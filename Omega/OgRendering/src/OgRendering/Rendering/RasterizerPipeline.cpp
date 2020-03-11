@@ -37,6 +37,11 @@ void OgEngine::RasterizerPipeline::SetupPipeline()
 	CreateDescriptorSets();
 	CreateCommandBuffers();
 	CreateSynchronizedObjects();
+
+	InitImGUI();
+	SetupImGUIFrameBuffers();
+	SetupImGUI();
+	std::cout << "imgui init successful";
 }
 
 void OgEngine::RasterizerPipeline::CleanPipeline()
@@ -115,7 +120,7 @@ void OgEngine::RasterizerPipeline::DrawFrame()
 		throw std::runtime_error("failed to acquire swap chain image!");
 	}
 
-	// UpdateUniformBuffer(imageIndex, Matrix4F::identity);
+	//UpdateUniformBuffer(imageIndex, Matrix4F::identity);
 
 	if (m_imagesInFlight[imageIndex] != VK_NULL_HANDLE)
 	{
@@ -145,6 +150,8 @@ void OgEngine::RasterizerPipeline::DrawFrame()
 	{
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
+
+	RenderUI(imageIndex);
 
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -428,9 +435,14 @@ void OgEngine::RasterizerPipeline::EndSingleTimeCommands(VkCommandBuffer p_comma
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &p_commandBuffer;
-
-	vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	// Create fence to ensure that the command buffer has finished executing
+	VkFenceCreateInfo fenceInfo = Initializers::fenceCreateInfo(0);
+	VkFence VIVELAFRANCE;
+	CHECK_ERROR(vkCreateFence(m_vulkanDevice.m_logicalDevice, &fenceInfo, nullptr, &VIVELAFRANCE));
+	CHECK_ERROR(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VIVELAFRANCE));
+	CHECK_ERROR(vkWaitForFences(m_vulkanDevice.m_logicalDevice, 1, &VIVELAFRANCE, VK_TRUE, 100000000000));
 	vkQueueWaitIdle(m_graphicsQueue);
+	vkDestroyFence(m_vulkanDevice.m_logicalDevice, VIVELAFRANCE, nullptr);
 
 	vkFreeCommandBuffers(m_vulkanDevice.m_logicalDevice, m_commandPool, 1, &p_commandBuffer);
 }
@@ -761,6 +773,8 @@ void OgEngine::RasterizerPipeline::CreateSwapChain()
 	{
 		imageCount = swapChainSupport.capabilities.maxImageCount;
 	}
+	m_minImageCount = imageCount;
+
 
 	VkSwapchainCreateInfoKHR createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -890,6 +904,8 @@ void OgEngine::RasterizerPipeline::CreateRenderPass()
 	{
 		throw std::runtime_error("failed to create render pass!");
 	}
+
+
 }
 
 void OgEngine::RasterizerPipeline::CreateGraphicsPipeline()
@@ -1023,6 +1039,8 @@ void OgEngine::RasterizerPipeline::CreateGraphicsPipeline()
 
 	vkDestroyShaderModule(m_vulkanDevice.m_logicalDevice, fragShaderModule, nullptr);
 	vkDestroyShaderModule(m_vulkanDevice.m_logicalDevice, vertShaderModule, nullptr);
+
+	CreatePipelineCache();
 }
 
 void OgEngine::RasterizerPipeline::CreateDescriptorSetLayout()
@@ -1138,14 +1156,14 @@ void OgEngine::RasterizerPipeline::CreateTextureImage()
 		vkFreeMemory(m_vulkanDevice.m_logicalDevice, stagingBufferMemory, nullptr);
 
 		GenerateMipmaps(m_textureImage, VK_FORMAT_R8G8B8A8_UNORM, texture->Width(), texture->Height(), texture->MipmapLevels());
-		
+
 	}
 }
 
-VkDescriptorImageInfo OgEngine::RasterizerPipeline::Create2DDescriptor(const VkImage&             p_image,
-                                                                       const VkSamplerCreateInfo& p_samplerCreateInfo,
-                                                                       const VkFormat&            p_format,
-                                                                       const VkImageLayout&       p_layout) const
+VkDescriptorImageInfo OgEngine::RasterizerPipeline::Create2DDescriptor(const VkImage& p_image,
+	const VkSamplerCreateInfo& p_samplerCreateInfo,
+	const VkFormat& p_format,
+	const VkImageLayout& p_layout) const
 {
 	VkImageViewCreateInfo viewInfo = Initializers::imageViewCreateInfo();
 	viewInfo.image = p_image;
@@ -1241,7 +1259,7 @@ void OgEngine::RasterizerPipeline::CreateUniformBuffers()
 
 	m_materialsBuffers.resize(m_images.size());
 	m_materialsBuffersMemory.resize(m_images.size());
-	
+
 	for (size_t i = 0; i < m_images.size(); ++i)
 	{
 		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -1317,7 +1335,7 @@ void OgEngine::RasterizerPipeline::CreateDescriptorSets()
 
 		VkDescriptorBufferInfo lightsInfo;
 		lightsInfo.buffer = m_lightsBuffers[i];
-		lightsInfo.offset = 0; 
+		lightsInfo.offset = 0;
 		lightsInfo.range = sizeof(UniformLightInfo);
 
 		VkDescriptorBufferInfo lightNumberInfo = {};
@@ -1474,10 +1492,10 @@ void OgEngine::RasterizerPipeline::CreateCommandBuffers()
 			vkCmdBindVertexBuffers(m_commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
 			vkCmdBindIndexBuffer(m_commandBuffers[i], iterator->second.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-			
+
 			vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1,
 				&m_descriptorSets[i], 0, nullptr);
-			
+
 
 			vkCmdDrawIndexed(m_commandBuffers[i], static_cast<uint32_t>(iterator->first->Indices().size()), 1, 0, 0, 0);
 			++j;
@@ -1593,4 +1611,337 @@ void OgEngine::RasterizerPipeline::RecreateSwapChain()
 	CreateDescriptorPool();
 	CreateDescriptorSets();
 	CreateCommandBuffers();
+}
+
+void OgEngine::RasterizerPipeline::InitImGUI()
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	SetupImGUIStyle();
+	//ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForVulkan(m_window, true);
+
+	VkAttachmentDescription attachment = {};
+	attachment.format = m_chainColorFormat;
+	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentReference color_attachment = {};
+	color_attachment.attachment = 0;
+	color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &color_attachment;
+
+	VkSubpassDependency dependency = {};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkRenderPassCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	info.attachmentCount = 1;
+	info.pAttachments = &attachment;
+	info.subpassCount = 1;
+	info.pSubpasses = &subpass;
+	info.dependencyCount = 1;
+	info.pDependencies = &dependency;
+
+	if (vkCreateRenderPass(m_vulkanDevice.m_logicalDevice, &info, nullptr, &m_ImGUIrenderPass) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Could not create Dear ImGui's render pass");
+	}
+
+	const std::vector<VkDescriptorPoolSize> ImGUIpoolSizes =
+	{
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1500 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+	};
+
+	VkDescriptorPoolCreateInfo descriptorPoolCreateInfoIMGUI = Initializers::descriptorPoolCreateInfo(ImGUIpoolSizes, 15000);
+	vkCreateDescriptorPool(m_vulkanDevice.m_logicalDevice, &descriptorPoolCreateInfoIMGUI, nullptr, &m_ImGUIdescriptorPool);
+
+	ImGui_ImplVulkan_InitInfo init_info = {};
+	init_info.Instance = m_vulkanDevice.m_instance;
+	init_info.PhysicalDevice = m_vulkanDevice.m_gpu;
+	init_info.Device = m_vulkanDevice.m_logicalDevice;
+	init_info.QueueFamily = m_vulkanDevice.m_gpuGraphicFamily.value();
+	init_info.Queue = m_graphicsQueue;
+	init_info.PipelineCache = m_pipelineCache;
+	init_info.DescriptorPool = m_ImGUIdescriptorPool;
+	init_info.Allocator = nullptr;
+	init_info.MinImageCount = m_minImageCount;
+	init_info.ImageCount = m_minImageCount;
+	init_info.CheckVkResultFn = CHECK_ERROR;
+	ImGui_ImplVulkan_Init(&init_info, m_ImGUIrenderPass);
+
+	VkCommandBuffer cmdBuffer = BeginSingleTimeCommands();
+	ImGui_ImplVulkan_CreateFontsTexture(cmdBuffer);
+
+
+	EndSingleTimeCommands(cmdBuffer);
+}
+
+void OgEngine::RasterizerPipeline::SetupImGUIStyle()
+{
+	ImGuiStyle* style = &ImGui::GetStyle();
+	ImVec4* colors = style->Colors;
+
+	colors[ImGuiCol_Text] = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
+	colors[ImGuiCol_TextDisabled] = ImVec4(0.500f, 0.500f, 0.500f, 1.000f);
+	colors[ImGuiCol_WindowBg] = ImVec4(0.180f, 0.180f, 0.180f, 1.000f);
+	colors[ImGuiCol_ChildBg] = ImVec4(0.280f, 0.280f, 0.280f, 0.000f);
+	colors[ImGuiCol_PopupBg] = ImVec4(0.313f, 0.313f, 0.313f, 1.000f);
+	colors[ImGuiCol_Border] = ImVec4(0.266f, 0.266f, 0.266f, 1.000f);
+	colors[ImGuiCol_BorderShadow] = ImVec4(0.000f, 0.000f, 0.000f, 0.000f);
+	colors[ImGuiCol_FrameBg] = ImVec4(0.160f, 0.160f, 0.160f, 1.000f);
+	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.200f, 0.200f, 0.200f, 1.000f);
+	colors[ImGuiCol_FrameBgActive] = ImVec4(0.280f, 0.280f, 0.280f, 1.000f);
+	colors[ImGuiCol_TitleBg] = ImVec4(0.148f, 0.148f, 0.148f, 1.000f);
+	colors[ImGuiCol_TitleBgActive] = ImVec4(0.148f, 0.148f, 0.148f, 1.000f);
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.148f, 0.148f, 0.148f, 1.000f);
+	colors[ImGuiCol_MenuBarBg] = ImVec4(0.195f, 0.195f, 0.195f, 1.000f);
+	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.160f, 0.160f, 0.160f, 1.000f);
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.277f, 0.277f, 0.277f, 1.000f);
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.300f, 0.300f, 0.300f, 1.000f);
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+	colors[ImGuiCol_CheckMark] = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
+	colors[ImGuiCol_SliderGrab] = ImVec4(0.391f, 0.391f, 0.391f, 1.000f);
+	colors[ImGuiCol_SliderGrabActive] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+	colors[ImGuiCol_Button] = ImVec4(1.000f, 1.000f, 1.000f, 0.000f);
+	colors[ImGuiCol_ButtonHovered] = ImVec4(1.000f, 1.000f, 1.000f, 0.156f);
+	colors[ImGuiCol_ButtonActive] = ImVec4(1.000f, 1.000f, 1.000f, 0.391f);
+	colors[ImGuiCol_Header] = ImVec4(0.313f, 0.313f, 0.313f, 1.000f);
+	colors[ImGuiCol_HeaderHovered] = ImVec4(0.469f, 0.469f, 0.469f, 1.000f);
+	colors[ImGuiCol_HeaderActive] = ImVec4(0.469f, 0.469f, 0.469f, 1.000f);
+	colors[ImGuiCol_Separator] = colors[ImGuiCol_Border];
+	colors[ImGuiCol_SeparatorHovered] = ImVec4(0.391f, 0.391f, 0.391f, 1.000f);
+	colors[ImGuiCol_SeparatorActive] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+	colors[ImGuiCol_ResizeGrip] = ImVec4(1.000f, 1.000f, 1.000f, 0.250f);
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4(1.000f, 1.000f, 1.000f, 0.670f);
+	colors[ImGuiCol_ResizeGripActive] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+	colors[ImGuiCol_Tab] = ImVec4(0.098f, 0.098f, 0.098f, 1.000f);
+	colors[ImGuiCol_TabHovered] = ImVec4(0.352f, 0.352f, 0.352f, 1.000f);
+	colors[ImGuiCol_TabActive] = ImVec4(0.195f, 0.195f, 0.195f, 1.000f);
+	colors[ImGuiCol_TabUnfocused] = ImVec4(0.098f, 0.098f, 0.098f, 1.000f);
+	colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.195f, 0.195f, 0.195f, 1.000f);
+	//colors[ImGuiCol_DockingPreview] = ImVec4(1.000f, 0.391f, 0.000f, 0.781f);
+	//colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.180f, 0.180f, 0.180f, 1.000f);
+	colors[ImGuiCol_PlotLines] = ImVec4(0.469f, 0.469f, 0.469f, 1.000f);
+	colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+	colors[ImGuiCol_PlotHistogram] = ImVec4(0.586f, 0.586f, 0.586f, 1.000f);
+	colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+	colors[ImGuiCol_TextSelectedBg] = ImVec4(1.000f, 1.000f, 1.000f, 0.156f);
+	colors[ImGuiCol_DragDropTarget] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+	colors[ImGuiCol_NavHighlight] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.000f, 0.000f, 0.000f, 0.586f);
+	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.000f, 0.000f, 0.000f, 0.586f);
+
+	style->ChildRounding = 4.0f;
+	style->FrameBorderSize = 1.0f;
+	style->FrameRounding = 2.0f;
+	style->GrabMinSize = 7.0f;
+	style->PopupRounding = 2.0f;
+	style->ScrollbarRounding = 12.0f;
+	style->ScrollbarSize = 13.0f;
+	style->TabBorderSize = 1.0f;
+	style->TabRounding = 0.0f;
+	style->WindowRounding = 4.0f;
+}
+
+void OgEngine::RasterizerPipeline::SetupImGUI()
+{
+	m_ImGUIcommandBuffers.resize(m_imageViews.size());
+	for (size_t i = 0; i < m_imageViews.size(); i++)
+	{
+		VkCommandPoolCreateInfo cmdPoolInfo = {};
+		cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		cmdPoolInfo.queueFamilyIndex = m_vulkanDevice.m_gpuGraphicFamily.value();
+		cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		CHECK_ERROR(vkCreateCommandPool(m_vulkanDevice.m_logicalDevice, &cmdPoolInfo, nullptr, &m_ImGUIcommandPool));
+
+		m_ImGUIcommandBuffers.resize(1);
+
+		VkCommandBufferAllocateInfo cmdBufAllocateInfo =
+			Initializers::commandBufferAllocateInfo(
+				m_ImGUIcommandPool,
+				VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+				static_cast<uint32_t>(m_ImGUIcommandBuffers.size()));
+
+		CHECK_ERROR(vkAllocateCommandBuffers(m_vulkanDevice.m_logicalDevice, &cmdBufAllocateInfo, m_ImGUIcommandBuffers.data()));
+	}
+
+	m_sceneID = nullptr;//ImGui_ImplVulkan_AddTexture(m_offScreenPass.sampler, m_offScreenPass.color.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	vkQueueWaitIdle(m_graphicsQueue);
+}
+
+void OgEngine::RasterizerPipeline::SetupImGUIFrameBuffers()
+{
+	VkImageView attachment[1];
+
+	VkFramebufferCreateInfo frameBufferCreateInfo = {};
+	frameBufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	frameBufferCreateInfo.pNext = nullptr;
+	frameBufferCreateInfo.renderPass = m_ImGUIrenderPass;
+	frameBufferCreateInfo.attachmentCount = 1;
+	frameBufferCreateInfo.pAttachments = attachment;
+	frameBufferCreateInfo.width = m_width;
+	frameBufferCreateInfo.height = m_height;
+	frameBufferCreateInfo.layers = 1;
+
+	// Create frame buffers for every swap chain image
+	m_ImGUIframeBuffers.resize(m_images.size());
+	for (uint32_t i = 0; i < m_ImGUIframeBuffers.size(); i++)
+	{
+		attachment[0] = m_imageViews[i];
+		CHECK_ERROR(vkCreateFramebuffer(m_vulkanDevice.m_logicalDevice, &frameBufferCreateInfo, nullptr, &m_ImGUIframeBuffers[i]));
+	}
+}
+
+void OgEngine::RasterizerPipeline::RescaleImGUI()
+{
+}
+
+void OgEngine::RasterizerPipeline::RenderUI(uint32_t p_id)
+{
+	VkRenderPassBeginInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	info.renderPass = m_ImGUIrenderPass;
+	info.framebuffer = m_ImGUIframeBuffers[p_id];
+	info.renderArea.extent.width = m_width;
+	info.renderArea.extent.height = m_height;
+	info.clearValueCount = 1;
+
+	VkClearValue clear;
+	clear.color = { {0.0, 0.0, 0.0, 1.0f} };
+	clear.depthStencil = { 1,0 };
+	info.pClearValues = &clear;
+
+	VkCommandBuffer cmdBuffer = BeginSingleTimeCommands();
+	vkCmdBeginRenderPass(cmdBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
+	vkCmdEndRenderPass(cmdBuffer);
+
+	EndSingleTimeCommands(cmdBuffer);
+}
+
+ImGuiContext* OgEngine::RasterizerPipeline::GetUIContext()
+{
+	return ImGui::GetCurrentContext();
+}
+
+void OgEngine::RasterizerPipeline::PrepareIMGUIFrame()
+{
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+}
+
+void OgEngine::RasterizerPipeline::DrawUI()
+{
+	ImGui::Render();
+}
+
+void OgEngine::RasterizerPipeline::DrawEditor()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+	{
+		//ImGuiID dockspaceID = ImGui::GetID("MyDockSpace");
+		//ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+	}
+	//ImGui::SetNextWindowPos({ 0, 0 });
+	//ImGui::SetNextWindowSize(ImVec2(m_vulkanContext->GetRTPipeline()->m_width, m_vulkanContext->GetRTPipeline()->m_height ));
+
+	static bool opt_fullscreen_persistant = true;
+	bool opt_fullscreen = opt_fullscreen_persistant;
+	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+	// because it would be confusing to have two docking targets within each others.
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_MenuBar;
+	if (opt_fullscreen)
+	{
+		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(viewport->GetWorkPos());
+		ImGui::SetNextWindowSize(viewport->GetWorkSize());
+		ImGui::SetNextWindowViewport(viewport->ID);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_MenuBar;
+	}
+
+	// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background 
+	// and handle the pass-thru hole, so we ask Begin() to not render a background.
+	if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+		window_flags |= ImGuiWindowFlags_NoBackground;
+
+	bool open = true;
+	ImGui::Begin("Editor", &open, window_flags);
+	{
+
+		if (opt_fullscreen)
+			ImGui::PopStyleVar(2);
+
+		// DockSpace
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+		{
+			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+		}
+	}
+	ImGui::End();
+	ImGui::ShowDemoWindow();
+	ImGui::SetNextWindowSizeConstraints({ 0, 0 }, { FLT_MAX, FLT_MAX }, CustomConstraints::Wide);
+
+	ImGui::Begin("Scene");
+	{
+		ImVec2 newSize = ImGui::GetContentRegionAvail();
+		//ResizeOffPass(newSize.x, newSize.y);
+		// FOR NOW : ImGui::Image(m_sceneID, newSize);
+	}
+	ImGui::End();
+}
+
+void OgEngine::RasterizerPipeline::CHECK_ERROR(VkResult p_result)
+{
+	if (p_result != VK_SUCCESS)
+	{
+		std::cout << p_result << '\n';
+		throw std::runtime_error(("Error with Vulkan function"));
+	}
+}
+
+void OgEngine::RasterizerPipeline::CreatePipelineCache()
+{
+	VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+	pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	vkCreatePipelineCache(m_vulkanDevice.m_logicalDevice, &pipelineCacheCreateInfo, nullptr, &m_pipelineCache);
 }

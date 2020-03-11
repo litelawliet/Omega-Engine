@@ -17,7 +17,12 @@ void OgEngine::RenderingSystem::Update(const float p_dt, const std::shared_ptr<V
 
 		if (p_context->IsRaytracing())
 		{
-			p_context->GetRTPipeline()->UpdateObject(entity, transform.worldMatrix, model.Mesh(), rand() % 3);
+			p_context->GetRTPipeline()->UpdateObject(entity, transform.worldMatrix, model.Mesh(), 0,
+                                                        model.Material().Color(), 
+                                                        model.Material().Roughness(), 
+                                                        model.Material().Metallic(), 
+                                                        model.Material().Reflectance(), 
+                                                        model.Material().Type());
 		}
 		else
 		{

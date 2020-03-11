@@ -330,7 +330,6 @@ xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpMP3.dll" "$(Soluti
     <ClInclude Include="include\OgCore\Managers\EntityManager.h" />
     <ClInclude Include="include\OgCore\Managers\SceneManager.h" />
     <ClInclude Include="include\OgCore\Managers\SystemManager.h" />
-    <ClInclude Include="include\OgCore\SceneNode.h" />
     <ClInclude Include="include\OgCore\Systems\RenderingSystem.h" />
     <ClInclude Include="include\OgCore\Systems\System.h" />
     <ClInclude Include="include\UI\imgui\imconfig.h" />
@@ -341,6 +340,7 @@ xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpMP3.dll" "$(Soluti
     <ClInclude Include="include\UI\imgui\imstb_rectpack.h" />
     <ClInclude Include="include\UI\imgui\imstb_textedit.h" />
     <ClInclude Include="include\UI\imgui\imstb_truetype.h" />
+    <ClInclude Include="include\OgCore\SceneNode.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\OgCore\Components\ComponentArray.inl" />

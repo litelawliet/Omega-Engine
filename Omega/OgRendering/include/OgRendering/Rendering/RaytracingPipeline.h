@@ -32,16 +32,28 @@ struct Semaphore {
     VkSemaphore renderComplete;
 };
 
+struct PBRMaterial
+{
+    alignas(alignof(GPM::Vector4F)) GPM::Vector4F albedo;
+    alignas(alignof(float)) float metallic;
+    alignas(alignof(float)) float roughness;
+    alignas(alignof(float)) float reflectance;
+    alignas(alignof(float)) float ambientOcc;
+    alignas(alignof(int)) int materialType;
+};
+
 struct UniformData
 {
     GPM::Matrix4F viewInverse;
     GPM::Matrix4F projInverse;
+    GPM::Vector4F data;
 };
 
 struct ShaderData
 {
     std::vector<Buffer> vertexBuffer;
     std::vector<Buffer> indexBuffer;
+    std::vector<Buffer> materialBuffer;
     Buffer textureIDBuffer;
 };
 
@@ -57,11 +69,30 @@ struct SwapChainBuffer
     VkImageView view;
 };
 
+struct FrameBufferAttachment 
+{
+    VkImage image;
+    VkDeviceMemory mem;
+    VkImageView view;
+};
+
+struct OffscreenPass 
+{
+    int32_t width, height;
+    VkFramebuffer frameBuffer;
+    FrameBufferAttachment color, depth;
+    VkRenderPass renderPass;
+    VkSampler sampler;
+    VkDescriptorImageInfo descriptor;
+};
+
 struct TextureData
 {
     VkImage img;
     VkDescriptorImageInfo info;
     VkDeviceMemory memory;
+    VkSampler sampler;
+    VkImageView view;
 };
 struct SwapChain {
     VkFormat colorFormat{};
@@ -75,14 +106,27 @@ struct SwapChain {
     uint32_t queueNodeIndex = 5000000;
 };
 
+struct GameViewProperties
+{
+    uint32_t width{0u};
+    uint32_t height{0u};
+};
+
 struct StorageImage 
 {
     VkDeviceMemory memory;
     VkImage image;
     VkImageView view;
     VkFormat format;
+    VkSampler imgSampler;
 };
 
+struct CustomConstraints
+{
+    static void Wide(ImGuiSizeCallbackData* data) { data->DesiredSize.y = data->DesiredSize.x * (9.0f / 16.0f); }
+    static void Square(ImGuiSizeCallbackData* data) { data->DesiredSize.x = data->DesiredSize.y = (data->DesiredSize.x > data->DesiredSize.y ? data->DesiredSize.x : data->DesiredSize.y); }
+    static void Step(ImGuiSizeCallbackData* data) { float step = (float)(int)(intptr_t)data->UserData; data->DesiredSize = ImVec2((int)(data->DesiredSize.x / step + 0.5f) * step, (int)(data->DesiredSize.y / step + 0.5f) * step); }
+};
 
 namespace OgEngine
 {
@@ -119,8 +163,8 @@ namespace OgEngine
         void CreateCommandBuffers();
         void CreateBottomLevelAccelerationStructure(const VkGeometryNV* p_geometries);
         void CreateTopLevelAccelerationStructure(AccelerationStructure& p_accelerationStruct, uint32_t p_instanceCount);
-        void CreateStorageImage();
-        void AddObject(uint64_t p_id, std::shared_ptr<Mesh> p_mesh, uint32_t p_textureID = 0);
+        void CreateStorageImage(StorageImage& p_image);
+        void AddObject(uint64_t p_id, std::shared_ptr<Mesh> p_mesh, uint32_t p_textureID, PBRMaterial p_material);
         void AddTexture(const char* p_texture);
         void CreateTLAS();
         void CreatePipeline(bool p_resizedWindow);
@@ -128,8 +172,8 @@ namespace OgEngine
         void CreatePipelineCache();
         void CreateShaderBindingTable();
         void CreateDescriptorSets(bool resizedWindow);
-        void CreateUniformBuffer();
-        void UpdateShaderData(std::shared_ptr<Mesh> p_mesh);
+        void CreateCamera();
+        void UpdateCamera();
         void UpdateTLAS();
         void UpdateDescriptorSets();
         void InitImGUI();
@@ -138,15 +182,21 @@ namespace OgEngine
         void SetupImGUIFrameBuffers();
         void RescaleImGUI();
         void RenderUI(uint32_t p_id);
+        void SetupUIOutput();
+
 #pragma endregion
 
 #pragma region External Pipeline Methods
         void GenerateMipmaps(VkImage p_image, VkFormat p_imageFormat, int32_t p_texWidth, int32_t p_texHeight, uint32_t p_mipLevels) const;
-        VkDescriptorImageInfo Create2DDescriptor(const VkDevice& device, const VkImage& image, const VkSamplerCreateInfo& samplerCreateInfo, const VkFormat& format, const VkImageLayout& layout);
-        void DestroyObjects(); //Deprecated with ECS conversion
+        VkDescriptorImageInfo Create2DDescriptor(const VkDevice& device, TextureData& image, const VkSamplerCreateInfo& samplerCreateInfo, const VkFormat& format, const VkImageLayout& layout);
+        void DestroyObjects();
+        void ResizeOffPass(uint32_t width, uint32_t height);
+        //Deprecated with ECS conversion
         void AddModelInGame(uint64_t p_id, std::shared_ptr<Mesh> p_mesh); //Deprecated with ECS conversion
         void RemoveModelInGame(); //Deprecated with ECS conversion
-        void UpdateObject(uint64_t id, const GPM::Matrix4F& p_transform, const std::shared_ptr<Mesh>& p_mesh, uint32_t p_texID);
+        void UpdateObject(uint64_t id, const GPM::Matrix4F& p_transform, const std::shared_ptr<Mesh>& p_mesh, uint32_t p_texID,
+                          GPM::Vector4F p_albedo, float p_roughness, float p_metallic, float p_reflectance, int p_type);
+        void UpdateMaterial(uint32_t p_id, GPM::Vector4F p_albedo, float p_roughness, float p_metallic, float p_reflectance, int p_type);
 #pragma endregion
 
 #pragma region Vulkan Helpers
@@ -160,7 +210,10 @@ namespace OgEngine
         void ResizeCleanup();
         void SetupTestEditor();
         void PrepareIMGUIFrame();
-        void DrawImGUI();
+        void DrawUI();
+        void DrawEditor();
+        void UpdateOffPass();
+        void SetupOffScreenPass();
         ImGuiContext* GetUIContext() { return ImGui::GetCurrentContext(); }
 
         static void CHECK_ERROR(VkResult result);
@@ -173,7 +226,7 @@ namespace OgEngine
         VkPipelineShaderStageCreateInfo LoadShader(std::string p_file_name, VkShaderStageFlagBits p_stage);
         VkDeviceSize CopyShaderIdentifier(uint8_t* p_data, const uint8_t* p_shaderHandleStorage, uint32_t p_groupIndex) const;
         VkResult AcquireNextImage(VkSemaphore p_presentCompleteSemaphore, uint32_t* p_imageIndex) const;
-        VkResult QueuePresent(VkQueue p_queue, uint32_t p_imageIndex, VkSemaphore p_waitSemaphore) const;
+        VkResult QueuePresent(VkQueue p_queue, uint32_t p_imageIndex, VkSemaphore p_waitSemaphore);
         VkResult CreateBuffer(VkBufferUsageFlags p_usageFlags, VkMemoryPropertyFlags p_memoryPropertyFlags, VkDeviceSize p_size, VkBuffer* p_buffer, VkDeviceMemory* p_memory, void* p_data = nullptr) const;
         VkResult CreateBuffer(VkBufferUsageFlags p_usageFlags, VkMemoryPropertyFlags p_memoryPropertyFlags, Buffer* p_buffer, VkDeviceSize p_size, void* p_data = nullptr) const;
 #pragma endregion
@@ -183,12 +236,14 @@ namespace OgEngine
         Device m_vulkanDevice{};
         
         SwapChain m_swapChain;
+        OffscreenPass m_offScreenPass;
         DepthStencil m_depthStencil{};
         StorageImage m_storageImage{};
+        GameViewProperties m_gameViewProps{};
         UniformData m_cameraData{};
         Semaphore m_semaphores{};
         ShaderData m_shaderData{};
-
+        ImTextureID m_sceneID;
         uint32_t m_currentBuffer{ 0 };
         uint32_t m_width{ 0 };
         uint32_t m_height{ 0 };
@@ -218,10 +273,14 @@ namespace OgEngine
         std::vector<Model> m_objects;
         std::vector<uint64_t> m_objectIDs;
         std::vector<uint32_t> textureIDs;
+        std::vector<PBRMaterial> m_materials;
         AccelerationStructure m_TLAS;
         std::vector<TextureData> m_textures;
 
         int TLASinstanceID{ 0 };
+
+        //Temporary solution
+        StorageImage m_accumulationImage;
 #pragma endregion
 
 #pragma region Vulkan Direct Variables
@@ -235,6 +294,14 @@ namespace OgEngine
         VkPipelineLayout m_pipelineLayout{};
         VkDescriptorSet m_descriptorSet{};
         VkDescriptorSetLayout m_descriptorSetLayout{};
+
+
+        //ImGui
+        VkDescriptorSet m_UIDescriptorSet{};
+        VkDescriptorPool m_UIDescriptorPool{};
+        VkDescriptorSetLayout m_UIDescriptorLayout{};
+        VkPipelineLayout m_UIPipelineLayout{};
+        TextureData m_UIimage{};
 
         VkDescriptorPool m_descriptorPool{};
         VkDescriptorPool m_ImGUIdescriptorPool{};

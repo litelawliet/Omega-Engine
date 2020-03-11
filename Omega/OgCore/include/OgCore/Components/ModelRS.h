@@ -23,13 +23,13 @@ namespace OgEngine
 		void SetMaterial(const Material& p_material);
 
 		[[nodiscard]] const std::shared_ptr<Mesh>& Mesh() const;
-		[[nodiscard]] const Material& Material() const;
+		[[nodiscard]] Material& Material();
 		[[nodiscard]] Matrix4F ModelMatrix() const;
 
 		ModelRS& operator=(const ModelRS& p_model);
 		ModelRS& operator=(ModelRS&& p_model) noexcept;
 		void     SetLocalTransform(Transform& p_transform);
-  
+
 	private:
 		std::shared_ptr<OgEngine::Mesh> m_mesh;
 		OgEngine::Material m_material;

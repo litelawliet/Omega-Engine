@@ -14,6 +14,9 @@ set BINARIES_FOLDER="bin/"
 :: miss shaders
 %GLSL_COMPILER% -t -V %SOURCE_FOLDER%ray_miss.rmiss -o %BINARIES_FOLDER%ray_miss.spv
 
+:: smiss shaders
+%GLSL_COMPILER% -t -V %SOURCE_FOLDER%ray_smiss.rmiss -o %BINARIES_FOLDER%ray_smiss.spv
+
 :: rasterizer shaders
 %GLSL_COMPILER% -t -V %SOURCE_FOLDER%rast_vert.vert -o %BINARIES_FOLDER%rast_vert.spv
 %GLSL_COMPILER% -t -V %SOURCE_FOLDER%rast_frag.frag -o %BINARIES_FOLDER%rast_frag.spv

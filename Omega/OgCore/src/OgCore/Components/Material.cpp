@@ -1,7 +1,7 @@
 #include <OgCore/Components/Material.h>
 
 OgEngine::Material::Material()
-	: color(Vector3F::one), rough(0.0), metal(false)
+	: color(Vector3F::one), roughness(0.0), materialType(2)
 {
 }
 

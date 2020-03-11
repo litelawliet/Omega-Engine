@@ -1,6 +1,5 @@
 #include <OgCore/SceneNode.h>
-
-#include "OgCore/Managers/SceneManager.h"
+#include <OgCore/Managers/SceneManager.h>
 
 OgEngine::SceneNode::SceneNode(Entity p_entity)
 	: m_parentNode(nullptr), m_entity(p_entity)

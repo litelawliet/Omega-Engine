@@ -19,8 +19,9 @@ int main()
 		ResourceManager::Add<Mesh>("Resources/models/plane.obj");
 		ResourceManager::Add<Mesh>("Resources/models/lucy.obj");
 		ResourceManager::Add<Texture>("Resources/textures/default.png");
+		ResourceManager::Add<Texture>("Resources/textures/error.png");
 		ResourceManager::WaitForAll();
-		Core core(1280, 720, "Omega Editor");
+		Core core(1920, 1080, "Omega Editor");
 		core.Run();
 
 		return EXIT_SUCCESS;

@@ -8,6 +8,7 @@
 #include <OgRendering/Resource/Mesh.h>
 #include <vector>
 #include <map>
+#include <OgRendering/UI/imgui/imgui.h>
 
 
 namespace OgEngine
@@ -33,7 +34,11 @@ namespace OgEngine
 		void CleanPipeline();
 		void Update(const float p_dt, const GPM::Matrix4F& p_modelTransform, const std::shared_ptr<Mesh>& p_mesh);
 		void DrawFrame();
-
+		ImGuiContext* GetUIContext();
+		void PrepareIMGUIFrame();
+		void DrawUI();
+		void DrawEditor();
+			
 	private:
 #pragma region Helpers
 		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice& p_gpu) const;
@@ -55,6 +60,7 @@ namespace OgEngine
 		VkResult CreateBuffer(VkBufferUsageFlags p_usageFlags, VkMemoryPropertyFlags p_memoryPropertyFlags, Buffer* p_buffer, VkDeviceSize p_size, void* p_data = nullptr) const;
 		void TransitionImageLayout(const VkImage p_image, VkFormat p_format, const VkImageLayout p_oldLayout, const VkImageLayout p_newLayout, const uint32_t p_mipLevels) const;
 		void UpdateUniformBuffer(const uint32_t p_currentImage, const Matrix4F& p_modelMatrix);
+		static void CHECK_ERROR(VkResult p_result);
 #pragma endregion
 
 #pragma region PipelineMethods
@@ -71,6 +77,7 @@ namespace OgEngine
 		void CreateTextureImageView();
 		void CreateTextureSampler();
 		VkDescriptorImageInfo Create2DDescriptor(const VkImage& p_image, const VkSamplerCreateInfo& p_samplerCreateInfo, const VkFormat& p_format, const VkImageLayout& p_layout) const;
+		void CreatePipelineCache();
 
 		void LoadModel();
 		void CreateVertexBuffer(const std::shared_ptr<Mesh>& p_mesh);
@@ -84,6 +91,14 @@ namespace OgEngine
 		// Cleanup
 		void CleanupSwapChain();
 		void RecreateSwapChain();
+
+		void InitImGUI();
+		void SetupImGUIStyle();
+		void SetupImGUI();
+		void SetupImGUIFrameBuffers();
+		void RescaleImGUI();
+		void RenderUI(uint32_t p_id);
+		
 #pragma endregion
 
 		//Referenced from Context
@@ -104,6 +119,13 @@ namespace OgEngine
 		VkDescriptorSetLayout m_descriptorSetLayout{};
 		VkPipelineLayout m_pipelineLayout{};
 		VkPipeline m_graphicsPipeline{};
+		// ImGUI
+		VkPipelineCache m_pipelineCache{};
+		VkRenderPass m_ImGUIrenderPass{};
+		VkCommandPool m_ImGUIcommandPool{};
+		VkDescriptorPool m_ImGUIdescriptorPool{};
+		std::vector<VkCommandBuffer> m_ImGUIcommandBuffers;
+		std::vector<VkFramebuffer> m_ImGUIframeBuffers;
 
 		VkDescriptorPool m_descriptorPool{};
 		std::vector<VkDescriptorSet> m_descriptorSets;
@@ -160,5 +182,7 @@ namespace OgEngine
 		//Window size
 		uint32_t m_width{ 0u };
 		uint32_t m_height{ 0u };
+		uint32_t m_minImageCount{ 0u };
+		ImTextureID m_sceneID;
 	};
 }

@@ -16,7 +16,7 @@ namespace OgEngine
 
 		[[nodiscard]] Matrix4F GetWorldTransform() const;
 		[[nodiscard]] Entity GetEntity() const;
-		
+
 		void AddChild(SceneNode* p_childNode);
 		SceneNode* GetChild(const uint64_t p_childIndex);
 

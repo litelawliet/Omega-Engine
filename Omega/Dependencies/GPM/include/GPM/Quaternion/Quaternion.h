@@ -5,7 +5,7 @@ namespace GPM
 {
 	struct Quaternion final
 	{
-		
+
 		//m_w is the real value of quaternion, this will be used to check if the quaternion is pure/identity or not.
 		double w;
 		double x;
@@ -75,17 +75,33 @@ namespace GPM
 
 		/**
 		 * @brief Construct from euler angles
-		 * @param p_euler A vector representing the euler angle in degree
+		 * @param p_roll The x-angle in degree
+		 * @param p_pitch The y-angle in degree
+		 * @param p_yaw The z-angle in degree
+		 * @return The quaternion made from euler angles
 		 */
-		inline void MakeFromEuler(const Vector3<double>& p_euler);
+		[[nodiscard]] static inline Quaternion MakeFromEuler(const double p_roll, const double p_pitch, const double p_yaw);
 
 		/**
 		 * @brief Construct from euler angles
-		 * @param p_x The x-angle in degree
-		 * @param p_y The x-angle in degree
-		 * @param p_z The x-angle in degree
+		 * @param p_euler A vector representing the euler angle in degree
+		 * @return The quaternion made from euler angles
 		 */
-		inline void MakeFromEuler(const double p_x, const double p_y, const double p_z);
+		[[nodiscard]] static inline Quaternion MakeFromEuler(const Vector3<double>& p_euler);
+
+		/**
+		 * @brief Set a quaternion from euler angles
+		 * @param p_euler A vector representing the euler angle in degree
+		 */
+		inline void SetFromEuler(const Vector3<double>& p_euler) const;
+
+		/**
+		 * @brief Set a quaternion from euler angles
+		 * @param p_roll The x-angle in degree
+		 * @param p_pitch The y-angle in degree
+		 * @param p_yaw The z-angle in degree
+		 */
+		inline void SetFromEuler(const double p_roll, const double p_pitch, const double p_yaw);
 
 		/**
 		 * @brief Copy assignment
@@ -109,21 +125,21 @@ namespace GPM
 		 * @note If the quaternion has no rotation(meaning x,y,z axis values = 0), it's Identity
 		 * @return True or false
 		 */
-		bool IsIdentity() const;
+		[[nodiscard]] bool IsIdentity() const;
 
 		/**
 		 * @brief Check if the quaternion is pure
 		 * @note If the quaternion has no real value(meaning real part = 0), it's pure
 		 * @return True or false
 		 */
-		bool IsPure() const;
+		[[nodiscard]] bool IsPure() const;
 
 		/**
 		 * @brief Check if the quaternion is normalized
 		 * @note A quaternion is normalized if his magnitude is equal to 1
 		 * @return True or false
 		 */
-		bool IsNormalized() const;
+		[[nodiscard]] bool IsNormalized() const;
 
 		/**
 		 * @brief Check is all components between the current quaternion and the other one are equals
@@ -156,7 +172,7 @@ namespace GPM
 		 * @param p_otherQuaternion The other quaternion
 		 * @return The result
 		 */
-		double DotProduct(const Quaternion& p_otherQuaternion) const;
+		[[nodiscard]] double DotProduct(const Quaternion& p_otherQuaternion) const;
 
 		/**
 		 * @brief Return the dot product between the current quaternion and another one
@@ -174,6 +190,9 @@ namespace GPM
 
 		inline Quaternion operator*(const Vector3<double>& p_toMultiply) const;
 		inline Quaternion& operator*=(const Vector3<double>& p_toMultiply);
+
+		inline Vector3<float> operator*(const Vector3<float>& p_toMultiply) const;
+
 
 #pragma endregion
 #pragma endregion
@@ -197,20 +216,31 @@ namespace GPM
 		 * @param p_quaternion The quaternion to multiply
 		 * @return The result of the multiplication between the two quaternion
 		 */
-		inline Quaternion Multiply(const Quaternion& p_quaternion) const;
+		[[nodiscard]] inline Quaternion Multiply(const Quaternion& p_quaternion) const;
 
 		/**
 		 * @brief Norm of a quaternion, alias magnitude
 		 * @return The magnitude
 		 */
-		inline double Norm() const;
+		[[nodiscard]] inline double Norm() const;
 
 		/**
 		 * @brief Norm square of a quaternion, alias magnitude square
 		 * @return The magnitude squared
 		 */
-		constexpr inline double NormSquare() const;
-		//double GetAngle() const;
+		[[nodiscard]] constexpr inline double NormSquare() const;
+
+		/**
+		 * @brief Actual angle of this quaternion
+		 * @return The angle of the quaternion
+		 */
+		[[nodiscard]] inline double GetAngle() const;
+
+		/**
+		 * @brief Actual angle of this quaternion
+		 * @return The angle of the quaternion
+		 */
+		[[nodiscard]] static inline double GetAngle(const Quaternion& p_target);
 
 		/**
 		 * @brief Inverse the current quaternion
@@ -248,7 +278,7 @@ namespace GPM
 		 * @brief Give the axis of the quaternion
 		 * @return An axis
 		 */
-		Vector3<double> GetRotationAxis() const;
+		[[nodiscard]] Vector3<double> GetRotationAxis() const;
 
 		//double AngularDistance(const Quaternion& p_other) const;
 
@@ -256,25 +286,25 @@ namespace GPM
 		 * @brief Return the x value of the axis
 		 * @return The value
 		 */
-		double GetXAxisValue() const;
+		[[nodiscard]] double GetXAxisValue() const;
 
 		/**
 		 * @brief Return the y value of the axis
 		 * @return The value
 		 */
-		double GetYAxisValue() const;
+		[[nodiscard]] double GetYAxisValue() const;
 
 		/**
 		 * @brief Return the z value of the axis
 		 * @return The value
 		 */
-		double GetZAxisValue() const;
+		[[nodiscard]] double GetZAxisValue() const;
 
 		/**
 		 * @brief Return the w component (real part)
 		 * @return The value
 		 */
-		double GetRealValue() const;
+		[[nodiscard]] double GetRealValue() const;
 
 
 		/**
@@ -307,7 +337,7 @@ namespace GPM
 		 * @param p_upwards Upwards direction
 		 * @return The quaternion
 		 */
-		Quaternion LookRotation(const Vector3<double>& p_forward, const Vector3<double>& p_upwards = Vector3<double>::up) const;
+		[[nodiscard]] Quaternion LookRotation(const Vector3<double>& p_forward, const Vector3<double>& p_upwards = Vector3<double>::up) const;
 
 		/**
 		 * @brief Create a quaternion out of an axis and angle
@@ -335,16 +365,16 @@ namespace GPM
 		 */
 		static Quaternion Slerp(const Quaternion& p_start, const Quaternion& p_end, const double p_alpha);
 
-        /**
-         * @brief Smoothly interpolate between two quaternions and use the shortest path to it. Prevents wrong side rotation.
-         * @param p_start Start quaternion
-         * @param p_end End quaternion
-         * @param p_alpha Coefficient
-         * @return The quaternion
-         */
-	    static Quaternion SlerpShortestPath(const Quaternion& p_start, const Quaternion& p_end, double p_alpha);
+		/**
+		 * @brief Smoothly interpolate between two quaternions and use the shortest path to it. Prevents wrong side rotation.
+		 * @param p_start Start quaternion
+		 * @param p_end End quaternion
+		 * @param p_alpha Coefficient
+		 * @return The quaternion
+		 */
+		static Quaternion SlerpShortestPath(const Quaternion& p_start, const Quaternion& p_end, double p_alpha);
 
-        /**
+		/**
 		 * @brief Normalized interpolate between two quaternions
 		 * @param p_start Start quaternion
 		 * @param p_end End quaternion
@@ -355,38 +385,21 @@ namespace GPM
 
 		/**
 		 * @brief Rotate a point relative to pivot
-		 * @param p_position
-		 * @param p_pivot
-		 * @warning This method is not implemented yet and will fail at compilation.
+		 * @param p_point The point to rotate around
+		 * @param p_quaternion The rotation
+		 * @return The new position
 		 */
-		Vector3<double> RotateRelativeToPivot(const Vector3<double>& p_position, const Vector3<double>& p_pivot) const;
-
-		/**
-		 * @brief Rotate a point relative to pivot using euler angles
-		 * @param p_position
-		 * @param p_pivot
-		 * @param p_eulerAngles
-		 * @warning This method is not implemented yet and will fail at compilation.
-		 */
-		static Vector3<double> RotateRelativeToPivot(const Vector3<double>& p_position, const Vector3<double>& p_pivot,
-			const Vector3<double>& p_eulerAngles);
+		[[nodiscard]] inline Vector3<double> RotateRelativeToPivot(const Vector3<double>& p_point, const Quaternion& p_quaternion) const;
 
 		/**
 		 * @brief Rotate a point relative to pivot using a quaternion
-		 * @param p_position
-		 * @param p_pivot
-		 * @param p_quaternion
-		 * @warning This method is not implemented yet and will fail at compilation.
+		 * @param p_point The point to rotate
+		 * @param p_pivot The point of pivot
+		 * @param p_quaternion The rotation
+		 * @return The new position
 		*/
-		static Vector3<double> RotateRelativeToPivot(const Vector3<double>& p_position, const Vector3<double>& p_pivot,
-			Quaternion& p_quaternion);
-
-		/**
-		 * @brief Rotate a vector around another one
-		 * @param p_toRotate
-		 * @warning This method is not implemented yet and will fail at compilation.
-		 */
-		Vector3<double> RotateVector(const Vector3<double>& p_toRotate) const;
+		[[nodiscard]] static inline Vector3<double> RotateRelativeToPivot(const Vector3<double>& p_point, const Vector3<double>& p_pivot,
+			const Quaternion& p_quaternion);
 
 		/**
 		 * @brief Rotate the vector of a certain angle around an arbitrary axis
@@ -404,7 +417,7 @@ namespace GPM
 		 * @note Quaternion representation is as follow : [w, x, y, z]
 		 */
 		double operator[](const int p_index) const;
-		
+
 #pragma endregion
 #pragma region Conversions
 		/**
@@ -417,7 +430,7 @@ namespace GPM
 		 * @brief Transform the current quaternion to euler angles in degrees
 		 * @return A vector containing each angles
 		 */
-		Vector3<double> ToEuler() const;
+		[[nodiscard]] Vector3<float> ToEuler() const;
 
 		/**
 		 * @brief Create a quaternion from euler in degrees
@@ -439,7 +452,7 @@ namespace GPM
 		 * @brief Transform the current quaternion to string
 		 * @return The converted string
 		 */
-		std::string ToString() const;
+		[[nodiscard]] std::string ToString() const;
 
 		/**
 		 * @brief Transform a quaternion to string
@@ -452,13 +465,13 @@ namespace GPM
 		 * @brief Return a Matrix3 of double out of the quaternion
 		 * @return The Matrix3<float>
 		 */
-		Matrix3<float> ToMatrix3() const;
+		[[nodiscard]] Matrix3<float> ToMatrix3() const;
 
 		/**
 		 * @brief Return a Matrix4 of double out of the quaternion
 		 * @return The Matrix4<float>
 		 */
-		Matrix4<float> ToMatrix4() const;
+		[[nodiscard]] Matrix4<float> ToMatrix4() const;
 #pragma endregion
 	};
 

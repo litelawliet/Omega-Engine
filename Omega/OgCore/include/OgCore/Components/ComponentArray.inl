@@ -38,9 +38,6 @@ void OgEngine::ComponentArray<T>::RemoveData(OgEngine::Entity p_entity)
 template <typename T>
 T& OgEngine::ComponentArray<T>::GetData(Entity p_entity)
 {
-	//if (m_entityToIndexMap.find(p_entity) == m_entityToIndexMap.end())
-		//return nullptr;
-	
 	assert(m_entityToIndexMap.find(p_entity) != m_entityToIndexMap.end() && "Retrieving non-existant component");
 
 	// Return a reference to the entity's component

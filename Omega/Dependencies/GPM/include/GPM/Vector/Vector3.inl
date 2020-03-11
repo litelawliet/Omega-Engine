@@ -337,6 +337,17 @@ namespace GPM
 
 	template<typename T>
 	template<typename U>
+	constexpr inline Vector3<T>& Vector3<T>::operator/=(const U p_scalar)
+	{
+		x /= p_scalar;
+		y /= p_scalar;
+		z /= p_scalar;
+
+		return *this;
+	}
+
+	template<typename T>
+	template<typename U>
 	constexpr inline bool Vector3<T>::operator==(const Vector3<U>& p_other) const
 	{
 		if (x == p_other.x && y == p_other.y && z == p_other.z)

@@ -24,6 +24,8 @@ void OgEngine::Renderer::InitVkRenderer(const int p_width, const int p_height, c
     
     m_context->InitWindow(p_width, p_height, p_name, true);
     m_context->InitAPI();
+    //Print context creation successful with Debug Tool
+
 #endif
 }
 

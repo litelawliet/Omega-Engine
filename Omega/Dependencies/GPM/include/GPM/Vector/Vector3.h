@@ -102,7 +102,7 @@ namespace GPM
          * @brief Normalized 
          * @return the copy of Normalized vector
          */
-        constexpr Vector3<T> Normalized() const;
+        [[nodiscard]] constexpr Vector3<T> Normalized() const;
 
         /**
          * @brief ToString
@@ -130,7 +130,7 @@ namespace GPM
          * @brief Calculate the Magnitude of the current vector
          * @return The Magnitude
          */
-		constexpr T Magnitude() const;
+        [[nodiscard]] constexpr T Magnitude() const;
 
         /**
          * @brief forward unit vector
@@ -246,6 +246,14 @@ namespace GPM
         */
         template<typename U>
         constexpr Vector3<T>& operator /=(const Vector3<U> p_other);
+
+        /**
+		* @brief Divide scalar to the current vector
+		* @param p_scalar : Divide this scalar to the p_vector
+		* @return The current vector modified
+		*/
+        template<typename U>
+        constexpr Vector3<T>& operator /=(const U p_scalar);
 
         /**
          * @brief Add vector p_left by an other vector

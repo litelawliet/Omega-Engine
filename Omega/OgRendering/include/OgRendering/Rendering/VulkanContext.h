@@ -100,7 +100,6 @@ namespace OgEngine
 
 		GLFWwindow* GetWindow() const;
 		
-
 		std::shared_ptr<OgEngine::RaytracingPipeline> GetRTPipeline() const { return m_RTPipeline; }
 		std::shared_ptr<OgEngine::RasterizerPipeline> GetRSPipeline() const { return m_RSPipeline; }
 		static bool                                   framebufferResized;

@@ -7,15 +7,18 @@
 #include <OgRendering/Utils/Initializers.h>
 #include <vulkan/vulkan.h>
 
-#ifdef NDEBUG
+/*#ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
-#endif
+#endif*/
+const bool enableValidationLayers = false;
 
 #define INDEX_RAYGEN 0
 #define INDEX_MISS 1
 #define INDEX_CLOSEST_HIT 2
+#define INDEX_SHADOW_MISS 3
+#define INDEX_SHADOW_HIT 4
 
 using namespace OgEngine;
 
@@ -380,10 +383,350 @@ void OgEngine::RaytracingPipeline::PrepareIMGUIFrame()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
-void OgEngine::RaytracingPipeline::DrawImGUI()
+void OgEngine::RaytracingPipeline::DrawUI()
 {
     ImGui::Render();
 }
+
+void OgEngine::RaytracingPipeline::DrawEditor()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+    {
+        //ImGuiID dockspaceID = ImGui::GetID("MyDockSpace");
+        //ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+    }
+    //ImGui::SetNextWindowPos({ 0, 0 });
+    //ImGui::SetNextWindowSize(ImVec2(m_vulkanContext->GetRTPipeline()->m_width, m_vulkanContext->GetRTPipeline()->m_height ));
+
+    static bool opt_fullscreen_persistant = true;
+    bool opt_fullscreen = opt_fullscreen_persistant;
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+    // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+    // because it would be confusing to have two docking targets within each others.
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_MenuBar;
+    if (opt_fullscreen)
+    {
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->GetWorkPos());
+        ImGui::SetNextWindowSize(viewport->GetWorkSize());
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_MenuBar;
+    }
+
+    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background 
+    // and handle the pass-thru hole, so we ask Begin() to not render a background.
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+        window_flags |= ImGuiWindowFlags_NoBackground;
+
+    bool open = true;
+    ImGui::Begin("Editor", &open, window_flags);
+    {
+        
+        if (opt_fullscreen)
+            ImGui::PopStyleVar(2);
+
+        // DockSpace
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+        {
+            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+        }
+    }
+    ImGui::End();
+    ImGui::ShowDemoWindow();
+    ImGui::SetNextWindowSizeConstraints({ 0, 0 }, { FLT_MAX, FLT_MAX }, CustomConstraints::Wide);
+
+    ImGui::Begin("Scene");
+    {
+        ImVec2 newSize = ImGui::GetContentRegionAvail();
+        //ResizeOffPass(newSize.x, newSize.y);
+        ImGui::Image(m_sceneID, newSize);
+    }
+    ImGui::End();
+    ImGui::Begin("Camera Settings");
+    {
+        ImGui::DragFloat("Focus", &m_cameraData.data.x, 0.01f);
+        ImGui::DragFloat("Aperture", &m_cameraData.data.y, 0.01f);
+    }
+    ImGui::End();
+}
+void OgEngine::RaytracingPipeline::UpdateOffPass()
+{
+    m_offScreenPass.width = m_width;
+    m_offScreenPass.height = m_height;
+
+    // Find a suitable depth format
+    VkFormat fbDepthFormat;
+    VkBool32 validDepthFormat = GetSupportedDepthFormat(m_vulkanDevice.m_gpu, &fbDepthFormat);
+    assert(validDepthFormat);
+
+    // Color attachment
+    VkImageCreateInfo image = Initializers::imageCreateInfo();
+    image.imageType = VK_IMAGE_TYPE_2D;
+    image.format = VK_FORMAT_B8G8R8A8_UNORM;
+    image.extent.width = m_offScreenPass.width;
+    image.extent.height = m_offScreenPass.height;
+    image.extent.depth = 1;
+    image.mipLevels = 1;
+    image.arrayLayers = 1;
+    image.samples = VK_SAMPLE_COUNT_1_BIT;
+    image.tiling = VK_IMAGE_TILING_OPTIMAL;
+    // We will sample directly from the color attachment
+    image.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    VkMemoryAllocateInfo memAlloc = Initializers::memoryAllocateInfo();
+    VkMemoryRequirements memReqs;
+
+    CHECK_ERROR(vkCreateImage(m_vulkanDevice.m_logicalDevice, &image, nullptr, &m_offScreenPass.color.image));
+    vkGetImageMemoryRequirements(m_vulkanDevice.m_logicalDevice, m_offScreenPass.color.image, &memReqs);
+    memAlloc.allocationSize = memReqs.size;
+    memAlloc.memoryTypeIndex = GetMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    CHECK_ERROR(vkAllocateMemory(m_vulkanDevice.m_logicalDevice, &memAlloc, nullptr, &m_offScreenPass.color.mem));
+    CHECK_ERROR(vkBindImageMemory(m_vulkanDevice.m_logicalDevice, m_offScreenPass.color.image, m_offScreenPass.color.mem, 0));
+
+    VkImageViewCreateInfo colorImageView = Initializers::imageViewCreateInfo();
+    colorImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    colorImageView.format = VK_FORMAT_B8G8R8A8_UNORM;
+    colorImageView.subresourceRange = {};
+    colorImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    colorImageView.subresourceRange.baseMipLevel = 0;
+    colorImageView.subresourceRange.levelCount = 1;
+    colorImageView.subresourceRange.baseArrayLayer = 0;
+    colorImageView.subresourceRange.layerCount = 1;
+    colorImageView.image = m_offScreenPass.color.image;
+    CHECK_ERROR(vkCreateImageView(m_vulkanDevice.m_logicalDevice, &colorImageView, nullptr, &m_offScreenPass.color.view));
+
+    // Create sampler to sample from the attachment in the fragment shader
+    VkSamplerCreateInfo samplerInfo = Initializers::samplerCreateInfo();
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeV = samplerInfo.addressModeU;
+    samplerInfo.addressModeW = samplerInfo.addressModeU;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.maxAnisotropy = 1.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 1.0f;
+    samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    CHECK_ERROR(vkCreateSampler(m_vulkanDevice.m_logicalDevice, &samplerInfo, nullptr, &m_offScreenPass.sampler));
+
+    // Depth stencil attachment
+    image.format = fbDepthFormat;
+    image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+    CHECK_ERROR(vkCreateImage(m_vulkanDevice.m_logicalDevice, &image, nullptr, &m_offScreenPass.depth.image));
+    vkGetImageMemoryRequirements(m_vulkanDevice.m_logicalDevice, m_offScreenPass.depth.image, &memReqs);
+    memAlloc.allocationSize = memReqs.size;
+    memAlloc.memoryTypeIndex = GetMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    CHECK_ERROR(vkAllocateMemory(m_vulkanDevice.m_logicalDevice, &memAlloc, nullptr, &m_offScreenPass.depth.mem));
+    CHECK_ERROR(vkBindImageMemory(m_vulkanDevice.m_logicalDevice, m_offScreenPass.depth.image, m_offScreenPass.depth.mem, 0));
+
+    VkImageViewCreateInfo depthStencilView = Initializers::imageViewCreateInfo();
+    depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    depthStencilView.format = fbDepthFormat;
+    depthStencilView.flags = 0;
+    depthStencilView.subresourceRange = {};
+    depthStencilView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    depthStencilView.subresourceRange.baseMipLevel = 0;
+    depthStencilView.subresourceRange.levelCount = 1;
+    depthStencilView.subresourceRange.baseArrayLayer = 0;
+    depthStencilView.subresourceRange.layerCount = 1;
+    depthStencilView.image = m_offScreenPass.depth.image;
+    CHECK_ERROR(vkCreateImageView(m_vulkanDevice.m_logicalDevice, &depthStencilView, nullptr, &m_offScreenPass.depth.view));
+
+    VkImageView attachments[2];
+    attachments[0] = m_offScreenPass.color.view;
+    attachments[1] = m_offScreenPass.depth.view;
+
+    VkFramebufferCreateInfo fbufCreateInfo = Initializers::framebufferCreateInfo();
+    fbufCreateInfo.renderPass = m_offScreenPass.renderPass;
+    fbufCreateInfo.attachmentCount = 2;
+    fbufCreateInfo.pAttachments = attachments;
+    fbufCreateInfo.width = m_offScreenPass.width;
+    fbufCreateInfo.height = m_offScreenPass.height;
+    fbufCreateInfo.layers = 1;
+
+    CHECK_ERROR(vkCreateFramebuffer(m_vulkanDevice.m_logicalDevice, &fbufCreateInfo, nullptr, &m_offScreenPass.frameBuffer));
+
+    // Fill a descriptor for later use in a descriptor set 
+    m_offScreenPass.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    m_offScreenPass.descriptor.imageView = m_offScreenPass.color.view;
+    m_offScreenPass.descriptor.sampler = m_offScreenPass.sampler;
+}
+void OgEngine::RaytracingPipeline::SetupOffScreenPass()
+{
+    m_offScreenPass.width = m_width;
+    m_offScreenPass.height = m_height;
+
+    // Find a suitable depth format
+    VkFormat fbDepthFormat;
+    VkBool32 validDepthFormat = GetSupportedDepthFormat(m_vulkanDevice.m_gpu, &fbDepthFormat);
+    assert(validDepthFormat);
+
+    // Color attachment
+    VkImageCreateInfo image = Initializers::imageCreateInfo();
+    image.imageType = VK_IMAGE_TYPE_2D;
+    image.format = VK_FORMAT_B8G8R8A8_UNORM;
+    image.extent.width = m_offScreenPass.width;
+    image.extent.height = m_offScreenPass.height;
+    image.extent.depth = 1;
+    image.mipLevels = 1;
+    image.arrayLayers = 1;
+    image.samples = VK_SAMPLE_COUNT_1_BIT;
+    image.tiling = VK_IMAGE_TILING_OPTIMAL;
+    // We will sample directly from the color attachment
+    image.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    VkMemoryAllocateInfo memAlloc = Initializers::memoryAllocateInfo();
+    VkMemoryRequirements memReqs;
+
+    CHECK_ERROR(vkCreateImage(m_vulkanDevice.m_logicalDevice, &image, nullptr, &m_offScreenPass.color.image));
+    vkGetImageMemoryRequirements(m_vulkanDevice.m_logicalDevice, m_offScreenPass.color.image, &memReqs);
+    memAlloc.allocationSize = memReqs.size;
+    memAlloc.memoryTypeIndex = GetMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    CHECK_ERROR(vkAllocateMemory(m_vulkanDevice.m_logicalDevice, &memAlloc, nullptr, &m_offScreenPass.color.mem));
+    CHECK_ERROR(vkBindImageMemory(m_vulkanDevice.m_logicalDevice, m_offScreenPass.color.image, m_offScreenPass.color.mem, 0));
+
+    VkImageViewCreateInfo colorImageView = Initializers::imageViewCreateInfo();
+    colorImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    colorImageView.format = VK_FORMAT_B8G8R8A8_UNORM;
+    colorImageView.subresourceRange = {};
+    colorImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    colorImageView.subresourceRange.baseMipLevel = 0;
+    colorImageView.subresourceRange.levelCount = 1;
+    colorImageView.subresourceRange.baseArrayLayer = 0;
+    colorImageView.subresourceRange.layerCount = 1;
+    colorImageView.image = m_offScreenPass.color.image;
+    CHECK_ERROR(vkCreateImageView(m_vulkanDevice.m_logicalDevice, &colorImageView, nullptr, &m_offScreenPass.color.view));
+
+    // Create sampler to sample from the attachment in the fragment shader
+    VkSamplerCreateInfo samplerInfo = Initializers::samplerCreateInfo();
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeV = samplerInfo.addressModeU;
+    samplerInfo.addressModeW = samplerInfo.addressModeU;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.maxAnisotropy = 1.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 1.0f;
+    samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    CHECK_ERROR(vkCreateSampler(m_vulkanDevice.m_logicalDevice, &samplerInfo, nullptr, &m_offScreenPass.sampler));
+
+    // Depth stencil attachment
+    image.format = fbDepthFormat;
+    image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+    CHECK_ERROR(vkCreateImage(m_vulkanDevice.m_logicalDevice, &image, nullptr, &m_offScreenPass.depth.image));
+    vkGetImageMemoryRequirements(m_vulkanDevice.m_logicalDevice, m_offScreenPass.depth.image, &memReqs);
+    memAlloc.allocationSize = memReqs.size;
+    memAlloc.memoryTypeIndex = GetMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    CHECK_ERROR(vkAllocateMemory(m_vulkanDevice.m_logicalDevice, &memAlloc, nullptr, &m_offScreenPass.depth.mem));
+    CHECK_ERROR(vkBindImageMemory(m_vulkanDevice.m_logicalDevice, m_offScreenPass.depth.image, m_offScreenPass.depth.mem, 0));
+
+    VkImageViewCreateInfo depthStencilView = Initializers::imageViewCreateInfo();
+    depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    depthStencilView.format = fbDepthFormat;
+    depthStencilView.flags = 0;
+    depthStencilView.subresourceRange = {};
+    depthStencilView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    depthStencilView.subresourceRange.baseMipLevel = 0;
+    depthStencilView.subresourceRange.levelCount = 1;
+    depthStencilView.subresourceRange.baseArrayLayer = 0;
+    depthStencilView.subresourceRange.layerCount = 1;
+    depthStencilView.image = m_offScreenPass.depth.image;
+    CHECK_ERROR(vkCreateImageView(m_vulkanDevice.m_logicalDevice, &depthStencilView, nullptr, &m_offScreenPass.depth.view));
+
+    // Create a separate render pass for the offscreen rendering as it may differ from the one used for scene rendering
+
+    std::array<VkAttachmentDescription, 2> attchmentDescriptions = {};
+    // Color attachment
+    attchmentDescriptions[0].format = VK_FORMAT_B8G8R8A8_UNORM;
+    attchmentDescriptions[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    attchmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attchmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attchmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attchmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attchmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attchmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    // Depth attachment
+    attchmentDescriptions[1].format = fbDepthFormat;
+    attchmentDescriptions[1].samples = VK_SAMPLE_COUNT_1_BIT;
+    attchmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attchmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attchmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attchmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attchmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attchmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference colorReference = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+    VkAttachmentReference depthReference = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+
+    VkSubpassDescription subpassDescription = {};
+    subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpassDescription.colorAttachmentCount = 1;
+    subpassDescription.pColorAttachments = &colorReference;
+    subpassDescription.pDepthStencilAttachment = &depthReference;
+
+    // Use subpass dependencies for layout transitions
+    std::array<VkSubpassDependency, 2> dependencies;
+
+    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[0].dstSubpass = 0;
+    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+    dependencies[1].srcSubpass = 0;
+    dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+    // Create the actual renderpass
+    VkRenderPassCreateInfo renderPassInfo = {};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = static_cast<uint32_t>(attchmentDescriptions.size());
+    renderPassInfo.pAttachments = attchmentDescriptions.data();
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpassDescription;
+    renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+    renderPassInfo.pDependencies = dependencies.data();
+
+    CHECK_ERROR(vkCreateRenderPass(m_vulkanDevice.m_logicalDevice, &renderPassInfo, nullptr, &m_offScreenPass.renderPass));
+
+    VkImageView attachments[2];
+    attachments[0] = m_offScreenPass.color.view;
+    attachments[1] = m_offScreenPass.depth.view;
+
+    VkFramebufferCreateInfo fbufCreateInfo = Initializers::framebufferCreateInfo();
+    fbufCreateInfo.renderPass = m_offScreenPass.renderPass;
+    fbufCreateInfo.attachmentCount = 2;
+    fbufCreateInfo.pAttachments = attachments;
+    fbufCreateInfo.width = m_offScreenPass.width;
+    fbufCreateInfo.height = m_offScreenPass.height;
+    fbufCreateInfo.layers = 1;
+
+    CHECK_ERROR(vkCreateFramebuffer(m_vulkanDevice.m_logicalDevice, &fbufCreateInfo, nullptr, &m_offScreenPass.frameBuffer));
+
+    // Fill a descriptor for later use in a descriptor set 
+    m_offScreenPass.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    m_offScreenPass.descriptor.imageView = m_offScreenPass.color.view;
+    m_offScreenPass.descriptor.sampler = m_offScreenPass.sampler;
+}
+
 void OgEngine::RaytracingPipeline::DestroyShaderBuffers(bool p_resizedWindow)
 {
     m_shaderBindingTable.unmap();
@@ -494,19 +837,21 @@ void OgEngine::RaytracingPipeline::GenerateMipmaps(VkImage p_image, VkFormat p_i
 
     QueueCmdBufferAndFlush(commandBuffer, m_graphicsQueue);
 }
-VkDescriptorImageInfo OgEngine::RaytracingPipeline::Create2DDescriptor(const VkDevice& device, const VkImage& image, const VkSamplerCreateInfo& samplerCreateInfo, const VkFormat& format, const VkImageLayout& layout)
+VkDescriptorImageInfo OgEngine::RaytracingPipeline::Create2DDescriptor(const VkDevice& device, TextureData& image, const VkSamplerCreateInfo& samplerCreateInfo, const VkFormat& format, const VkImageLayout& layout)
 {
     VkImageViewCreateInfo viewInfo = Initializers::imageViewCreateInfo();
-    viewInfo.image = image;
+    viewInfo.image = image.img;
     viewInfo.format = format;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, ~0u, 0, 1 };
 
     VkImageView view;
     vkCreateImageView(m_vulkanDevice.m_logicalDevice, &viewInfo, nullptr, &view);
+    image.view = view;
 
     VkSampler sampler;
     vkCreateSampler(m_vulkanDevice.m_logicalDevice, &samplerCreateInfo, nullptr, &sampler);
+    image.sampler = sampler;
 
     VkDescriptorImageInfo info = Initializers::descriptorImageInfo(sampler, view, layout);
     return info;
@@ -530,6 +875,7 @@ void OgEngine::RaytracingPipeline::SetupRaytracingPipeline()
     InitSwapchain();
     CreateCommandPool();
     SetupSwapchain(m_width, m_height, false);
+    SetupOffScreenPass();
     CreateCommandBuffers();
     CreateSynchronizationPrimitives();
     SetupDepthStencil();
@@ -540,9 +886,6 @@ void OgEngine::RaytracingPipeline::SetupRaytracingPipeline()
     InitRaytracingRenderer(false);
 }
 
-void OgEngine::RaytracingPipeline::UpdateShaderData(std::shared_ptr<Mesh> p_mesh)
-{
-}
 
 void OgEngine::RaytracingPipeline::UpdateTLAS()
 {
@@ -619,6 +962,8 @@ void OgEngine::RaytracingPipeline::UpdateTLAS()
 
 void OgEngine::RaytracingPipeline::UpdateDescriptorSets()
 {
+    if (m_shaderData.textureIDBuffer.buffer == nullptr)
+        return;
 
     //Acceleration Structure
     VkWriteDescriptorSetAccelerationStructureNV descriptorAccelerationStructureInfo{};
@@ -644,6 +989,7 @@ void OgEngine::RaytracingPipeline::UpdateDescriptorSets()
 
     std::vector<VkDescriptorBufferInfo> vertexDescriptor;
     std::vector<VkDescriptorBufferInfo> indexDescriptor;
+    std::vector<VkDescriptorBufferInfo> materialDescriptor;
 
     for (auto buf : m_shaderData.vertexBuffer)
     {
@@ -655,6 +1001,12 @@ void OgEngine::RaytracingPipeline::UpdateDescriptorSets()
     {
         buf.alignment = VK_WHOLE_SIZE;
         indexDescriptor.push_back(buf.descriptor);
+    }
+
+    for (auto buf : m_shaderData.materialBuffer)
+    {
+        buf.alignment = VK_WHOLE_SIZE;
+        materialDescriptor.push_back(buf.descriptor);
     }
 
     m_shaderData.textureIDBuffer.map();
@@ -676,6 +1028,7 @@ void OgEngine::RaytracingPipeline::UpdateDescriptorSets()
     const VkWriteDescriptorSet vertexWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, vertexDescriptor.data(), static_cast<uint32_t>(m_shaderData.vertexBuffer.size()));
     const VkWriteDescriptorSet indexWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, indexDescriptor.data(), static_cast<uint32_t>(m_shaderData.indexBuffer.size()));
     const VkWriteDescriptorSet textureIDWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6, &m_shaderData.textureIDBuffer.descriptor);
+    const VkWriteDescriptorSet materialWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 7, materialDescriptor.data(), static_cast<uint32_t>(m_shaderData.materialBuffer.size()));
 
     std::vector<VkWriteDescriptorSet> writeDescriptorSets =
     {
@@ -685,7 +1038,8 @@ void OgEngine::RaytracingPipeline::UpdateDescriptorSets()
         vertexWrite,
         indexWrite,
         textureDescriptor,
-        textureIDWrite
+        textureIDWrite,
+        materialWrite
     };
 
     vkUpdateDescriptorSets(m_vulkanDevice.m_logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
@@ -761,7 +1115,7 @@ void OgEngine::RaytracingPipeline::InitImGUI()
         { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
     };
 
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfoIMGUI = Initializers::descriptorPoolCreateInfo(ImGUIpoolSizes, 1);
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfoIMGUI = Initializers::descriptorPoolCreateInfo(ImGUIpoolSizes, 15000);
     vkCreateDescriptorPool(m_vulkanDevice.m_logicalDevice, &descriptorPoolCreateInfoIMGUI, nullptr, &m_ImGUIdescriptorPool);
 
     ImGui_ImplVulkan_InitInfo init_info = {};
@@ -777,9 +1131,11 @@ void OgEngine::RaytracingPipeline::InitImGUI()
     init_info.ImageCount = m_swapChain.imageCount;
     init_info.CheckVkResultFn = CHECK_ERROR;
     ImGui_ImplVulkan_Init(&init_info, m_ImGUIrenderPass);
-
+    
     VkCommandBuffer cmdBuffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
     ImGui_ImplVulkan_CreateFontsTexture(cmdBuffer);
+
+
     QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
 }
 
@@ -795,7 +1151,7 @@ void OgEngine::RaytracingPipeline::SetupImGUI()
         cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         CHECK_ERROR(vkCreateCommandPool(m_vulkanDevice.m_logicalDevice, &cmdPoolInfo, nullptr, &m_ImGUIcommandPool));
 
-        m_ImGUIcommandBuffers.resize(m_swapChain.imageCount);
+        m_ImGUIcommandBuffers.resize(1);
 
         VkCommandBufferAllocateInfo cmdBufAllocateInfo =
             Initializers::commandBufferAllocateInfo(
@@ -805,6 +1161,8 @@ void OgEngine::RaytracingPipeline::SetupImGUI()
 
         CHECK_ERROR(vkAllocateCommandBuffers(m_vulkanDevice.m_logicalDevice, &cmdBufAllocateInfo, m_ImGUIcommandBuffers.data()));
     }
+    m_sceneID = ImGui_ImplVulkan_AddTexture(m_offScreenPass.sampler, m_offScreenPass.color.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    vkQueueWaitIdle(m_graphicsQueue);
 }
 
 void OgEngine::RaytracingPipeline::SetupImGUIStyle()
@@ -929,6 +1287,130 @@ void OgEngine::RaytracingPipeline::RenderUI(uint32_t p_id)
 
 }
 
+void OgEngine::RaytracingPipeline::SetupUIOutput()
+{
+    auto mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(m_width, m_height)))) + 1;
+
+    VkImageCreateInfo info = Initializers::imageCreateInfo();
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.imageType = VK_IMAGE_TYPE_2D;
+    info.format = VK_FORMAT_R8G8B8A8_SRGB;
+    info.mipLevels = mipLevels;
+    info.arrayLayers = 1;
+    info.extent = { m_width, m_height, 1 };
+    info.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    info.samples = VK_SAMPLE_COUNT_1_BIT;
+
+    vkCreateImage(m_vulkanDevice.m_logicalDevice, &info, nullptr, &m_UIimage.img);
+
+    VkCommandBuffer cmdBuffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+    VkImageSubresourceRange range;
+    range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    range.baseMipLevel = 0;
+    range.levelCount = info.mipLevels;
+    range.baseArrayLayer = 0;
+    range.layerCount = 1;
+
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(m_vulkanDevice.m_logicalDevice, m_UIimage.img, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = GetMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    if (vkAllocateMemory(m_vulkanDevice.m_logicalDevice, &allocInfo, nullptr, &m_UIimage.memory) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to allocate image memory!");
+    }
+
+
+    vkBindImageMemory(m_vulkanDevice.m_logicalDevice, m_UIimage.img, m_UIimage.memory, 0);
+
+    SetImageLayout(cmdBuffer, m_UIimage.img,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        range,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+    GenerateMipmaps(m_UIimage.img, VK_FORMAT_R8G8B8A8_SRGB, m_width, m_height, mipLevels);
+    range.levelCount = 1;
+
+    SetImageLayout(cmdBuffer, m_UIimage.img,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        range,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+
+
+    VkSamplerCreateInfo samplerInfo = Initializers::samplerCreateInfo();
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.maxLod = FLT_MAX;
+
+    m_UIimage.info = Create2DDescriptor(m_vulkanDevice.m_logicalDevice, m_UIimage, samplerInfo, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
+}
+
+/*void OgEngine::RaytracingPipeline::UpdateUIOutput(VkImage p_img)
+{
+    const VkImageSubresourceRange subresource_range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+    VkCommandBuffer cmdBuffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    SetImageLayout(
+        cmdBuffer,
+        m_UIimage.img,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        subresource_range,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+    SetImageLayout(
+        cmdBuffer,
+        p_img,
+        VK_IMAGE_LAYOUT_GENERAL,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        subresource_range,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+    VkImageCopy copyRegion{};
+    copyRegion.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+    copyRegion.srcOffset = { 0, 0, 0 };
+    copyRegion.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+    copyRegion.dstOffset = { 0, 0, 0 };
+    copyRegion.extent = { m_width, m_height, 1 };
+    vkCmdCopyImage(cmdBuffer, p_img, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_UIimage.img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+    SetImageLayout(
+        cmdBuffer,
+        m_UIimage.img,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        subresource_range,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+    // Transition ray tracing output image back to general layout
+    SetImageLayout(
+        cmdBuffer,
+        p_img,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_IMAGE_LAYOUT_GENERAL,
+        subresource_range,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+    QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
+}*/
+
 void OgEngine::RaytracingPipeline::ResizeWindow()
 {
     int width = 0, height = 0;
@@ -945,9 +1427,7 @@ void OgEngine::RaytracingPipeline::ResizeWindow()
     ResizeCleanup();
     vkQueueWaitIdle(m_graphicsQueue);
     vkQueueWaitIdle(m_presentQueue);
-    //m_currentBuffer = 0;
 
-    //SetRaytracingCmd();
     InitSwapchain();
     CreateCommandPool();
     SetupSwapchain(m_width, m_height, false);
@@ -962,6 +1442,41 @@ void OgEngine::RaytracingPipeline::ResizeWindow()
 
 }
 
+void OgEngine::RaytracingPipeline::ResizeOffPass(uint32_t width, uint32_t height)
+{
+    vkQueueWaitIdle(m_graphicsQueue);
+    std::cout << m_gameViewProps.width << '\n';
+    std::cout << m_gameViewProps.height << '\n';
+    std::cout << width << '\n';
+    std::cout << height << '\n';
+    if (m_gameViewProps.width != width || m_gameViewProps.height != height)
+    {
+        m_offScreenPass.width = m_gameViewProps.width = width;
+        m_offScreenPass.height = m_gameViewProps.height = height;
+        std::cout << "Updated Size of window\n";
+        vkDestroyImage(m_vulkanDevice.m_logicalDevice, m_offScreenPass.color.image, nullptr);
+        vkDestroyImageView(m_vulkanDevice.m_logicalDevice, m_offScreenPass.color.view, nullptr);
+        vkDestroySampler(m_vulkanDevice.m_logicalDevice, m_offScreenPass.sampler, nullptr);
+        vkFreeMemory(m_vulkanDevice.m_logicalDevice, m_offScreenPass.color.mem, nullptr);
+
+        vkDestroyImage(m_vulkanDevice.m_logicalDevice, m_offScreenPass.depth.image, nullptr);
+        vkDestroyImageView(m_vulkanDevice.m_logicalDevice, m_offScreenPass.depth.view, nullptr);
+        vkFreeMemory(m_vulkanDevice.m_logicalDevice, m_offScreenPass.depth.mem, nullptr);
+
+        vkDestroyFramebuffer(m_vulkanDevice.m_logicalDevice, m_offScreenPass.frameBuffer, nullptr);
+
+        vkDestroyImage(m_vulkanDevice.m_logicalDevice, m_storageImage.image, nullptr);
+        vkDestroyImageView(m_vulkanDevice.m_logicalDevice, m_storageImage.view, nullptr);
+        vkDestroySampler(m_vulkanDevice.m_logicalDevice, m_storageImage.imgSampler, nullptr);
+        vkFreeMemory(m_vulkanDevice.m_logicalDevice, m_storageImage.memory, nullptr);
+
+        CreateStorageImage(m_storageImage);
+        CreateStorageImage(m_accumulationImage);
+        UpdateOffPass();
+    }
+
+
+}
 void OgEngine::RaytracingPipeline::AddModelInGame(uint64_t p_id, std::shared_ptr<Mesh> p_mesh)
 {
     Model object = Model(p_mesh, true);
@@ -1060,10 +1575,11 @@ void OgEngine::RaytracingPipeline::AddModelInGame(uint64_t p_id, std::shared_ptr
 
 void OgEngine::RaytracingPipeline::RemoveModelInGame()
 {
-
+    //TODO
 }
 
-void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const GPM::Matrix4F& p_transform, const std::shared_ptr<Mesh>& p_mesh, uint32_t p_texID)
+void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const GPM::Matrix4F& p_transform, const std::shared_ptr<Mesh>& p_mesh, uint32_t p_texID,
+                                                GPM::Vector4F p_albedo, float p_roughness, float p_metallic, float p_reflectance, int p_type)
 {
     std::vector<uint64_t>::iterator it = std::find(m_objectIDs.begin(), m_objectIDs.end(), p_id);
 
@@ -1071,11 +1587,33 @@ void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const GPM::Matrix
     {
         int id = std::distance(m_objectIDs.begin(), it);
         m_objects[id].ConvertTransform(p_transform);
+        UpdateMaterial(id, p_albedo, p_roughness, p_metallic, p_reflectance, p_type);
         return;
     }
+    PBRMaterial newMaterial;
+    newMaterial.albedo = p_albedo;
+    newMaterial.roughness = p_roughness;
+    newMaterial.metallic = p_metallic;
+    newMaterial.reflectance = p_reflectance;
+    newMaterial.materialType = p_type;
 
-    AddObject(p_id, p_mesh, p_texID);
+    AddObject(p_id, p_mesh, p_texID, newMaterial);
     m_objects.back().ConvertTransform(p_transform);
+}
+
+void OgEngine::RaytracingPipeline::UpdateMaterial(uint32_t p_id, GPM::Vector4F p_albedo, float p_roughness, float p_metallic, float p_reflectance, int p_type)
+{
+    PBRMaterial mat;
+    mat.albedo = p_albedo;
+    mat.roughness = p_roughness;
+    mat.metallic = p_metallic;
+    mat.reflectance = p_reflectance;
+    mat.materialType = p_type;
+
+    m_shaderData.materialBuffer[p_id].map();
+    memcpy(m_shaderData.materialBuffer[p_id].mapped, &mat, sizeof(mat));
+    m_shaderData.materialBuffer[p_id].unmap();
+    
 }
 
 
@@ -1090,7 +1628,7 @@ VkResult RaytracingPipeline::AcquireNextImage(VkSemaphore presentCompleteSemapho
     return vkAcquireNextImageKHR(m_vulkanDevice.m_logicalDevice, m_swapChain.swapChain, UINT64_MAX, presentCompleteSemaphore, static_cast<VkFence>(nullptr), imageIndex);
 }
 
-VkResult RaytracingPipeline::QueuePresent(VkQueue queue, uint32_t imageIndex, VkSemaphore waitSemaphore = nullptr) const
+VkResult RaytracingPipeline::QueuePresent(VkQueue queue, uint32_t imageIndex, VkSemaphore waitSemaphore = nullptr)
 {
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1104,6 +1642,8 @@ VkResult RaytracingPipeline::QueuePresent(VkQueue queue, uint32_t imageIndex, Vk
         presentInfo.pWaitSemaphores = &waitSemaphore;
         presentInfo.waitSemaphoreCount = 1;
     }
+    
+    //UpdateUIOutput(m_swapChain.images[imageIndex]);
     return vkQueuePresentKHR(queue, &presentInfo);
 }
 
@@ -1348,7 +1888,7 @@ void RaytracingPipeline::CreateTopLevelAccelerationStructure(AccelerationStructu
     vkGetAccelerationStructureHandleNV(m_vulkanDevice.m_logicalDevice, accelerationStruct.accelerationStructure, sizeof(uint64_t), &accelerationStruct.handle);
 }
 //VALID
-void RaytracingPipeline::CreateStorageImage()
+void RaytracingPipeline::CreateStorageImage(StorageImage& p_image)
 {
     VkImageCreateInfo image = Initializers::imageCreateInfo();
     image.imageType = VK_IMAGE_TYPE_2D;
@@ -1362,15 +1902,15 @@ void RaytracingPipeline::CreateStorageImage()
     image.tiling = VK_IMAGE_TILING_OPTIMAL;
     image.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
     image.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    vkCreateImage(m_vulkanDevice.m_logicalDevice, &image, nullptr, &m_storageImage.image);
+    vkCreateImage(m_vulkanDevice.m_logicalDevice, &image, nullptr, &p_image.image);
 
     VkMemoryRequirements memory_requierements;
-    vkGetImageMemoryRequirements(m_vulkanDevice.m_logicalDevice, m_storageImage.image, &memory_requierements);
+    vkGetImageMemoryRequirements(m_vulkanDevice.m_logicalDevice, p_image.image, &memory_requierements);
     VkMemoryAllocateInfo memoryAllocateInfo = Initializers::memoryAllocateInfo();
     memoryAllocateInfo.allocationSize = memory_requierements.size;
     memoryAllocateInfo.memoryTypeIndex = GetMemoryType(memory_requierements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    vkAllocateMemory(m_vulkanDevice.m_logicalDevice, &memoryAllocateInfo, nullptr, &m_storageImage.memory);
-    vkBindImageMemory(m_vulkanDevice.m_logicalDevice, m_storageImage.image, m_storageImage.memory, 0);
+    vkAllocateMemory(m_vulkanDevice.m_logicalDevice, &memoryAllocateInfo, nullptr, &p_image.memory);
+    vkBindImageMemory(m_vulkanDevice.m_logicalDevice, p_image.image, p_image.memory, 0);
 
     VkImageViewCreateInfo colorImageView = Initializers::imageViewCreateInfo();
     colorImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -1380,11 +1920,18 @@ void RaytracingPipeline::CreateStorageImage()
     colorImageView.subresourceRange.levelCount = 1;
     colorImageView.subresourceRange.baseArrayLayer = 0;
     colorImageView.subresourceRange.layerCount = 1;
-    colorImageView.image = m_storageImage.image;
-    vkCreateImageView(m_vulkanDevice.m_logicalDevice, &colorImageView, nullptr, &m_storageImage.view);
+    colorImageView.image = p_image.image;
+    vkCreateImageView(m_vulkanDevice.m_logicalDevice, &colorImageView, nullptr, &p_image.view);
+
+    VkSamplerCreateInfo samplerInfo = Initializers::samplerCreateInfo();
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.maxLod = FLT_MAX;
+    vkCreateSampler(m_vulkanDevice.m_logicalDevice, &samplerInfo, nullptr, &p_image.imgSampler);
 
     const VkCommandBuffer cmd_buffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-    SetImageLayout(cmd_buffer, m_storageImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+    SetImageLayout(cmd_buffer, p_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
     QueueCmdBufferAndFlush(cmd_buffer, m_graphicsQueue);
 }
 //VALID
@@ -1453,7 +2000,7 @@ VkBool32 RaytracingPipeline::GetSupportedDepthFormat(VkPhysicalDevice physicalDe
 
     return false;
 }
-void RaytracingPipeline::AddObject(uint64_t p_id, std::shared_ptr<Mesh> p_mesh, uint32_t p_textureID)
+void RaytracingPipeline::AddObject(uint64_t p_id, std::shared_ptr<Mesh> p_mesh, uint32_t p_textureID, PBRMaterial p_material)
 {
     Model object = Model(p_mesh, true);
     m_objectIDs.push_back(p_id);
@@ -1473,7 +2020,6 @@ void RaytracingPipeline::AddObject(uint64_t p_id, std::shared_ptr<Mesh> p_mesh, 
 
     Buffer vertexBuffer;
     Buffer indexBuffer;
-
     CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         &vertexBuffer, object.m_mesh->Vertices().size() * sizeof(Vertex),
         (void*)object.m_mesh->Vertices().data()));
@@ -1482,8 +2028,17 @@ void RaytracingPipeline::AddObject(uint64_t p_id, std::shared_ptr<Mesh> p_mesh, 
         &indexBuffer, object.m_mesh->Indices().size() * sizeof(uint32_t),
         (void*)object.m_mesh->Indices().data()));
 
+    std::cout << "Material Color: " << p_material.albedo.x << '/' << p_material.albedo.y << '/' << p_material.albedo.z << '\n';
+    Buffer materialBuffer;
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &materialBuffer, sizeof(PBRMaterial),
+        &p_material));
+    m_shaderData.materialBuffer.push_back(materialBuffer);
+
     m_shaderData.vertexBuffer.push_back(vertexBuffer);
     m_shaderData.indexBuffer.push_back(indexBuffer);
+
+
     textureIDs.push_back(p_textureID);
 
     VkGeometryNV geometry{};
@@ -1564,6 +2119,7 @@ void RaytracingPipeline::AddObject(uint64_t p_id, std::shared_ptr<Mesh> p_mesh, 
     std::cout << "Object Added\n";
     QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
     scratchBuffer.destroy();
+    UpdateDescriptorSets();
 }
 
 void OgEngine::RaytracingPipeline::AddTexture(const char* p_texture)
@@ -1658,15 +2214,15 @@ void OgEngine::RaytracingPipeline::AddTexture(const char* p_texture)
     vkCmdCopyBufferToImage(cmdBuffer, stagingBuffer.buffer, data.img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         1, &copyRegion);
 
-    GenerateMipmaps(data.img, format, width, height, mipLevels);
-    range.levelCount = 1;
-
     SetImageLayout(cmdBuffer, data.img,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     range,
     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+    GenerateMipmaps(data.img, format, width, height, mipLevels);
+    range.levelCount = 1;
 
 
 
@@ -1676,10 +2232,11 @@ void OgEngine::RaytracingPipeline::AddTexture(const char* p_texture)
     samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     samplerInfo.maxLod = FLT_MAX;
 
-    data.info = Create2DDescriptor(m_vulkanDevice.m_logicalDevice, data.img, samplerInfo, format, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    data.info = Create2DDescriptor(m_vulkanDevice.m_logicalDevice, data, samplerInfo, format, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     m_textures.push_back(data);
     QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
+    UpdateDescriptorSets();
 
 }
 
@@ -1752,7 +2309,7 @@ void RaytracingPipeline::CreatePipeline(bool resizedWindow)
     accelerationStructureLayoutBinding.binding = 0;
     accelerationStructureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
     accelerationStructureLayoutBinding.descriptorCount = 1;
-    accelerationStructureLayoutBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
+    accelerationStructureLayoutBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 
     VkDescriptorSetLayoutBinding resultImageLayoutBinding{};
     resultImageLayoutBinding.binding = 1;
@@ -1790,6 +2347,18 @@ void RaytracingPipeline::CreatePipeline(bool resizedWindow)
     textureIDBinding.descriptorCount = MAX_OBJECTS;
     textureIDBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 
+    VkDescriptorSetLayoutBinding materialBufferBinding{};
+    materialBufferBinding.binding = 7;
+    materialBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    materialBufferBinding.descriptorCount = MAX_OBJECTS;
+    materialBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+
+    VkDescriptorSetLayoutBinding accumulationImageBinding{};
+    accumulationImageBinding.binding = 8;
+    accumulationImageBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    accumulationImageBinding.descriptorCount = 1;
+    accumulationImageBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
+
     //create a Binding vector for Uniform bindings
     std::vector<VkDescriptorSetLayoutBinding> bindings({
         accelerationStructureLayoutBinding,
@@ -1798,7 +2367,9 @@ void RaytracingPipeline::CreatePipeline(bool resizedWindow)
         vertexBufferBinding,
         indexBufferBinding,
         textureBinding,
-        textureIDBinding
+        textureIDBinding,
+        materialBufferBinding,
+        accumulationImageBinding
         });
 
     //Create the buffer that will map the shader uniforms to the actual shader
@@ -1815,16 +2386,18 @@ void RaytracingPipeline::CreatePipeline(bool resizedWindow)
 
     vkCreatePipelineLayout(m_vulkanDevice.m_logicalDevice, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout);
 
-    const uint32_t shader_index_ray = 0;
+    const uint32_t shaderIndexRay = 0;
     const uint32_t shaderIndexMiss = 1;
     const uint32_t shaderIndexClosestHit = 2;
+    const uint32_t shaderIndexShadowMiss = 3;
 
-    std::array<VkPipelineShaderStageCreateInfo, 3> shaderStages{};
-    shaderStages[shader_index_ray] = LoadShader("Resources/shaders/bin/ray_gen.spv", VK_SHADER_STAGE_RAYGEN_BIT_NV);
+    std::array<VkPipelineShaderStageCreateInfo, 4> shaderStages{};
+    shaderStages[shaderIndexRay] = LoadShader("Resources/shaders/bin/ray_gen.spv", VK_SHADER_STAGE_RAYGEN_BIT_NV);
     shaderStages[shaderIndexMiss] = LoadShader("Resources/shaders/bin/ray_miss.spv", VK_SHADER_STAGE_MISS_BIT_NV);
     shaderStages[shaderIndexClosestHit] = LoadShader("Resources/shaders/bin/ray_chit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV);
+    shaderStages[shaderIndexShadowMiss] = LoadShader("Resources/shaders/bin/ray_smiss.spv", VK_SHADER_STAGE_MISS_BIT_NV);
 
-    std::array<VkRayTracingShaderGroupCreateInfoNV, 3> groups{};
+    std::array<VkRayTracingShaderGroupCreateInfoNV, 5> groups{};
     for (auto& group : groups)
     {
         // Init all groups with some default values
@@ -1837,12 +2410,22 @@ void RaytracingPipeline::CreatePipeline(bool resizedWindow)
 
     // Links shaders and types to ray tracing shader groups
     groups[INDEX_RAYGEN].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
-    groups[INDEX_RAYGEN].generalShader = shader_index_ray;
+    groups[INDEX_RAYGEN].generalShader = shaderIndexRay;
+    // Scene miss shader group
     groups[INDEX_MISS].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
     groups[INDEX_MISS].generalShader = shaderIndexMiss;
+    // Shadow miss shader group 
+    groups[INDEX_SHADOW_MISS].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
+    groups[INDEX_SHADOW_MISS].generalShader = shaderIndexShadowMiss;
+    // Scene closest hit shader group
     groups[INDEX_CLOSEST_HIT].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV;
     groups[INDEX_CLOSEST_HIT].generalShader = VK_SHADER_UNUSED_NV;
     groups[INDEX_CLOSEST_HIT].closestHitShader = shaderIndexClosestHit;
+    // Shadow closest hit shader group
+    groups[INDEX_SHADOW_HIT].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV;
+    groups[INDEX_SHADOW_HIT].generalShader = VK_SHADER_UNUSED_NV;
+    // Reuse shadow miss shader
+    groups[INDEX_SHADOW_HIT].closestHitShader = shaderIndexShadowMiss;
 
     VkRayTracingPipelineCreateInfoNV rayPipelineInfo{};
     rayPipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_NV;
@@ -1968,7 +2551,7 @@ void RaytracingPipeline::SetupRenderPass()
     attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     // Depth attachment
     attachments[1].format = m_depthFormat;
     attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -2256,6 +2839,8 @@ void RaytracingPipeline::CreateShaderBindingTable()
     data += CopyShaderIdentifier(data, shaderHandleStorage, INDEX_RAYGEN);
     data += CopyShaderIdentifier(data, shaderHandleStorage, INDEX_MISS);
     data += CopyShaderIdentifier(data, shaderHandleStorage, INDEX_CLOSEST_HIT);
+    data += CopyShaderIdentifier(data, shaderHandleStorage, INDEX_SHADOW_MISS);
+    data += CopyShaderIdentifier(data, shaderHandleStorage, INDEX_SHADOW_HIT);
     m_shaderBindingTable.unmap();
 }
 
@@ -2273,8 +2858,10 @@ void RaytracingPipeline::CreateDescriptorSets(bool resizedWindow)
     {
         { VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, 1 },
         { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_TEXTURES },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, MAX_OBJECTS },
         { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, MAX_OBJECTS },
         { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, MAX_OBJECTS },
         { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, MAX_OBJECTS },
@@ -2307,12 +2894,17 @@ void RaytracingPipeline::CreateDescriptorSets(bool resizedWindow)
     storageImageDescriptor.imageView = m_storageImage.view;
     storageImageDescriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
+    VkDescriptorImageInfo accumulationDescriptor{};
+    accumulationDescriptor.imageView = m_accumulationImage.view;
+    accumulationDescriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
     std::vector<VkDescriptorImageInfo> infos;
     for (auto tex : m_textures)
         infos.push_back(tex.info);
 
     std::vector<VkDescriptorBufferInfo> vertexDescriptor;
     std::vector<VkDescriptorBufferInfo> indexDescriptor;
+    std::vector<VkDescriptorBufferInfo> materialDescriptor;
 
     for (auto buf : m_shaderData.vertexBuffer)
     {
@@ -2326,12 +2918,20 @@ void RaytracingPipeline::CreateDescriptorSets(bool resizedWindow)
         indexDescriptor.push_back(buf.descriptor);
     }
 
-    if(!resizedWindow)
+    for (auto buf : m_shaderData.materialBuffer)
+    {
+        buf.alignment = VK_WHOLE_SIZE;
+        materialDescriptor.push_back(buf.descriptor);
+    }
+
+    if (!resizedWindow)
+    {
         CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             &m_shaderData.textureIDBuffer,
             MAX_OBJECTS * sizeof(uint32_t),
             textureIDs.data()));
+    }
 
     VkWriteDescriptorSet textureDescriptor{};
     textureDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2348,6 +2948,8 @@ void RaytracingPipeline::CreateDescriptorSets(bool resizedWindow)
     const VkWriteDescriptorSet vertexWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, vertexDescriptor.data(), static_cast<uint32_t>(m_shaderData.vertexBuffer.size()));
     const VkWriteDescriptorSet indexWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, indexDescriptor.data(), static_cast<uint32_t>(m_shaderData.indexBuffer.size()));
     const VkWriteDescriptorSet textureIDWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6, &m_shaderData.textureIDBuffer.descriptor);
+    const VkWriteDescriptorSet materialWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 7, materialDescriptor.data(), static_cast<uint32_t>(m_shaderData.materialBuffer.size()));
+    const VkWriteDescriptorSet accumulationWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 8, &accumulationDescriptor);
     
     std::vector<VkWriteDescriptorSet> writeDescriptorSets = 
     {
@@ -2357,26 +2959,44 @@ void RaytracingPipeline::CreateDescriptorSets(bool resizedWindow)
         vertexWrite,
         indexWrite,
         textureDescriptor,
-        textureIDWrite
+        textureIDWrite,
+        materialWrite,
+        accumulationWrite
     };
 
     vkUpdateDescriptorSets(m_vulkanDevice.m_logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 }
 
-void RaytracingPipeline::CreateUniformBuffer()
+void RaytracingPipeline::CreateCamera()
 {
 
     m_camera.setPosition({ 0, 5, 5});
     m_camera.setPerspective(90.0f, static_cast<float>(m_width) / static_cast<float>(m_height), 0.1f, 1024.0f);
     m_cameraData.viewInverse = GPM::Matrix4F::Inverse(m_camera.matrices.view);
     m_cameraData.projInverse = GPM::Matrix4F::Inverse(m_camera.matrices.perspective);
-
+    m_cameraData.data = GPM::Vector4F::one;
     CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         &m_cameraBuffer,
         sizeof(m_cameraData),
         &m_cameraData));
-    CHECK_ERROR(m_cameraBuffer.map());
+}
+
+void RaytracingPipeline::UpdateCamera()
+{
+    if (m_cameraBuffer.buffer == VK_NULL_HANDLE)
+        return;
+
+    if (m_cameraData.data.w > 100000)
+        m_cameraData.data.w = 0;
+
+    m_cameraData.data.w += 1u;
+
+    m_cameraData.data.z += 1;
+
+    m_cameraBuffer.map();
+    memcpy(m_cameraBuffer.mapped, &m_cameraData, sizeof(m_cameraData));
+    m_cameraBuffer.unmap();
 }
 
 void RaytracingPipeline::StartPathTracing()
@@ -2415,7 +3035,7 @@ void RaytracingPipeline::StartPathTracing()
         // Prepare current swapchain image as transfer destination
         SetImageLayout(
             m_commandBuffers[i],
-            m_swapChain.images[i],
+            m_offScreenPass.color.image,
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             subresource_range,
@@ -2438,14 +3058,14 @@ void RaytracingPipeline::StartPathTracing()
         copyRegion.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
         copyRegion.dstOffset = { 0, 0, 0 };
         copyRegion.extent = { m_width, m_height, 1 };
-        vkCmdCopyImage(m_commandBuffers[i], m_storageImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_swapChain.images[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+        vkCmdCopyImage(m_commandBuffers[i], m_storageImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_offScreenPass.color.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
         // Transition swap chain image back for presentation
         SetImageLayout(
             m_commandBuffers[i],
-            m_swapChain.images[i],
+            m_offScreenPass.color.image,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             subresource_range,
             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
@@ -2499,12 +3119,17 @@ void RaytracingPipeline::InitRaytracingRenderer(bool resizedWindow)
 
 
         vkQueueWaitIdle(m_graphicsQueue);
-        AddObject(99999, ResourceManager::Get<OgEngine::Mesh>("cube.obj"), 1);
+        PBRMaterial mat;
+        mat.albedo = { 1, 1, 1 };
+        mat.materialType = 987654;
+        mat.roughness = 0.0;
+        AddObject(99999, ResourceManager::Get<OgEngine::Mesh>("cube.obj"), 1, mat);
         CreateTLAS();
-        CreateUniformBuffer();
+        CreateCamera();
     }
     
-    CreateStorageImage();
+    CreateStorageImage(m_storageImage);
+    CreateStorageImage(m_accumulationImage);
 
     CreatePipeline(resizedWindow);
     CreateShaderBindingTable();
@@ -2522,15 +3147,15 @@ void RaytracingPipeline::InitRaytracingRenderer(bool resizedWindow)
         InitImGUI();
         SetupImGUIFrameBuffers();
         SetupImGUI();
+        //SetupUIOutput();
     }
 }
 
 void RaytracingPipeline::PrepareFrame()
 {
-    // Acquire the next image from the swap chain
+    
     const VkResult result = AcquireNextImage(m_semaphores.presentComplete, &m_currentBuffer);
-    RenderUI(m_currentBuffer);
-    // Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE) or no longer optimal for presentation (SUBOPTIMAL)
+
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         ResizeWindow();
@@ -2543,6 +3168,7 @@ void RaytracingPipeline::PrepareFrame()
 void RaytracingPipeline::SubmitFrame()
 {
     const VkResult result = QueuePresent(m_graphicsQueue, m_currentBuffer, m_semaphores.renderComplete);
+    //UpdateUIOutput(m_swapChain.buffers[m_currentBuffer].image);
     if (!((result == VK_SUCCESS) || (result == VK_SUBOPTIMAL_KHR)))
     {
         if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -2558,13 +3184,7 @@ void RaytracingPipeline::SubmitFrame()
 
 void RaytracingPipeline::Draw()
 {
-    /*ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame(); 
-    SetupTestEditor();
-    //ImGui::ShowDemoWindow();
-    ImGui::Render();*/
-
+    UpdateCamera();
     PrepareFrame();
     m_submitInfo.commandBufferCount = 1;
     m_submitInfo.pCommandBuffers = &m_commandBuffers[m_currentBuffer];
@@ -2580,5 +3200,4 @@ void RaytracingPipeline::Draw()
 
     RenderUI(m_currentBuffer);
     SubmitFrame();
-    UpdateDescriptorSets();
 }

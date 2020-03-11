@@ -39,9 +39,9 @@ void OgEngine::ModelRS::SetMesh(std::string_view p_meshName)
 
 void OgEngine::ModelRS::SetMaterial(const OgEngine::Material& p_material)
 {
-	m_material.color = p_material.color;
-	m_material.rough = p_material.rough;
-	m_material.metal = p_material.metal;
+	m_material.SetColor(p_material.Color());
+	m_material.SetRoughness(p_material.Roughness());
+	m_material.SetType(p_material.Type());
 }
 
 const std::shared_ptr<OgEngine::Mesh>& OgEngine::ModelRS::Mesh() const
@@ -49,7 +49,7 @@ const std::shared_ptr<OgEngine::Mesh>& OgEngine::ModelRS::Mesh() const
 	return m_mesh;
 }
 
-const OgEngine::Material& OgEngine::ModelRS::Material() const
+OgEngine::Material& OgEngine::ModelRS::Material()
 {
 	return m_material;
 }

@@ -1,9 +1,12 @@
 #version 460
 #extension GL_NV_ray_tracing : require
+#extension GL_GOOGLE_include_directive : enable
+#include "payload.glsl"
 
-layout(location = 0) rayPayloadInNV vec3 ResultColor;
+layout(location = 0) rayPayloadInNV Payload tracedData;
 
 void main() 
 {
-    ResultColor = vec3(0.412f, 0.796f, 1.0f);
+    tracedData.hasHit = false;
+    tracedData.color = vec3(1);
 }

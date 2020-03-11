@@ -3,39 +3,55 @@
 #include <GPM/GPM.h>
 
 namespace OgEngine
-{	
+{
 	struct Transform final
 	{
 		/**
-		 *	@brief transform of this gameObject (read-only)
+		 *	@brief World transform of this gameObject (read-only)
 		 */
 		const Matrix4F& worldMatrix = _worldMatrix;
 
 		/**
-		*	@brief local transform of this gameObject (read-only)
+		*	@brief Local transform of this gameObject (read-only)
 		*/
 		const Matrix4F& localMatrix = _localMatrix;
 
 		/**
-		 *	@brief position of this gameObject (read-only)
+		 *	@brief World position of this gameObject (read-only)
 		 */
 		const Vector3F& position = _position;
 
 		/**
-		 *	@brief scale of this gameObject (read-only)
+		 *	@brief Local position of this gameObject (read-only)
+		 */
+		const Vector3F& localPosition = _localPosition;
+
+		/**
+		 *	@brief World scale of this gameObject (read-only)
 		 */
 		const Vector3F& scale = _scale;
 
 		/**
-		 *	@brief rotation of this gameObject in radians (read-only)
+		 *	@brief Local scale of this gameObject (read-only)
 		 */
-		const Quaternion& rotation = _rotation;
+		const Vector3F& localScale = _localScale;
+
+		/**
+		 *	@brief World rotation of this gameObject in radians (read-only)
+		 */
+		const Quaternion &rotation = _rotation;
+
+		/**
+		 *	@brief Local rotation of this gameObject in radians (read-only)
+		 */
+		const Quaternion& localRotation = _localRotation;
 
 		/**
 		*	@brief Return parent transform (read-only). If no parent exists, returns nullptr
+		*	@return Transform* : The parent transform if existing
 		*/
 		[[nodiscard]] const Transform* GetParent() const;
-		
+
 		Transform();
 		explicit Transform(const Matrix4F& p_matrix);
 		Transform(const Transform& p_other);
@@ -56,10 +72,9 @@ namespace OgEngine
 
 		/**
 		 * @brief Rotate the transform of a certain angle (in degree).
-		 * @param p_angle The angle to add
-		 * @param p_axis The axe of rotation
+		 * @param p_rotation The angle to add
 		 */
-		void Rotate(const float p_angle, const Vector3F& p_axis);
+		void Rotate(const Quaternion& p_rotation);
 
 		/**
 		 * @brief Set the transform to a new position in world space.
@@ -75,11 +90,9 @@ namespace OgEngine
 
 		/**
 		 * @brief Set the transform to a new rotation.
-		 * @param p_yaw The new right axis angle
-		 * @param p_pitch The new up axis angle
-		 * @param p_roll The new forward axis angle
+		 * @param p_rotation The rotation quaternion
 		 */
-		void SetRotation(const float p_yaw, const float p_pitch, const float p_roll);
+		void SetRotation(const Quaternion& p_rotation);
 
 		/**
 		 * @brief Set the transform to a new rotation.
@@ -92,7 +105,43 @@ namespace OgEngine
 		 * @param p_worldMatrix The new parent of this transform
 		 */
 		void SetWorldMatrix(const GPM::Matrix4F& p_worldMatrix);
-		
+
+		/**
+		 * @brief Return the world forward of this transform.
+		 * @return The world forward
+		 */
+		[[nodiscard]] Vector3F WorldForward() const;
+
+		/**
+		 * @brief Return the world up of this transform.
+		 * @return The world up
+		 */
+		[[nodiscard]] Vector3F WorldUp() const;
+
+		/**
+		 * @brief Return the world right of this transform.
+		 * @return The world right
+		 */
+		[[nodiscard]] Vector3F WorldRight() const;
+
+		/**
+		 * @brief Return the local forward of this transform.
+		 * @return The local forward
+		 */
+		[[nodiscard]] Vector3F LocalForward() const;
+
+		/**
+		 * @brief Return the local up of this transform.
+		 * @return The local up
+		 */
+		[[nodiscard]] Vector3F LocalUp() const;
+
+		/**
+		 * @brief Return the local right of this transform.
+		 * @return The local right
+		 */
+		[[nodiscard]] Vector3F LocalRight() const;
+
 		Transform& operator=(const Transform& p_other);
 		Transform& operator=(Transform&& p_other) noexcept;
 
@@ -101,9 +150,16 @@ namespace OgEngine
 		alignas(64) Matrix4F _worldMatrix;
 		alignas(64) Matrix4F _localMatrix;
 		alignas(16) Vector3F _position;
+		alignas(16) Vector3F _localPosition;
 		alignas(16) Vector3F _scale;
+		alignas(16) Vector3F _localScale;
 		alignas(16) Quaternion _rotation;
+		alignas(16) Quaternion _localRotation;
 		alignas(16) Transform* _parent = nullptr;
+
+		void GenerateMatrices(const Vector3F & p_position, const Quaternion & p_rotation, const Vector3F & p_scale);
+		void DecomposeWorldMatrix();
+		
 	};
 
 	std::ostream& operator<<(std::ostream& p_out, const Transform& p_other);
