@@ -9,4 +9,5 @@ void main()
 {
     tracedData.hasHit = false;
     tracedData.color = vec3(1);
+    tracedData.baseAlbedo = vec3(1);
 }

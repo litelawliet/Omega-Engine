@@ -3,10 +3,14 @@
 struct Payload
 {
     vec3 color;
-    uint seed; 
+    vec3 baseAlbedo;
     vec3 newOrigin;
+    vec3 normal;
     vec3 newDir;
     vec3 cameraPos;
-    float reflectanceFactor;
+
+    uint seed; 
+    
     bool hasHit;
+    bool isDirect;
 };

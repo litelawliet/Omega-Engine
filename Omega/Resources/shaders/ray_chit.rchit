@@ -8,8 +8,11 @@
 #include "random.glsl"
 #define PI 3.141592653589793
 
+
 layout(location = 0) rayPayloadInNV Payload tracedData;
 layout(location = 3) rayPayloadNV bool isShadowed;
+
+layout(location = 4) rayPayloadNV Payload indirectData;
 
 layout(set = 0, binding = 0) uniform accelerationStructureNV Scene;
 
@@ -108,7 +111,7 @@ void main()
 {
     const vec3 barycentricCoords = vec3(1.0 - HitAttribs.x - HitAttribs.y, HitAttribs.x, HitAttribs.y);
     vec3 hitPos = gl_WorldRayOriginNV + (gl_WorldRayDirectionNV * gl_HitTNV);
-    vec3 lightPos = vec3(-20, 20, 20);
+    vec3 lightPos = vec3(0, 5, 6);
     vec3 direction = normalize(lightPos - hitPos);
     
     uint IDx = sceneIndices[gl_InstanceID].indices[3 * gl_PrimitiveID];
@@ -130,43 +133,62 @@ void main()
 
 
     Material objMat = sceneMaterials[gl_InstanceID].mat;
+    vec3 color = vec3(0);
+
+    vec3 N = normal;
     vec3 V = normalize(tracedData.cameraPos - forigin);
-    vec3 L = normalize(lightPos - tracedData.cameraPos);
-    vec3 H = normalize(V + L);
+    vec3 L = normalize(lightPos - forigin);
 
-    float cosTheta = max(0.0, dot(normalize(lightPos - forigin), normal));
-    float cosView = max(0.0, dot(V, normal));
+    float dist    = length(lightPos - forigin);
+    float attenuation = 100.0 / (dist * dist);
+    vec3 radiance     = vec3(1) * attenuation;
+    color = objMat.albedo.rgb * dot(N, L) * radiance; 
 
-    vec3 lambertDiffuse = objMat.albedo.rgb * cosTheta;
-    vec3 F0 = vec3(0.04); // Plastic Reflectance
-    F0 = mix(F0, objMat.albedo.rgb, objMat.metallic);
-
-    float finalRoughness = objMat.roughness * objMat.roughness;
-    float k = ((finalRoughness + 1) * (finalRoughness + 1)) / 8;
-    float D = DistributionGGX(normal, H, finalRoughness);
-    vec3 F = fresnelSchlick(cosView, F0);
-    float G = GeometrySmith(normal, V, L, k);
-
-
-    vec3 cookTorrance = D * F * G;
-    cookTorrance /= 4 * dot(V, normal) * dot(L, normal);
-
-
-    vec3 Ks = F;
-    vec3 Kd = vec3(1.0) - Ks;
-    Kd *= 1.0 - objMat.metallic;
-
-    vec3 color = Kd * lambertDiffuse + Ks * cookTorrance;
-
-    /*isShadowed = true;
+    isShadowed = true;
     traceNV(Scene, rayFlags, 0xFF, 0, 0, 0, forigin, 0, fdir, 1000.0f, 3);
     if(isShadowed)
-        color = vec3(0);*/
+        color = vec3(0);
 
     tracedData.newOrigin = forigin;
-    tracedData.newDir = normalize(reflect(gl_WorldRayDirectionNV, normal) + (RandomInUnitSphere(tracedData.seed) * D));
+    tracedData.newDir = normalize(reflect(gl_WorldRayDirectionNV, normal));
     tracedData.color = color;
-    tracedData.reflectanceFactor = D;
+    tracedData.normal = normal;
+    tracedData.baseAlbedo = objMat.albedo.rgb;
     tracedData.hasHit = true;
 
 }
+
+
+
+
+    /*float roughness = objMat.roughness;
+    if(roughness < 0.00001)
+        roughness = 0.00001;
+
+    vec3 H = normalize(V + L);
+
+    vec3 F0 = vec3(0.04); 
+    F0 = mix(F0, objMat.albedo.rgb, objMat.metallic);
+	           
+
+    // calculate per-light radiance
+    float dist    = length(lightPos - forigin);
+    float attenuation = 80.0 / (dist * dist);
+    vec3 radiance     = vec3(1) * attenuation;        
+    
+    // cook-torrance brdf
+    float NDF = DistributionGGX(N, H, roughness);        
+    float G   = GeometrySmith(N, V, L, roughness);      
+    vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
+    
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - objMat.metallic;	  
+    
+    vec3 numerator    = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+    vec3 specular     = numerator / max(denominator, 0.001);  
+        
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(N, L), 0.0);                
+    vec3 color = (kD * objMat.albedo.rgb / PI + specular) * radiance * NdotL; */
