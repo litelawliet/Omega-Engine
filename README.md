@@ -29,6 +29,3 @@ SPRINT3 release note:
 For testing Raytracing pipeline, please use the RT_Pipeline branch.
 Also, be aware of the needed models and textures inside the ain.cpp which may cause a crash if not in the Resources folders. You can use your owns.
 glm is not added in dependencies but is needed for raytracing. Please add it ;anually for now since it will be removed lately.
-
-
-IMPORTANT : In order to get all the resources we use, just download them at the following link : https://www.mediafire.com/file/7fwstjjqky88y51/Resources.rar/file
