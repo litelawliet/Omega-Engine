@@ -1,21 +1,13 @@
 #pragma once
 #include <OgRendering/Export.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include <OgRendering/Rendering/Device.h>
 
 #include <OgRendering/Rendering/RaytracingPipeline.h>
 #include <OgRendering/Rendering/RasterizerPipeline.h>
-#include <OgRendering/Rendering/Device.h>
 
 #include <vector>
-#include <string>
-#include <set>
 #include <optional>
-
-#include <OgRendering/Resource/Vertex.h>
-
-//#include <vulkan/vulkan.hpp>
 
 //RT
 //#include <windows.h>
@@ -70,9 +62,9 @@ namespace OgEngine
 
 	struct UniformMaterialInfo
 	{
-		alignas(16) float rough;
-		alignas(16) GPM::Vector3F color;
-		alignas(16) bool metal;
+		alignas(16) GPM::Vector4F color;
+		alignas(4) float rough;
+		alignas(1) bool metal;
 	};
 	
 	using namespace OgEngine;
@@ -91,17 +83,17 @@ namespace OgEngine
 		void VK_ERROR(VkResult p_result) const;
 
 		void SetRenderingLoop(const bool p_renderingLoop);
-		void ChangeWindowTitle(std::string_view p_title, const uint64_t p_fps = 0);
+		void ChangeWindowTitle(std::string_view p_title, const uint64_t p_fps = 0) const;
 		void PollEvents() const;
-		bool WindowShouldClose();
+		bool WindowShouldClose() const;
 		double TimeOfContext() const;
 		bool IsRendering() const;
 		bool IsRaytracing() const;
-
+	
 		GLFWwindow* GetWindow() const;
 		
-		std::shared_ptr<OgEngine::RaytracingPipeline> GetRTPipeline() const { return m_RTPipeline; }
-		std::shared_ptr<OgEngine::RasterizerPipeline> GetRSPipeline() const { return m_RSPipeline; }
+		OgEngine::RaytracingPipeline* GetRTPipeline() const { return m_RTPipeline; }
+		OgEngine::RasterizerPipeline* GetRSPipeline() const { return m_RSPipeline; }
 		static bool                                   framebufferResized;
 	private:
 		void CheckRaytracingSupport();
@@ -143,7 +135,7 @@ namespace OgEngine
 		// ##### members #####
 		const std::vector<const char*> m_validationLayers =
 		{
-			"VK_LAYER_KHRONOS_validation",
+			//"VK_LAYER_KHRONOS_validation",
 			"VK_LAYER_LUNARG_standard_validation"
 		};
 
@@ -156,7 +148,7 @@ namespace OgEngine
 
 		//Window Compatibility and GLFW
 		GLFWwindow* m_window{};
-		VkInstance               m_instance{};
+		VkInstance  m_instance{};
 		VkDebugUtilsMessengerEXT m_debugMessenger{};
 		uint32_t minImageCount;
 
@@ -178,8 +170,8 @@ namespace OgEngine
 		bool isUsingVsync = false;
 
 		//Raytracing Pipeline
-		std::shared_ptr<RaytracingPipeline> m_RTPipeline;
-		std::shared_ptr<RasterizerPipeline> m_RSPipeline;
+		RaytracingPipeline* m_RTPipeline;
+		RasterizerPipeline* m_RSPipeline;
 
 		std::atomic<bool> m_renderingLoop{ true };
 	};

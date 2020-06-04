@@ -16,21 +16,16 @@ namespace GPM
 		T y;
 
 		/**
-		 * @brief Default Constructor
-		 */
-		constexpr Vector2();
-
-		/**
-		 * @brief Destructor
+		 * @brief Default destructor
 		 */
 		~Vector2() = default;
-
+		
 		/**
 		 * @brief Constructor with parameters
 		 * @param p_x x coordinate
 		 * @param p_y y coordinate
 		 */
-		constexpr Vector2(const T p_x, const T p_y);
+		constexpr Vector2(const T p_x = 0, const T p_y = 0);
 
 		/**
 		 * @brief Copy Constructor
@@ -56,7 +51,7 @@ namespace GPM
 		 * @brief Creates a string representing this Vector
 		 * @return this Vector in string format
 		 */
-		constexpr std::string ToString() const;
+		[[nodiscard]] constexpr std::string ToString() const;
 
 		static const Vector2<T> zero;
 		static const Vector2<T> up;
@@ -84,7 +79,7 @@ namespace GPM
 		 * @return The current vector modified
 		 */
 		constexpr Vector2<T>& operator=(const Vector2<T>& p_other);
-		
+
 		/**
 		 * @brief Overload = operator by copy
 		 * @param p_other The vector to construct from
@@ -98,8 +93,8 @@ namespace GPM
 		 * @param p_other The vector to construct from
 		 * @return The current vector modified
 		 */
-		inline constexpr GPM::Vector2<T>& operator=(Vector2<T>&& p_other);
-		
+		inline constexpr GPM::Vector2<T>& operator=(Vector2<T>&& p_other) noexcept;
+
 		/**
 		 * @brief Overload = operator by move
 		 * @param p_other The vector to construct from
@@ -122,13 +117,13 @@ namespace GPM
 		 * @brief Returns normalized version of this vector without modifying it
 		 * @return A new Vector2<T> made from this Vector2 with Magnitude == 1
 		 */
-		constexpr GPM::Vector2<T> normalized() const;
+		[[nodiscard]] constexpr GPM::Vector2<T> normalized() const;
 
 		/**
 		 * @brief Returns length of this Vector2
 		 * @return Vector2 length
 		 */
-		constexpr T Magnitude() const;
+		[[nodiscard]] constexpr T Magnitude() const;
 
 		/**
 		 * @brief Calculates Dot Product between this Vector and another
@@ -149,7 +144,7 @@ namespace GPM
 		/**
 		 * @brief Returns a Vector2<T> that is perpendicular to this Vector2
 		 */
-		constexpr Vector2<T> Perpendicular() const;
+		[[nodiscard]] constexpr Vector2<T> Perpendicular() const;
 
 		/**
 		 * @brief Multiplies this Vector2's x,y values by a given scalar
@@ -379,7 +374,6 @@ namespace GPM
 
 	template <typename T, typename U>
 	constexpr void operator/=(Vector2<T>& p_vector2Left, const U& p_scalar);
-
 #pragma endregion
 
 	using Vector2U = GPM::Vector2<unsigned int>;
@@ -388,6 +382,5 @@ namespace GPM
 	using Vector2D = GPM::Vector2<double>;
 	using Vector2L = GPM::Vector2<long>;
 }
-
 
 #include <GPM/Vector/Vector2.inl>

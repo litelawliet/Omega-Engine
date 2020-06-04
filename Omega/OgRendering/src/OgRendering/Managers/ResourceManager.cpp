@@ -10,13 +10,3 @@ OgEngine::ResourceManager& OgEngine::ResourceManager::Instance()
 
 	return m_instance;
 }
-
-void OgEngine::ResourceManager::SetRaytracingLoading(bool p_raytracingEnabled)
-{
-	m_raytracingEnable = p_raytracingEnabled;
-}
-
-bool OgEngine::ResourceManager::RaytracingLoadingEnabled()
-{
-	return m_raytracingEnable;
-}

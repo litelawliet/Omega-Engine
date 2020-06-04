@@ -14,14 +14,27 @@ namespace OgEngine
 	{
 	public:
 		template<typename ResourceType>
-		inline static std::shared_ptr<ResourceType> Load(std::string_view p_file);
+		static inline std::shared_ptr<ResourceType> Load(std::string_view p_file);
+
+		static inline bool CheckValidMesh(const std::string_view p_file);
 
 	private:
 		LoaderManager() = default;
+		
+		template<typename ResourceType>
+		static inline std::shared_ptr<ResourceType> AssimpLoad(const std::string_view p_file);
+
+		template<typename ResourceType>
+		static inline std::shared_ptr<ResourceType> GltfLoad(const std::string_view p_file);
+
+		template<typename ResourceType>
+		static inline std::shared_ptr<ResourceType> ObjLoad(const std::string_view p_file);
+		
+		static std::string GetFilePathExtension(const std::string &p_filename);
 	};
 
 	template<>
-	inline std::shared_ptr<Mesh> LoaderManager::Load<Mesh>(std::string_view p_file);
+	inline std::shared_ptr<OgEngine::Mesh> OgEngine::LoaderManager::Load<OgEngine::Mesh>(std::string_view p_file);
 }
 
 #include <OgRendering/Managers/Loaders/LoaderManager.inl>

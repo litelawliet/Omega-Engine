@@ -31,7 +31,7 @@ namespace OgEngine::Services
 		Concurrency::concurrent_unordered_map<std::string, std::shared_ptr<Mesh>> m_meshes;
 		Utils::ThreadPool m_pool;
 
-		const std::hash<std::string> m_hashValueFromName;
+		std::hash<std::string> m_hashValueFromName;
 		std::list<std::pair<uint64_t, std::string>> m_workerToMesh;
 	};
 }

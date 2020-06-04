@@ -20,6 +20,7 @@ namespace OgEngine::Services
 		[[nodiscard]] inline std::shared_ptr<Texture> Get(std::string_view p_textureName) const;
 		inline void WaitForAll() { m_pool.WaitForWorkers(); }
 		inline void WaitForResource(std::string_view p_textureName);
+		std::vector<Texture*>& GetAllTextures();
 
 	private:
 		inline void MultithreadedLoading(std::string_view p_filePath);
@@ -29,5 +30,6 @@ namespace OgEngine::Services
 
 		const std::hash<std::string> m_hashValueFromName;
 		std::list<std::pair<uint64_t, std::string>> m_workerToTexture;
+		std::vector<Texture*> m_texturesRefs;
 	};
 }

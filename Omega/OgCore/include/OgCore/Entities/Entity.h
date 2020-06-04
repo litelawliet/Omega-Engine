@@ -1,4 +1,5 @@
 #pragma once
+#include <OgCore/Export.h>
 #include <cstdint>
 #include <bitset>
 

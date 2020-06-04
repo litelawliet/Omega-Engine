@@ -5,10 +5,17 @@
 namespace GPM
 {
 #pragma region Constructor
+	template<typename T>
+	constexpr Vector3<T>::Vector3(const T p_x, const T p_y, const T p_z)
+		: x{ p_x }, y{ p_y }, z{ p_z }
+	{}
+
 
 	template <typename T>
 	template <typename U>
-	constexpr Vector3<T>::Vector3(const Vector3<U>& p_other) : x{ p_other.x }, y{ p_other.y }, z{ p_other.z }{}
+	constexpr Vector3<T>::Vector3(const Vector3<U>& p_other)
+		: x{ p_other.x }, y{ p_other.y }, z{ p_other.z }
+	{}
 
 	template <typename T>
 	template <typename U>

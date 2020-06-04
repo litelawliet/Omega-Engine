@@ -1,6 +1,6 @@
-#version 460
+#version 450
 
-layout(set = 0, binding = 0) uniform UniformBufferObject
+layout(std140, binding = 0) uniform UniformBufferObject
 {
     mat4 model;
     mat4 view;
@@ -23,12 +23,12 @@ vec3 inColor = vec3(1,1,1);
 
 void main()
 {
-    mat4 mvp = ubo.proj * ubo.view * ubo.model;
+    mat4 mvp = ubo.proj * ubo.view * transpose(ubo.model);
 
     gl_Position = mvp * vec4(inPosition.xyz, 1);
 
     // pos in view space
-    outFragPosition = vec3(vec4(inPosition.xyz, 1.0) * ubo.model * ubo.view);
+    outFragPosition = vec3(transpose(ubo.model) * vec4(inPosition, 1));
 
     // color to next stage
     outFragColor = vec4(inColor, 1.0);
@@ -37,5 +37,9 @@ void main()
     outFragTexCoord = inTexCoord;
 
     // normal to fragment shader
-    outFragNormal = mat3(transpose(inverse(ubo.model))) * inNormal;
+    outFragNormal = mat3(inverse(ubo.model)) * inNormal;
+
+    mat4 invCam = inverse(ubo.view);
+    outCameraPosition = vec4(invCam[3].x, invCam[3].y, invCam[3].z, 1);
+
 }

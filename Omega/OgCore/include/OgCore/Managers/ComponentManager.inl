@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 template<typename T>
 void OgEngine::ComponentManager::RegisterComponent()
 {
@@ -52,7 +53,7 @@ T& OgEngine::ComponentManager::GetComponent(Entity p_entity)
 template <typename T>
 std::shared_ptr<OgEngine::ComponentArray<T>> OgEngine::ComponentManager::GetComponentArray()
 {
-	const char* typeName = typeid(T).name();
+	const std::string typeName = typeid(T).name();
 
 	assert(m_componentTypes.find(typeName) != m_componentTypes.end() && "Component not registered before use.");
 

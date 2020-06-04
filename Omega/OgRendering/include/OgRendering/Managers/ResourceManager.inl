@@ -22,7 +22,7 @@ inline void OgEngine::ResourceManager::Add<OgEngine::Texture>(const std::string_
 #pragma endregion
 
 template <typename ResourceType>
-inline std::shared_ptr<ResourceType> OgEngine::ResourceManager::Get(std::string_view p_resourceName)
+inline ResourceType* OgEngine::ResourceManager::Get(std::string_view p_resourceName)
 {
 	std::cerr << "Warning: Unable to return the resource of type '" << type_name<ResourceType>() << "'.\n";
 	return nullptr;
@@ -30,19 +30,19 @@ inline std::shared_ptr<ResourceType> OgEngine::ResourceManager::Get(std::string_
 
 #pragma region Mesh
 template <>
-inline std::shared_ptr<OgEngine::Mesh> OgEngine::ResourceManager::Get<OgEngine::Mesh>(
+inline OgEngine::Mesh* OgEngine::ResourceManager::Get<OgEngine::Mesh>(
 		const std::string_view p_resourceName)
 {
-	return m_meshService.Get(p_resourceName);
+	return m_meshService.Get(p_resourceName).get();
 }
 #pragma endregion
 
 #pragma region Texture
 template <>
-inline std::shared_ptr<OgEngine::Texture> OgEngine::ResourceManager::Get<OgEngine::Texture>(
+inline OgEngine::Texture* OgEngine::ResourceManager::Get<OgEngine::Texture>(
 		const std::string_view p_resourceName)
 {
-	return m_textureService.Get(p_resourceName);
+	return m_textureService.Get(p_resourceName).get();
 }
 #pragma endregion
 
@@ -65,5 +65,10 @@ template <>
 inline void OgEngine::ResourceManager::WaitForResource<OgEngine::Texture>(const std::string_view p_resourceName)
 {
 	m_textureService.WaitForResource(p_resourceName);
+}
+
+inline std::vector<OgEngine::Texture*>& OgEngine::ResourceManager::GetAllTextures()
+{
+	return m_textureService.GetAllTextures();
 }
 #pragma endregion

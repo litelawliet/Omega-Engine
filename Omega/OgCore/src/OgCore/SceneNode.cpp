@@ -8,11 +8,8 @@ OgEngine::SceneNode::SceneNode(Entity p_entity)
 
 OgEngine::SceneNode::~SceneNode()
 {
-	for (auto& i : m_children)
-	{
-		SceneManager::DestroyEntity(i->GetEntity());
-		delete i;
-	}
+	RemoveChildren();
+	SceneManager::DestroyEntity(m_entity);
 }
 
 Matrix4F OgEngine::SceneNode::GetWorldTransform() const
@@ -36,6 +33,16 @@ OgEngine::SceneNode* OgEngine::SceneNode::GetChild(const uint64_t p_childIndex)
 	assert(p_childIndex < m_children.size() && "GetChild out of bound");
 
 	return m_children[p_childIndex];
+}
+
+OgEngine::SceneNode* OgEngine::SceneNode::LastChild() const
+{
+	if (!m_children.empty())
+	{
+		return m_children.back();
+	}
+
+	return nullptr;
 }
 
 std::vector<OgEngine::SceneNode*>& OgEngine::SceneNode::GetChildren()
@@ -75,4 +82,43 @@ std::vector<OgEngine::SceneNode*>::const_iterator OgEngine::SceneNode::GetChildI
 std::vector<OgEngine::SceneNode*>::const_iterator OgEngine::SceneNode::GetChildIteratorEnd()
 {
 	return m_children.end();
+}
+
+OgEngine::SceneNode* OgEngine::SceneNode::GetParent() const
+{
+	return m_parentNode;
+}
+
+bool OgEngine::SceneNode::HasParent() const
+{
+	return m_parentNode != nullptr;
+}
+
+void OgEngine::SceneNode::RemoveChild(const uint64_t p_index)
+{
+	if (p_index < m_children.size())
+	{
+		delete m_children[p_index];
+		m_children.erase(m_children.begin() + p_index);
+	}
+}
+
+void OgEngine::SceneNode::RemoveChild(SceneNode* p_childNode)
+{
+	const auto it = std::find(m_children.begin(), m_children.end(), p_childNode);
+	if (it != m_children.end())
+	{
+		m_children.erase(it);
+		delete p_childNode;
+		p_childNode = nullptr;
+	}
+}
+
+void OgEngine::SceneNode::RemoveChildren()
+{
+	for (auto* it : m_children)
+	{
+		delete it;
+	}
+	m_children.clear();
 }

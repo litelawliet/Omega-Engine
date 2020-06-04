@@ -136,10 +136,10 @@ namespace GPM
 		z = sinAngle * p_axis.z;
 	}
 
-	inline Quaternion Quaternion::MakeFromEuler(const double p_roll, const double p_pitch, const double p_yaw)
+	inline Quaternion Quaternion::MakeFromEuler(const double p_yawAlpha, const double p_roll, const double p_yaw)
 	{
 		Quaternion rotation;
-		rotation.SetFromEuler(p_roll, p_pitch, p_yaw);
+		rotation.SetFromEuler(p_yawAlpha, p_roll, p_yaw);
 
 		return rotation;
 	}
@@ -157,10 +157,10 @@ namespace GPM
 		SetFromEuler(Vector3<double>(p_euler.x, p_euler.y, p_euler.z));
 	}
 
-	inline void Quaternion::SetFromEuler(const double p_roll, const double p_pitch, const double p_yaw)
+	inline void Quaternion::SetFromEuler(const double p_roll, const double p_pith, const double p_yaw)
 	{
 		const double roll = Tools::Utils::ToRadians(p_roll) * 0.5;
-		const double pitch = Tools::Utils::ToRadians(p_pitch) * 0.5;
+		const double pitch = Tools::Utils::ToRadians(p_pith) * 0.5;
 		const double yaw = Tools::Utils::ToRadians(p_yaw) * 0.5;
 
 		const double cy = cos(yaw);
@@ -170,10 +170,10 @@ namespace GPM
 		const double cr = cos(roll);
 		const double sr = sin(roll);
 
-		x = sr * cp * cy - cr * sp * sy;
-		y = cr * sp * cy + sr * cp * sy;
-		z = cr * cp * sy - sr * sp * cy;
-		w = cr * cp * cy + sr * sp * sy;
+		w = cr * cp * cy - sr * sp * sy;
+		x = sr * cp * cy + cr * sp * sy;
+		y = cr * sp * cy - sr * cp * sy;
+		z = cr * cp * sy + sr * sp * cy;
 	}
 
 	inline Quaternion& Quaternion::operator=(Quaternion&& p_other) noexcept
@@ -318,15 +318,15 @@ namespace GPM
 		const float num = static_cast<float>(x) * 2.0f;
 		const float num2 = static_cast<float>(y) * 2.0f;
 		const float num3 = static_cast<float>(z) * 2.0f;
-		const float num4 = static_cast<float>(x)* num;
-		const float num5 = static_cast<float>(y)* num2;
-		const float num6 = static_cast<float>(z)* num3;
-		const float num7 = static_cast<float>(x)* num2;
-		const float num8 = static_cast<float>(x)* num3;
-		const float num9 = static_cast<float>(y)* num3;
-		const float num10 = static_cast<float>(w)* num;
-		const float num11 = static_cast<float>(w)* num2;
-		const float num12 = static_cast<float>(w)* num3;
+		const float num4 = static_cast<float>(x) * num;
+		const float num5 = static_cast<float>(y) * num2;
+		const float num6 = static_cast<float>(z) * num3;
+		const float num7 = static_cast<float>(x) * num2;
+		const float num8 = static_cast<float>(x) * num3;
+		const float num9 = static_cast<float>(y) * num3;
+		const float num10 = static_cast<float>(w) * num;
+		const float num11 = static_cast<float>(w) * num2;
+		const float num12 = static_cast<float>(w) * num3;
 		Vector3F    result;
 		result.x = (1.f - (num5 + num6)) * p_toMultiply.x + (num7 - num12) * p_toMultiply.y + (
 			num8 + num11) *

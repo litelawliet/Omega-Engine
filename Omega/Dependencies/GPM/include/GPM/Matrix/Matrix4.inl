@@ -712,12 +712,12 @@ Matrix4<T>& Matrix4<T>::operator=(const Matrix4<U>& p_matrix)
 }
 
 template <typename T>
-constexpr std::ostream& GPM::operator<<(std::ostream& p_os, const Matrix4<T>& p_vector)
+constexpr std::ostream& GPM::operator<<(std::ostream& p_os, const Matrix4<T>& p_matrix)
 {
-	p_os << '[' << p_vector.m_data[0] << "  " << p_vector.m_data[1] << "  " << p_vector.m_data[2] << "  " << p_vector.m_data[3] << "]\n"
-		<< '[' << p_vector.m_data[4] << "  " << p_vector.m_data[5] << "  " << p_vector.m_data[6] << "  " << p_vector.m_data[7] << "]\n"
-		<< '[' << p_vector.m_data[8] << "  " << p_vector.m_data[9] << "  " << p_vector.m_data[10] << "  " << p_vector.m_data[11] << "]\n"
-		<< '[' << p_vector.m_data[12] << "  " << p_vector.m_data[13] << "  " << p_vector.m_data[14] << "  " << p_vector.m_data[15] << "]\n";
+	p_os << '[' << p_matrix.m_data[0] << "  " << p_matrix.m_data[1] << "  " << p_matrix.m_data[2] << "  " << p_matrix.m_data[3] << "]\n"
+		<< '[' << p_matrix.m_data[4] << "  " << p_matrix.m_data[5] << "  " << p_matrix.m_data[6] << "  " << p_matrix.m_data[7] << "]\n"
+		<< '[' << p_matrix.m_data[8] << "  " << p_matrix.m_data[9] << "  " << p_matrix.m_data[10] << "  " << p_matrix.m_data[11] << "]\n"
+		<< '[' << p_matrix.m_data[12] << "  " << p_matrix.m_data[13] << "  " << p_matrix.m_data[14] << "  " << p_matrix.m_data[15] << "]\n";
 	return p_os;
 }
 

@@ -1,9 +1,6 @@
 #pragma once
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
 #include <vector>
-#include <cassert>
-#include <fstream>
 
 namespace Initializers
 {
@@ -169,6 +166,7 @@ namespace Initializers
         bufCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufCreateInfo.usage = usage;
         bufCreateInfo.size = size;
+        bufCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         return bufCreateInfo;
     }
 

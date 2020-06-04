@@ -3,6 +3,7 @@
 #include <OgRendering/Utils/Initializers.h>
 #include <glm/glm.hpp>
 #include <GPM/GPM.h>
+#include <fstream>
 
 struct GeometryInstance
 {
@@ -14,55 +15,81 @@ struct GeometryInstance
 	uint64_t accelerationStructureHandle;
 };
 
-inline glm::vec3 ConvertToGLM(GPM::Vector3F p)
+enum TEXTURE_TYPE : std::uint8_t
 {
-	return glm::vec3(p.x, p.y, p.z);
+	TEXTURE = 0u,
+	NORMAL = 1u
+};
+
+/**
+ * @brief Convert a GPM::Vector3<float> to a glm::vec3<float>
+ * @param p_vector The vector to convert : GPM::Vector3<float>
+ * @return The converted vector 3 of type glm::vec3<float>
+ */
+inline glm::vec3 ConvertToGLM(const GPM::Vector3F& p_vector)
+{
+	return glm::vec3(p_vector.x, p_vector.y, p_vector.z);
 }
 
-inline glm::mat4 ConvertToGLM(GPM::Matrix4F p)
+/**
+ * @brief Convert a GPM::Matrix4<float> to a glm::mat4<float>
+ * @param p_matrix The matrix to convert : GPM::Matrix4<float>
+ * @return The converted matrix 4x4 of type glm::mat4<float>
+ */
+inline glm::mat4 ConvertToGLM(GPM::Matrix4F p_matrix)
 {
 	/*return glm::mat4(
-		p(0, 0), p(1, 0), p(2, 0), p(3, 0),
-		p(0, 1), p(1, 1), p(2, 1), p(3, 1),
-		p(0, 2), p(1, 2), p(2, 2), p(3, 2),
-		p(0, 3), p(1, 3), p(2, 3), p(3, 3)
+		p_matrix(0, 0), p_matrix(1, 0), p_matrix(2, 0), p_matrix(3, 0),
+		p_matrix(0, 1), p_matrix(1, 1), p_matrix(2, 1), p_matrix(3, 1),
+		p_matrix(0, 2), p_matrix(1, 2), p_matrix(2, 2), p_matrix(3, 2),
+		p_matrix(0, 3), p_matrix(1, 3), p_matrix(2, 3), p_matrix(3, 3)
 		);*/
 
 	return glm::mat4(
-	                 p(0, 0), p(0, 1), p(0, 2), p(0, 3),
-	                 p(1, 0), p(1, 1), p(1, 2), p(1, 3),
-	                 p(2, 0), p(2, 1), p(2, 2), p(2, 3),
-	                 p(3, 0), p(3, 1), p(3, 2), p(3, 3)
-	                );
+		p_matrix(0, 0), p_matrix(0, 1), p_matrix(0, 2), p_matrix(0, 3),
+		p_matrix(1, 0), p_matrix(1, 1), p_matrix(1, 2), p_matrix(1, 3),
+		p_matrix(2, 0), p_matrix(2, 1), p_matrix(2, 2), p_matrix(2, 3),
+		p_matrix(3, 0), p_matrix(3, 1), p_matrix(3, 2), p_matrix(3, 3)
+	);
 }
 
 struct AccelerationStructure
 {
-    VkDeviceMemory memory{};
-    VkAccelerationStructureNV accelerationStructure{};
-    uint64_t handle{ 0u };
+	VkDeviceMemory memory{};
+	VkAccelerationStructureNV accelerationStructure{};
+	uint64_t handle{ 0u };
 };
 
+/**
+ * @brief Change the layout of a VkImage to a new layout
+ * @param p_commandBuffer The command buffer to use to change the layout
+ * @param p_image The image on which we modify the layout
+ * @param p_oldImageLayout The old layout of the image
+ * @param p_newImageLayout The new layout of the image
+ * @param p_subresourceRange The resource range to use
+ * @param p_srcStageMask Type of flag used for the source
+ * @param p_dstStageMask Type of flag to use as destination
+ */
 inline void setImageLayout(
-		VkCommandBuffer         cmdbuffer,
-		VkImage                 image,
-		VkImageLayout           oldImageLayout,
-		VkImageLayout           newImageLayout,
-		VkImageSubresourceRange subresourceRange,
-		VkPipelineStageFlags    srcStageMask,
-		VkPipelineStageFlags    dstStageMask)
+	VkCommandBuffer         p_commandBuffer,
+	VkImage                 p_image,
+	const VkImageLayout           p_oldImageLayout,
+	const VkImageLayout           p_newImageLayout,
+	const VkImageSubresourceRange p_subresourceRange,
+	const VkPipelineStageFlags    p_srcStageMask,
+	const VkPipelineStageFlags    p_dstStageMask)
 {
 	// Create an image barrier object
 	VkImageMemoryBarrier imageMemoryBarrier = Initializers::imageMemoryBarrier();
-	imageMemoryBarrier.oldLayout            = oldImageLayout;
-	imageMemoryBarrier.newLayout            = newImageLayout;
-	imageMemoryBarrier.image                = image;
-	imageMemoryBarrier.subresourceRange     = subresourceRange;
+	imageMemoryBarrier.oldLayout = p_oldImageLayout;
+	imageMemoryBarrier.newLayout = p_newImageLayout;
+	imageMemoryBarrier.image = p_image;
+	imageMemoryBarrier.subresourceRange = p_subresourceRange;
 
 	// Source layouts (old)
 	// Source access mask controls actions that have to be finished on the old layout
 	// before it will be transitioned to the new layout
-	switch (oldImageLayout)
+	switch (p_oldImageLayout)
 	{
 	case VK_IMAGE_LAYOUT_UNDEFINED:
 		// Image layout is undefined (or does not matter)
@@ -114,7 +141,7 @@ inline void setImageLayout(
 
 	// Target layouts (new)
 	// Destination access mask controls the dependency for the new image layout
-	switch (newImageLayout)
+	switch (p_newImageLayout)
 	{
 	case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
 		// Image will be used as a transfer destination
@@ -138,7 +165,7 @@ inline void setImageLayout(
 		// Image layout will be used as a depth/stencil attachment
 		// Make sure any writes to depth/stencil buffer have been finished
 		imageMemoryBarrier.dstAccessMask = imageMemoryBarrier.dstAccessMask |
-		                                   VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		break;
 
 	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
@@ -157,31 +184,14 @@ inline void setImageLayout(
 
 	// Put barrier inside setup command buffer
 	vkCmdPipelineBarrier(
-	                     cmdbuffer,
-	                     srcStageMask,
-	                     dstStageMask,
-	                     0,
-	                     0, nullptr,
-	                     0, nullptr,
-	                     1, &imageMemoryBarrier);
+		p_commandBuffer,
+		p_srcStageMask,
+		p_dstStageMask,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &imageMemoryBarrier);
 }
-
-/*void setImageLayout(
-	VkCommandBuffer cmdbuffer,
-	VkImage image,
-	VkImageAspectFlags aspectMask,
-	VkImageLayout oldImageLayout,
-	VkImageLayout newImageLayout,
-	VkPipelineStageFlags srcStageMask,
-	VkPipelineStageFlags dstStageMask)
-{
-	VkImageSubresourceRange subresourceRange = {};
-	subresourceRange.aspectMask = aspectMask;
-	subresourceRange.baseMipLevel = 0;
-	subresourceRange.levelCount = 1;
-	subresourceRange.layerCount = 1;
-	setImageLayout(cmdbuffer, image, oldImageLayout, newImageLayout, subresourceRange, srcStageMask, dstStageMask);
-}*/
 
 struct Buffer
 {
@@ -189,9 +199,9 @@ struct Buffer
 	VkBuffer               buffer = nullptr;
 	VkDeviceMemory         memory = nullptr;
 	VkDescriptorBufferInfo descriptor{};
-	VkDeviceSize           size      = 0;
+	VkDeviceSize           size = 0;
 	VkDeviceSize           alignment = 0;
-	void*                  mapped    = nullptr;
+	void* mapped = nullptr;
 
 	/** @brief Usage flags to be filled by external source at buffer creation (to query at some later point) */
 	VkBufferUsageFlags usageFlags{};
@@ -199,24 +209,21 @@ struct Buffer
 	VkMemoryPropertyFlags memoryPropertyFlags{};
 
 	/**
-	* Map a memory range of this buffer. If successful, mapped points to the specified buffer range.
-	*
+	* @brief Map a memory range of this buffer. If successful, mapped points to the specified buffer range.
 	* @param size (Optional) Size of the memory range to map. Pass VK_WHOLE_SIZE to map the complete buffer range.
 	* @param offset (Optional) Byte offset from beginning
-	*
 	* @return VkResult of the buffer mapping call
 	*/
-	VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0)
+	VkResult Map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0)
 	{
 		return vkMapMemory(device, memory, offset, size, 0, &mapped);
 	}
 
 	/**
-	* Unmap a mapped memory range
-	*
+	* @brief Unmap a mapped memory range
 	* @note Does not return a result as vkUnmapMemory can't fail
 	*/
-	void unmap()
+	void Unmap()
 	{
 		if (mapped)
 		{
@@ -226,88 +233,78 @@ struct Buffer
 	}
 
 	/**
-	* Attach the allocated memory block to the buffer
-	*
-	* @param offset (Optional) Byte offset (from the beginning) for the memory region to bind
-	*
+	* @brief Attach the allocated memory block to the buffer
+	* @param p_offset (Optional) Byte offset (from the beginning) for the memory region to bind
 	* @return VkResult of the bindBufferMemory call
 	*/
-	VkResult bind(VkDeviceSize offset = 0) const
+	[[nodiscard]] VkResult Bind(VkDeviceSize p_offset = 0) const
 	{
-		return vkBindBufferMemory(device, buffer, memory, offset);
+		return vkBindBufferMemory(device, buffer, memory, p_offset);
 	}
 
 	/**
-	* Setup the default descriptor for this buffer
-	*
-	* @param size (Optional) Size of the memory range of the descriptor
-	* @param offset (Optional) Byte offset from beginning
+	* @brief Setup the default descriptor for this buffer
+	* @param p_size (Optional) Size of the memory range of the descriptor
+	* @param p_offset (Optional) Byte offset from beginning
 	*
 	*/
-	void setupDescriptor(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0)
+	void SetupDescriptor(VkDeviceSize p_size = VK_WHOLE_SIZE, VkDeviceSize p_offset = 0)
 	{
-		descriptor.offset = offset;
+		descriptor.offset = p_offset;
 		descriptor.buffer = buffer;
-		descriptor.range  = size;
+		descriptor.range = p_size;
 	}
 
 	/**
-	* Copies the specified data to the mapped buffer
-	*
-	* @param data Pointer to the data to copy
-	* @param size Size of the data to copy in machine units
+	* @brief Copies the specified data to the mapped buffer
+	* @param p_data Pointer to the data to copy
+	* @param p_size Size of the data to copy in machine units
 	*
 	*/
-	void copyTo(void* data, VkDeviceSize size) const
+	void CopyTo(void* p_data, VkDeviceSize p_size) const
 	{
 		assert(mapped);
-		memcpy_s(mapped, size, data, size);
+		memcpy_s(mapped, p_size, p_data, p_size);
 	}
 
 	/**
-	* Flush a memory range of the buffer to make it visible to the device
-	*
+	* @brief Flush a memory range of the buffer to make it visible to the device
 	* @note Only required for non-coherent memory
-	*
-	* @param size (Optional) Size of the memory range to flush. Pass VK_WHOLE_SIZE to flush the complete buffer range.
-	* @param offset (Optional) Byte offset from beginning
-	*
+	* @param p_size (Optional) Size of the memory range to flush. Pass VK_WHOLE_SIZE to flush the complete buffer range.
+	* @param p_offset (Optional) Byte offset from beginning
 	* @return VkResult of the flush call
 	*/
-	VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const
+	[[nodiscard]] VkResult Flush(VkDeviceSize p_size = VK_WHOLE_SIZE, VkDeviceSize p_offset = 0) const
 	{
 		VkMappedMemoryRange mappedRange = {};
-		mappedRange.sType               = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		mappedRange.memory              = memory;
-		mappedRange.offset              = offset;
-		mappedRange.size                = size;
+		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		mappedRange.memory = memory;
+		mappedRange.offset = p_offset;
+		mappedRange.size = p_size;
 		return vkFlushMappedMemoryRanges(device, 1, &mappedRange);
 	}
 
 	/**
-	* Invalidate a memory range of the buffer to make it visible to the host
-	*
+	* @brief Invalidate a memory range of the buffer to make it visible to the host
 	* @note Only required for non-coherent memory
-	*
-	* @param size (Optional) Size of the memory range to invalidate. Pass VK_WHOLE_SIZE to invalidate the complete buffer range.
-	* @param offset (Optional) Byte offset from beginning
-	*
+	* @param p_size (Optional) Size of the memory range to invalidate. Pass VK_WHOLE_SIZE to invalidate the complete buffer range.
+	* @param p_offset (Optional) Byte offset from beginning
 	* @return VkResult of the invalidate call
 	*/
-	VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const
+	[[nodiscard]] VkResult Invalidate(VkDeviceSize p_size = VK_WHOLE_SIZE, VkDeviceSize p_offset = 0) const
 	{
 		VkMappedMemoryRange mappedRange = {};
-		mappedRange.sType               = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		mappedRange.memory              = memory;
-		mappedRange.offset              = offset;
-		mappedRange.size                = size;
+		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		mappedRange.memory = memory;
+		mappedRange.offset = p_offset;
+		mappedRange.size = p_size;
 		return vkInvalidateMappedMemoryRanges(device, 1, &mappedRange);
 	}
 
 	/**
-	* Release all Vulkan resources held by this buffer
+	* @brief Release all Vulkan resources held by this buffer
 	*/
-	void destroy() const
+	void Destroy() const
 	{
 		if (buffer)
 		{
@@ -324,9 +321,15 @@ struct Buffer
 	}
 };
 
-static VkShaderModule LoadShaderFile(const char* fileName, VkDevice device)
+/**
+ * @brief Load a shader from a source file
+ * @param p_fileName The source file
+ * @param p_device The device to link the shader with
+ * @return The VkShaderModule created
+ */
+static VkShaderModule LoadShaderFile(const char* p_fileName, VkDevice p_device)
 {
-	std::ifstream is(fileName, std::ios::binary | std::ios::in | std::ios::ate);
+	std::ifstream is(p_fileName, std::ios::binary | std::ios::in | std::ios::ate);
 
 	if (is.is_open())
 	{
@@ -340,11 +343,11 @@ static VkShaderModule LoadShaderFile(const char* fileName, VkDevice device)
 
 		VkShaderModule           shaderModule;
 		VkShaderModuleCreateInfo moduleCreateInfo{};
-		moduleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 		moduleCreateInfo.codeSize = size;
-		moduleCreateInfo.pCode    = reinterpret_cast<uint32_t*>(shaderCode);
+		moduleCreateInfo.pCode = reinterpret_cast<uint32_t*>(shaderCode);
 
-		vkCreateShaderModule(device, &moduleCreateInfo, nullptr, &shaderModule);
+		vkCreateShaderModule(p_device, &moduleCreateInfo, nullptr, &shaderModule);
 
 		delete[] shaderCode;
 
@@ -352,7 +355,7 @@ static VkShaderModule LoadShaderFile(const char* fileName, VkDevice device)
 	}
 	else
 	{
-		std::cerr << "Error: Could not open shader file \"" << fileName << "\"" << std::endl;
+		std::cerr << "Error: Could not open shader file \"" << p_fileName << "\"" << std::endl;
 		return nullptr;
 	}
 }

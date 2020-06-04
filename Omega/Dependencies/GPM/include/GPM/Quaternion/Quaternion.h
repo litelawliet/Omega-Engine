@@ -75,12 +75,12 @@ namespace GPM
 
 		/**
 		 * @brief Construct from euler angles
-		 * @param p_roll The x-angle in degree
-		 * @param p_pitch The y-angle in degree
+		 * @param p_yawAlpha The x-angle in degree
+		 * @param p_roll The y-angle in degree
 		 * @param p_yaw The z-angle in degree
 		 * @return The quaternion made from euler angles
 		 */
-		[[nodiscard]] static inline Quaternion MakeFromEuler(const double p_roll, const double p_pitch, const double p_yaw);
+		[[nodiscard]] static inline Quaternion MakeFromEuler(const double p_yawAlpha, const double p_roll, const double p_yaw);
 
 		/**
 		 * @brief Construct from euler angles
@@ -98,10 +98,10 @@ namespace GPM
 		/**
 		 * @brief Set a quaternion from euler angles
 		 * @param p_roll The x-angle in degree
-		 * @param p_pitch The y-angle in degree
+		 * @param p_pith The y-angle in degree
 		 * @param p_yaw The z-angle in degree
 		 */
-		inline void SetFromEuler(const double p_roll, const double p_pitch, const double p_yaw);
+		inline void SetFromEuler(const double p_roll, const double p_pith, const double p_yaw);
 
 		/**
 		 * @brief Copy assignment

@@ -90,28 +90,49 @@
     <ClInclude Include="include\OgRendering\Managers\InputManager.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\OgRendering\Utils\imgui\imconfig.h">
+    <ClInclude Include="include\OgRendering\UI\imgui\imconfig.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\OgRendering\Utils\imgui\imgui.h">
+    <ClInclude Include="include\OgRendering\UI\imgui\imgui.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\OgRendering\Utils\imgui\imgui_impl_glfw.h">
+    <ClInclude Include="include\OgRendering\UI\imgui\imgui_impl_glfw.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\OgRendering\Utils\imgui\imgui_impl_vulkan.h">
+    <ClInclude Include="include\OgRendering\UI\imgui\imgui_impl_vulkan.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\OgRendering\Utils\imgui\imgui_internal.h">
+    <ClInclude Include="include\OgRendering\UI\imgui\imgui_internal.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\OgRendering\Utils\imgui\imstb_rectpack.h">
+    <ClInclude Include="include\OgRendering\UI\imgui\imstb_rectpack.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\OgRendering\Utils\imgui\imstb_textedit.h">
+    <ClInclude Include="include\OgRendering\UI\imgui\imstb_textedit.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\OgRendering\Utils\imgui\imstb_truetype.h">
+    <ClInclude Include="include\OgRendering\UI\imgui\imstb_truetype.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OgRendering\Resource\ObjectInstance.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OgRendering\Resource\ModelRasterization.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OgRendering\Resource\TextureData.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OgRendering\Managers\Loaders\GltfLoader\json.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OgRendering\Managers\Loaders\GltfLoader\stb_image.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OgRendering\Managers\Loaders\GltfLoader\tiny_gltf.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OgRendering\Managers\Loaders\GltfLoader\stb_image_write.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
@@ -161,43 +182,34 @@
     <ClCompile Include="src\OgRendering\Managers\Services\TextureService.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\OgRendering\Editor\imgui.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\OgRendering\Editor\imgui_demo.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\OgRendering\Editor\imgui_draw.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\OgRendering\Editor\imgui_impl_glfw.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\OgRendering\Editor\imgui_impl_vulkan.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\OgRendering\Editor\imgui_widgets.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="include\OgRendering\Utils\imgui\imgui.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="include\OgRendering\Utils\imgui\imgui_demo.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="include\OgRendering\Utils\imgui\imgui_draw.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="include\OgRendering\Utils\imgui\imgui_impl_glfw.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="include\OgRendering\Utils\imgui\imgui_impl_vulkan.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="include\OgRendering\Utils\imgui\imgui_widgets.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\OgRendering\Managers\InputManager.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="include\OgRendering\UI\imgui\imgui.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="include\OgRendering\UI\imgui\imgui_demo.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="include\OgRendering\UI\imgui\imgui_draw.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="include\OgRendering\UI\imgui\imgui_impl_glfw.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="include\OgRendering\UI\imgui\imgui_impl_vulkan.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="include\OgRendering\UI\imgui\imgui_widgets.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OgRendering\Rendering\Denoiser.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OgRendering\Resource\ObjectInstance.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OgRendering\Resource\ModelRasterization.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

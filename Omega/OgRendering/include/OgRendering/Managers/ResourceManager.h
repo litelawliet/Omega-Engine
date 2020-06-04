@@ -20,18 +20,17 @@ namespace OgEngine
 		static inline void Add(std::string_view p_resourceName);
 
 		template<typename ResourceType>
-		[[nodiscard]] static inline std::shared_ptr<ResourceType> Get(std::string_view p_resourceName);
+		[[nodiscard]] static inline ResourceType* Get(std::string_view p_resourceName);
 
 		template<typename ResourceType>
 		static inline void WaitForResource(std::string_view p_resourceName);
 
+		static inline std::vector<Texture*>& GetAllTextures();
+		
 		static inline void WaitForAll() {
 			m_textureService.WaitForAll();
 			m_meshService.WaitForAll();
 		}
-
-		static void SetRaytracingLoading(bool p_raytracingEnabled);
-		static bool RaytracingLoadingEnabled();
 
 		ResourceManager(ResourceManager const&) = delete;
 		void operator=(ResourceManager const&) = delete;
@@ -53,7 +52,7 @@ namespace OgEngine
 	inline void ResourceManager::Add<Mesh>(std::string_view p_resourceName);
 
 	template<>
-	[[nodiscard]] inline std::shared_ptr<Mesh> ResourceManager::Get(std::string_view p_resourceName);
+	[[nodiscard]] inline Mesh* ResourceManager::Get(std::string_view p_resourceName);
 
 	template<>
 	inline void ResourceManager::WaitForResource<Mesh>(std::string_view p_resourceName);
@@ -64,7 +63,7 @@ namespace OgEngine
 	inline void ResourceManager::Add<Texture>(std::string_view p_resourceName);
 
 	template<>
-	[[nodiscard]] inline std::shared_ptr<Texture> ResourceManager::Get(std::string_view p_resourceName);
+	[[nodiscard]] inline Texture* ResourceManager::Get(std::string_view p_resourceName);
 
 	template<>
 	inline void ResourceManager::WaitForResource<Texture>(std::string_view p_resourceName);

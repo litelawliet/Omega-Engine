@@ -1,9 +1,6 @@
 #include <iostream>
-#include <OgAudio/Audio/AudioEngine.h>
 #include <OgCore/Core.h>
-#include <OgCore/Components/Transform.h>
 #include <OgRendering/Managers/ResourceManager.h>
-#include <OgCore/Managers/SceneManager.h>
 
 using namespace OgEngine;
 
@@ -11,10 +8,10 @@ int main()
 {
 	try
 	{
-
+		srand(static_cast<unsigned int>(time(NULL)));
 		ResourceManager::SetRaytracingLoading(false);
 		ResourceManager::Add<Mesh>("Resources/models/cube.obj");
-		ResourceManager::Add<Mesh>("Resources/models/link.obj");
+		//ResourceManager::Add<Mesh>("Resources/models/link.obj");
 		ResourceManager::Add<Mesh>("Resources/models/sphere.obj");
 		ResourceManager::Add<Mesh>("Resources/models/plane.obj");
 		ResourceManager::Add<Mesh>("Resources/models/lucy.obj");

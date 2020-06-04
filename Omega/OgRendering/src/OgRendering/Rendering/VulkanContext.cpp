@@ -1,9 +1,8 @@
 #include <OgRendering/Rendering/VulkanContext.h>
 #include <iostream>
-#include <cassert>
 #include <algorithm>
 #include <fstream>
-#include <OgRendering/Rendering/SwapChainSupportDetails.h>
+#include <set>
 #include <OgRendering/Utils/Debugger.h>
 
 #include <OgRendering/Managers/InputManager.h>
@@ -58,24 +57,33 @@ void OgEngine::VulkanContext::InitWindow(const int p_width, const int p_height, 
 
 void OgEngine::VulkanContext::DestroyContext() const
 {
-	if (isUsingRaytracing)
-		m_RTPipeline->CleanUp();
-	else
+	if (isUsingRaytracing && m_RTPipeline)
+		m_RTPipeline->CleanPipeline();
+	else if (m_RSPipeline)
 		m_RSPipeline->CleanPipeline();
 
-	vkDestroyDevice(m_vulkanDevice.m_logicalDevice, nullptr);
+	vkDestroyDevice(m_vulkanDevice.logicalDevice, nullptr);
 
 	if (enableValidationLayers)
 	{
 		DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
 	}
 
-	vkDestroySurfaceKHR(m_instance, m_vulkanDevice.m_surface, nullptr);
+	vkDestroySurfaceKHR(m_instance, m_vulkanDevice.surface, nullptr);
 	vkDestroyInstance(m_instance, nullptr);
 
 	glfwDestroyWindow(m_window);
 
 	glfwTerminate();
+
+	if (m_RSPipeline != nullptr)
+	{
+		delete m_RSPipeline;
+	}
+	if (m_RTPipeline != nullptr)
+	{
+		delete m_RTPipeline;
+	}
 
 	std::cout << "\nContext Successfully Destroyed! \n";
 }
@@ -86,53 +94,36 @@ void OgEngine::VulkanContext::MainLoop() const
 	double currentTime = 0.0;
 	uint64_t frameCount = 0u;
 
-	/*auto renderSystem = SceneManager::RegisterSystem<OgEngine::RenderingSystem>();
-	{
-		Signature signature;
-		signature.set(SceneManager::GetComponentType<Model>());
-		signature.set(SceneManager::GetComponentType<Transform>());
-		SceneManager::SetSystemSignature<RenderingSystem>(signature);
-	}
-	renderSystem->Init();
-	*/
 	float dt = 0.0f;
 	
 	while (!glfwWindowShouldClose(m_window) || m_renderingLoop.load())
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 		currentTime = glfwGetTime();
-		// TODO: GET EVENT, AND UPDATE THEM
 		glfwPollEvents();
 
-		// TODO: GAME LOGIC
 		frameCount++;
 		if (currentTime - previousTime >= 1.0)
 		{
-			glfwSetWindowTitle(m_window, std::string("Vulkan, FPS:" + std::to_string(frameCount)).c_str());
-
 			frameCount = 0u;
 			previousTime = currentTime;
-			
 		}
 		
 		// Rendering using the selected pipeline
 		if (isUsingRaytracing)
 		{
-			//RTPipeline->m_models[0]->Rotate({ 0, 0.002f, 0 });
 			m_RTPipeline->UpdateTLAS();
-			m_RTPipeline->Draw();
+			m_RTPipeline->RenderFrame();
 		}
 		else
 		{
-			m_RSPipeline->DrawFrame();
+			m_RSPipeline->RenderFrame();
 		}
 
 		auto stopTime = std::chrono::high_resolution_clock::now();
 
 		dt = std::chrono::duration<float, std::chrono::seconds::period>(stopTime - startTime).count();
 	}
-
-	//vkDeviceWaitIdle(m_vulkanDevice.logicalDevice);
 }
 
 VkResult OgEngine::VulkanContext::CreateDebugUtilsMessengerEXT(VkInstance p_instance, const VkDebugUtilsMessengerCreateInfoEXT* p_pCreateInfo, const VkAllocationCallbacks* p_pAllocator, VkDebugUtilsMessengerEXT* p_pDebugMessenger)
@@ -161,10 +152,10 @@ void OgEngine::VulkanContext::DestroyDebugUtilsMessengerEXT(VkInstance p_instanc
 }
 void OgEngine::VulkanContext::InitInstance()
 {
-	if (!CheckValidationLayers())
+	/*if (!CheckValidationLayers())
 	{
 		throw std::runtime_error("validation layers requested, but not available!");
-	}
+	}*/
 
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -172,7 +163,7 @@ void OgEngine::VulkanContext::InitInstance()
 	appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 1);
 	appInfo.pEngineName = "Omega";
 	appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 1);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	appInfo.apiVersion = VK_API_VERSION_1_2;
 
 	VkInstanceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -206,11 +197,14 @@ void OgEngine::VulkanContext::InitInstance()
 	{
 		throw std::runtime_error("failed to create instance!");
 	}
-	const VkResult err = glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_vulkanDevice.m_surface);
+	const VkResult err = glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_vulkanDevice.surface);
 
+	m_vulkanDevice.instance = m_instance;
+	
 	if (err)
 		throw std::runtime_error("failed to create surface!");
 }
+
 void OgEngine::VulkanContext::InitGpuDevice()
 {
 	//m_vulkanDevice.physicalDevice = nullptr;
@@ -228,11 +222,11 @@ void OgEngine::VulkanContext::InitGpuDevice()
 	std::cout << "GPUs available: \n";
 	for (size_t i = 0; i < GPUs.size(); ++i)
 	{
-		memset(&m_vulkanDevice.m_gpuProperties, 0, sizeof(m_vulkanDevice.m_gpuProperties));
+		memset(&m_vulkanDevice.gpuProperties, 0, sizeof(m_vulkanDevice.gpuProperties));
 
-		vkGetPhysicalDeviceProperties(GPUs[i], &m_vulkanDevice.m_gpuProperties);
+		vkGetPhysicalDeviceProperties(GPUs[i], &m_vulkanDevice.gpuProperties);
 
-		std::cout << i << ": " << m_vulkanDevice.m_gpuProperties.deviceName << '\n';
+		std::cout << i << ": " << m_vulkanDevice.gpuProperties.deviceName << '\n';
 	}
 	int id;
 	while (true)
@@ -240,18 +234,18 @@ void OgEngine::VulkanContext::InitGpuDevice()
 		std::cin >> id;
 		if (IsPhysicalDeviceSuitable(GPUs[id]))
 		{
-			m_vulkanDevice.m_gpu = GPUs[id];
-			m_vulkanDevice.m_gpuEnabledFeatures = m_vulkanDevice.m_gpuFeatures[id];
-			vkGetPhysicalDeviceMemoryProperties(m_vulkanDevice.m_gpu, &m_vulkanDevice.m_gpuMemoryProperties);
+			m_vulkanDevice.gpu = GPUs[id];
+			m_vulkanDevice.gpuEnabledFeatures = m_vulkanDevice.gpuFeatures[id];
+			vkGetPhysicalDeviceMemoryProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuMemoryProperties);
 			break;
 		}
 		std::cout << "Device is not suitable for the Renderer! \n";
 	}
-	vkGetPhysicalDeviceProperties(m_vulkanDevice.m_gpu, &m_vulkanDevice.m_gpuProperties);
+	vkGetPhysicalDeviceProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuProperties);
 
-	std::cout << "Selected GPU: " << m_vulkanDevice.m_gpuProperties.deviceName << '\n';
+	std::cout << "Selected GPU: " << m_vulkanDevice.gpuProperties.deviceName << '\n';
 
-	if (m_vulkanDevice.m_gpu == nullptr)
+	if (m_vulkanDevice.gpu == nullptr)
 	{
 		throw std::runtime_error("failed to find a suitable GPU!");
 	}
@@ -259,7 +253,7 @@ void OgEngine::VulkanContext::InitGpuDevice()
 
 void OgEngine::VulkanContext::InitLogicalDevice()
 {
-	QueueFamilyIndices indices = FindQueueFamilies(m_vulkanDevice.m_gpu);
+	QueueFamilyIndices indices = FindQueueFamilies(m_vulkanDevice.gpu);
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -275,7 +269,7 @@ void OgEngine::VulkanContext::InitLogicalDevice()
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	m_vulkanDevice.m_gpuEnabledFeatures.samplerAnisotropy = VK_TRUE;
+	m_vulkanDevice.gpuEnabledFeatures.samplerAnisotropy = VK_TRUE;
 	
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -289,7 +283,7 @@ void OgEngine::VulkanContext::InitLogicalDevice()
     indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
     indexingFeatures.runtimeDescriptorArray = VK_TRUE;
 
-	createInfo.pEnabledFeatures = &m_vulkanDevice.m_gpuEnabledFeatures;
+	createInfo.pEnabledFeatures = &m_vulkanDevice.gpuEnabledFeatures;
     createInfo.pNext = &indexingFeatures;
 
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(m_gpuExtensions.size());
@@ -305,16 +299,16 @@ void OgEngine::VulkanContext::InitLogicalDevice()
 		createInfo.enabledLayerCount = 0;
 	}
 
-	if (vkCreateDevice(m_vulkanDevice.m_gpu, &createInfo, nullptr, &m_vulkanDevice.m_logicalDevice) != VK_SUCCESS)
+	if (vkCreateDevice(m_vulkanDevice.gpu, &createInfo, nullptr, &m_vulkanDevice.logicalDevice) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create logical device!");
 	}
 
-	vkGetDeviceQueue(m_vulkanDevice.m_logicalDevice, indices.graphicsFamily.value(), 0, &m_graphicsQueue);
-	vkGetDeviceQueue(m_vulkanDevice.m_logicalDevice, indices.presentFamily.value(), 0, &m_presentQueue);
+	vkGetDeviceQueue(m_vulkanDevice.logicalDevice, indices.graphicsFamily.value(), 0, &m_graphicsQueue);
+	vkGetDeviceQueue(m_vulkanDevice.logicalDevice, indices.presentFamily.value(), 0, &m_presentQueue);
 
-	m_vulkanDevice.m_gpuGraphicFamily = std::make_optional(indices.graphicsFamily.value());
-	m_vulkanDevice.m_gpuPresentFamily = std::make_optional(indices.presentFamily.value());
+	m_vulkanDevice.graphicFamily = std::make_optional(indices.graphicsFamily.value());
+	m_vulkanDevice.presentFamily = std::make_optional(indices.presentFamily.value());
 }
 
 bool OgEngine::VulkanContext::CheckValidationLayers() const
@@ -411,12 +405,12 @@ void OgEngine::VulkanContext::SetupDebugMessenger()
 
 bool OgEngine::VulkanContext::IsPhysicalDeviceSuitable(VkPhysicalDevice p_gpu)
 {
-	vkGetPhysicalDeviceMemoryProperties(p_gpu, &m_vulkanDevice.m_gpuMemoryProperties);
+	vkGetPhysicalDeviceMemoryProperties(p_gpu, &m_vulkanDevice.gpuMemoryProperties);
 	VkPhysicalDeviceFeatures p_features;
     p_features.shaderStorageBufferArrayDynamicIndexing = true;
 
 	vkGetPhysicalDeviceFeatures(p_gpu, &p_features);
-	m_vulkanDevice.m_gpuFeatures.push_back(p_features);
+	m_vulkanDevice.gpuFeatures.push_back(p_features);
 	const QueueFamilyIndices indices = FindQueueFamilies(p_gpu);
 
 	const bool extensionsSupported = CheckDeviceExtensionSupport(p_gpu);
@@ -460,25 +454,25 @@ SupportDetails OgEngine::VulkanContext::SwapChainSupport(VkPhysicalDevice p_devi
 {
 	SupportDetails details;
 
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(p_device, m_vulkanDevice.m_surface, &details.capabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(p_device, m_vulkanDevice.surface, &details.capabilities);
 	minImageCount = details.capabilities.minImageCount;
 
 	uint32_t formatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(p_device, m_vulkanDevice.m_surface, &formatCount, nullptr);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(p_device, m_vulkanDevice.surface, &formatCount, nullptr);
 
 	if (formatCount != 0)
 	{
 		details.formats.resize(formatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(p_device, m_vulkanDevice.m_surface, &formatCount, details.formats.data());
+		vkGetPhysicalDeviceSurfaceFormatsKHR(p_device, m_vulkanDevice.surface, &formatCount, details.formats.data());
 	}
 
 	uint32_t presentModeCount;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(p_device, m_vulkanDevice.m_surface, &presentModeCount, nullptr);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(p_device, m_vulkanDevice.surface, &presentModeCount, nullptr);
 
 	if (presentModeCount != 0)
 	{
 		details.presentModes.resize(presentModeCount);
-		vkGetPhysicalDeviceSurfacePresentModesKHR(p_device, m_vulkanDevice.m_surface, &presentModeCount, details.presentModes.data());
+		vkGetPhysicalDeviceSurfacePresentModesKHR(p_device, m_vulkanDevice.surface, &presentModeCount, details.presentModes.data());
 	}
 
 	return details;
@@ -500,15 +494,15 @@ QueueFamilyIndices OgEngine::VulkanContext::FindQueueFamilies(VkPhysicalDevice p
 	vkGetPhysicalDeviceQueueFamilyProperties(p_gpu, &queueFamilyCount, nullptr);
 
 	//Get actual info of the GPU's QueueFamily
-	m_vulkanDevice.m_queueFamilyProperties.resize(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(p_gpu, &queueFamilyCount, m_vulkanDevice.m_queueFamilyProperties.data());
+	m_vulkanDevice.queueFamilyProperties.resize(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(p_gpu, &queueFamilyCount, m_vulkanDevice.queueFamilyProperties.data());
 
 	int i = 0;
-	for (const auto& queueFamily : m_vulkanDevice.m_queueFamilyProperties)
+	for (const auto& queueFamily : m_vulkanDevice.queueFamilyProperties)
 	{
 		//Finding support for image rendering (presentation)
 		VkBool32 presentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(p_gpu, i, m_vulkanDevice.m_surface, &presentSupport);
+		vkGetPhysicalDeviceSurfaceSupportKHR(p_gpu, i, m_vulkanDevice.surface, &presentSupport);
 
 		if (presentSupport)
 		{
@@ -534,7 +528,7 @@ void OgEngine::VulkanContext::FramebufferResizeCallback(GLFWwindow* window, int 
 	app->framebufferResized = true;
 }
 
-void OgEngine::VulkanContext::VK_ERROR( VkResult p_result) const
+void OgEngine::VulkanContext::VK_ERROR(VkResult p_result) const
 {
 	std::cout << "VK_RESULT CODE: " << p_result << '\n';
 	if (p_result != VK_SUCCESS)
@@ -548,9 +542,9 @@ void OgEngine::VulkanContext::SetRenderingLoop(const bool p_renderingLoop)
 	m_renderingLoop.store(p_renderingLoop);
 }
 
-void OgEngine::VulkanContext::ChangeWindowTitle(std::string_view p_title, const uint64_t p_fps)
+void OgEngine::VulkanContext::ChangeWindowTitle(std::string_view p_title, const uint64_t p_fps) const
 {
-	glfwSetWindowTitle(m_window, std::string("Vulkan, FPS:" + std::to_string(p_fps)).c_str());
+	glfwSetWindowTitle(m_window, std::string(p_title.data() + std::to_string(p_fps)).c_str());
 }
 
 void OgEngine::VulkanContext::PollEvents() const
@@ -558,7 +552,7 @@ void OgEngine::VulkanContext::PollEvents() const
 	glfwPollEvents();
 }
 
-bool OgEngine::VulkanContext::WindowShouldClose()
+bool OgEngine::VulkanContext::WindowShouldClose() const
 {
 	return glfwWindowShouldClose(m_window);
 }
@@ -633,23 +627,17 @@ void OgEngine::VulkanContext::CheckRaytracingSupport()
 
 void OgEngine::VulkanContext::InitSelectedRenderer()
 {
-	std::cout << "Preparing Renderer...\n";
-
 	if (isUsingRaytracing)
 	{
 		
-		m_RTPipeline = std::make_shared<OgEngine::RaytracingPipeline>(m_vulkanDevice, m_width, m_height, m_graphicsQueue, m_presentQueue, m_window, minImageCount);
-		ResourceManager::SetRaytracingLoading(true);
+		m_RTPipeline = new OgEngine::RaytracingPipeline(m_vulkanDevice, m_width, m_height, m_graphicsQueue, m_presentQueue, m_window, minImageCount);
 		m_RTPipeline->SetupRaytracingPipeline();
 	}
 	else
 	{
-		m_RSPipeline = std::make_shared<OgEngine::RasterizerPipeline>(m_window, m_vulkanDevice, m_graphicsQueue, m_presentQueue,
+		m_RSPipeline = new OgEngine::RasterizerPipeline(m_window, m_vulkanDevice, m_graphicsQueue, m_presentQueue,
 			m_width, m_height);
-		ResourceManager::SetRaytracingLoading(false);
 
 		m_RSPipeline->SetupPipeline();
 	}
-
-	std::cout << "Renderer created.\n";
 }

@@ -73,33 +73,33 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)include;$(SolutionDir)Dependencies\GPM\include;$(SolutionDir)Dependencies\assimp5\include;$(SolutionDir)Dependencies\vulkan\include;$(SolutionDir)Dependencies\ParserIni\include;$(SolutionDir)Dependencies\glfw\include;$(SolutionDir)Dependencies\irrKlang\include;$(SolutionDir)OgAudio\include;$(SolutionDir)OgRendering\include;$(SolutionDir)Dependencies\glm\include;$(SolutionDir)OgCore\include;$(ProjectDir)UI;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)UI;$(SolutionDir)OgCore\include;$(SolutionDir)OgRendering\include;$(SolutionDir)OgPhysics\include;$(SolutionDir)OgAudio\include;$(SolutionDir)Dependencies\GPM\include;$(SolutionDir)Dependencies\assimp5\include;$(SolutionDir)Dependencies\ParserIni\include;$(SolutionDir)Dependencies\vulkan\include;$(SolutionDir)Dependencies\glfw\include;$(SolutionDir)Dependencies\irrKlang\include;$(SolutionDir)Dependencies\PhysX\physx\include;$(SolutionDir)Dependencies\glm\include;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)src;$(ProjectDir)UI;$(SourcePath)</SourcePath>
-    <LibraryPath>$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\glfw\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)include;$(SolutionDir)Dependencies\GPM\include;$(SolutionDir)Dependencies\assimp5\include;$(SolutionDir)Dependencies\vulkan\include;$(SolutionDir)Dependencies\ParserIni\include;$(SolutionDir)Dependencies\glfw\include;$(SolutionDir)Dependencies\irrKlang\include;$(SolutionDir)OgAudio\include;$(SolutionDir)OgRendering\include;$(SolutionDir)Dependencies\glm\include;$(SolutionDir)OgCore\include;$(ProjectDir)UI;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)UI;$(SolutionDir)OgCore\include;$(SolutionDir)OgRendering\include;$(SolutionDir)OgPhysics\include;$(SolutionDir)OgAudio\include;$(SolutionDir)Dependencies\GPM\include;$(SolutionDir)Dependencies\assimp5\include;$(SolutionDir)Dependencies\ParserIni\include;$(SolutionDir)Dependencies\vulkan\include;$(SolutionDir)Dependencies\glfw\include;$(SolutionDir)Dependencies\irrKlang\include;$(SolutionDir)Dependencies\PhysX\physx\include;$(SolutionDir)Dependencies\glm\include;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)src;$(ProjectDir)UI;$(SourcePath)</SourcePath>
-    <LibraryPath>$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\glfw\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)include;$(SolutionDir)Dependencies\GPM\include;$(SolutionDir)Dependencies\assimp5\include;$(SolutionDir)Dependencies\vulkan\include;$(SolutionDir)Dependencies\ParserIni\include;$(SolutionDir)Dependencies\glfw\include;$(SolutionDir)Dependencies\irrKlang\include;$(SolutionDir)OgAudio\include;$(SolutionDir)OgRendering\include;$(SolutionDir)Dependencies\glm\include;$(SolutionDir)OgCore\include;$(ProjectDir)UI;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)UI;$(SolutionDir)OgCore\include;$(SolutionDir)OgRendering\include;$(SolutionDir)OgPhysics\include;$(SolutionDir)OgAudio\include;$(SolutionDir)Dependencies\GPM\include;$(SolutionDir)Dependencies\assimp5\include;$(SolutionDir)Dependencies\ParserIni\include;$(SolutionDir)Dependencies\vulkan\include;$(SolutionDir)Dependencies\glfw\include;$(SolutionDir)Dependencies\irrKlang\include;$(SolutionDir)Dependencies\PhysX\physx\include;$(SolutionDir)Dependencies\glm\include;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)src;$(ProjectDir)UI;$(SourcePath)</SourcePath>
-    <LibraryPath>$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\glfw\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)include;$(SolutionDir)Dependencies\GPM\include;$(SolutionDir)Dependencies\assimp5\include;$(SolutionDir)Dependencies\vulkan\include;$(SolutionDir)Dependencies\ParserIni\include;$(SolutionDir)Dependencies\glfw\include;$(SolutionDir)Dependencies\irrKlang\include;$(SolutionDir)OgAudio\include;$(SolutionDir)OgRendering\include;$(SolutionDir)Dependencies\glm\include;$(SolutionDir)OgCore\include;$(ProjectDir)UI;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)UI;$(SolutionDir)OgCore\include;$(SolutionDir)OgRendering\include;$(SolutionDir)OgPhysics\include;$(SolutionDir)OgAudio\include;$(SolutionDir)Dependencies\GPM\include;$(SolutionDir)Dependencies\assimp5\include;$(SolutionDir)Dependencies\ParserIni\include;$(SolutionDir)Dependencies\vulkan\include;$(SolutionDir)Dependencies\glfw\include;$(SolutionDir)Dependencies\irrKlang\include;$(SolutionDir)Dependencies\PhysX\physx\include;$(SolutionDir)Dependencies\glm\include;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)src;$(ProjectDir)UI;$(SourcePath)</SourcePath>
-    <LibraryPath>$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\glfw\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -110,15 +110,29 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;vulkan-1.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>LinkVerboseREF</ShowProgress>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy "$(SolutionDir)Resources" "$(SolutionDir)bin\$(Platform)\$(Configuration)\Resources\" /E /S /Y 
+xcopy "$(SolutionDir)Resources" "$(ProjectDir)Resources\" /E /S /Y
+xcopy "$(SolutionDir)OgCore\imgui.ini" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /Y</Command>
+    </PreBuildEvent>
+    <PreLinkEvent>
+      <Command>xcopy "$(SolutionDir)dll\OgCore\$(Platform)\$(Configuration)\OgCore.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgAudio\$(Platform)\$(Configuration)\OgAudio.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgRendering\$(Platform)\$(Configuration)\OgRendering.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgPhysics\$(Platform)\$(Configuration)\OgPhysics.dll" "$(OutDir)" /E /S /Y</Command>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -127,13 +141,26 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;vulkan-1.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>LinkVerboseREF</ShowProgress>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy "$(SolutionDir)Resources" "$(SolutionDir)bin\$(Platform)\$(Configuration)\Resources\" /E /S /Y 
+xcopy "$(SolutionDir)Resources" "$(ProjectDir)Resources\" /E /S /Y
+xcopy "$(SolutionDir)OgCore\imgui.ini" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /Y</Command>
+    </PreBuildEvent>
+    <PreLinkEvent>
+      <Command>xcopy "$(SolutionDir)dll\OgCore\$(Platform)\$(Configuration)\OgCore.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgAudio\$(Platform)\$(Configuration)\OgAudio.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgRendering\$(Platform)\$(Configuration)\OgRendering.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgPhysics\$(Platform)\$(Configuration)\OgPhysics.dll" "$(OutDir)" /E /S /Y</Command>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -142,13 +169,26 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;vulkan-1.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>LinkVerboseREF</ShowProgress>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy "$(SolutionDir)Resources" "$(SolutionDir)bin\$(Platform)\$(Configuration)\Resources\" /E /S /Y 
+xcopy "$(SolutionDir)Resources" "$(ProjectDir)Resources\" /E /S /Y
+xcopy "$(SolutionDir)OgCore\imgui.ini" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /Y</Command>
+    </PreBuildEvent>
+    <PreLinkEvent>
+      <Command>xcopy "$(SolutionDir)dll\OgCore\$(Platform)\$(Configuration)\OgCore.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgAudio\$(Platform)\$(Configuration)\OgAudio.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgRendering\$(Platform)\$(Configuration)\OgRendering.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgPhysics\$(Platform)\$(Configuration)\OgPhysics.dll" "$(OutDir)" /E /S /Y</Command>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -159,19 +199,34 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;vulkan-1.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;VkLayer_utils.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>LinkVerboseREF</ShowProgress>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy "$(SolutionDir)Resources" "$(SolutionDir)bin\$(Platform)\$(Configuration)\Resources\" /E /S /Y 
+xcopy "$(SolutionDir)Resources" "$(ProjectDir)Resources\" /E /S /Y
+xcopy "$(SolutionDir)OgCore\imgui.ini" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /Y</Command>
+    </PreBuildEvent>
+    <PreLinkEvent>
+      <Command>xcopy "$(SolutionDir)dll\OgCore\$(Platform)\$(Configuration)\OgCore.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgAudio\$(Platform)\$(Configuration)\OgAudio.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgRendering\$(Platform)\$(Configuration)\OgRendering.dll" "$(OutDir)" /E /S /Y
+xcopy "$(SolutionDir)dll\OgPhysics\$(Platform)\$(Configuration)\OgPhysics.dll" "$(OutDir)" /E /S /Y</Command>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\Editor.h" />
     <ClInclude Include="include\UI\imgui\imconfig.h" />
+    <ClInclude Include="include\UI\imgui\imfilebrowser.h" />
     <ClInclude Include="include\UI\imgui\imgui.h" />
     <ClInclude Include="include\UI\imgui\imgui_impl_glfw.h" />
     <ClInclude Include="include\UI\imgui\imgui_impl_vulkan.h" />
@@ -188,6 +243,20 @@
     <ClCompile Include="include\UI\imgui\imgui_impl_vulkan.cpp" />
     <ClCompile Include="include\UI\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\Editor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OgAudio\OgAudio.vcxproj">
+      <Project>{e0e3ad75-a0b7-4fe9-87e1-d7524f0ad918}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\OgCore\OgCore.vcxproj">
+      <Project>{7259e9b5-c9fc-46f6-be60-0ba3c62383e0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\OgPhysics\OgPhysics.vcxproj">
+      <Project>{1f4a4900-a14f-4f17-a004-5f901dbc51de}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\OgRendering\OgRendering.vcxproj">
+      <Project>{c736ea81-2072-46e0-a9b3-c5ee867a9976}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

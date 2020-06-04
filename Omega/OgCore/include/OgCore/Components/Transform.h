@@ -1,10 +1,10 @@
 #pragma once
-
+#include <OgCore/Export.h>
 #include <GPM/GPM.h>
 
 namespace OgEngine
 {
-	struct Transform final
+	struct CORE_API Transform final
 	{
 		/**
 		 *	@brief World transform of this gameObject (read-only)
@@ -39,7 +39,7 @@ namespace OgEngine
 		/**
 		 *	@brief World rotation of this gameObject in radians (read-only)
 		 */
-		const Quaternion &rotation = _rotation;
+		const Quaternion& rotation = _rotation;
 
 		/**
 		 *	@brief Local rotation of this gameObject in radians (read-only)
@@ -47,15 +47,35 @@ namespace OgEngine
 		const Quaternion& localRotation = _localRotation;
 
 		/**
-		*	@brief Return parent transform (read-only). If no parent exists, returns nullptr
-		*	@return Transform* : The parent transform if existing
+		 * @brief Name of the gameObject (read-only)
 		*/
-		[[nodiscard]] const Transform* GetParent() const;
+		const std::string& name = _name;
 
+		/**
+		*	@brief Default constructor
+		*/
 		Transform();
-		explicit Transform(const Matrix4F& p_matrix);
+		/**
+		*	@brief Constructor using a matrix
+		*	@param p_matrix The matrix used to set the transform
+		*/
+		explicit Transform(Matrix4F p_matrix);
+
+		/**
+		*	@brief Copy constructor
+		*	@param p_other The other transform
+		*/
 		Transform(const Transform& p_other);
+
+		/**
+		*	@brief Move constructor
+		*	@param p_other The other transform
+		*/
 		Transform(Transform&& p_other) noexcept;
+
+		/**
+		*	@brief Destructor
+		*/
 		~Transform() = default;
 
 		/**
@@ -103,8 +123,17 @@ namespace OgEngine
 		/**
 		 * @brief Set the transform world matrix.
 		 * @param p_worldMatrix The new parent of this transform
+		 * @note This method should be used when updating the children of the scenegraph.
 		 */
 		void SetWorldMatrix(const GPM::Matrix4F& p_worldMatrix);
+
+		/**
+		 * @brief Set the GameObject's name
+		 * @param p_name is the new name of the object
+		*/
+		void SetName(const std::string& p_name);
+
+		[[nodiscard]] std::string Serialize(const int p_depth) const;
 
 		/**
 		 * @brief Return the world forward of this transform.
@@ -142,7 +171,30 @@ namespace OgEngine
 		 */
 		[[nodiscard]] Vector3F LocalRight() const;
 
+		/**
+		* @brief Return parent transform (read-only). If no parent exists, returns nullptr
+		* @return Transform* : The parent transform if existing
+		*/
+		[[nodiscard]] const Transform* GetParent() const;
+
+		/**
+		* @brief Tell if this Transform has a parent
+		* @return True of False
+		*/
+		[[nodiscard]] bool HasParent() const;
+
+		/**
+		 * @brief Copy assignment
+		 * @param p_other The other transform
+		 * @return The other transform to copy
+		 */
 		Transform& operator=(const Transform& p_other);
+
+		/**
+		 * @brief Move assignment
+		 * @param p_other The other transform
+		 * @return The other transform to move
+		 */
 		Transform& operator=(Transform&& p_other) noexcept;
 
 
@@ -155,11 +207,24 @@ namespace OgEngine
 		alignas(16) Vector3F _localScale;
 		alignas(16) Quaternion _rotation;
 		alignas(16) Quaternion _localRotation;
-		alignas(16) Transform* _parent = nullptr;
+		alignas(8) Transform* _parent = nullptr;
+		std::string _name;
 
-		void GenerateMatrices(const Vector3F & p_position, const Quaternion & p_rotation, const Vector3F & p_scale);
+		/**
+		 * @brief Generate the local matrix using the locals position, rotation and scale.
+		 * @param p_position The local position
+		 * @param p_rotation The local rotation
+		 * @param p_scale The local scale
+		 */
+		void GenerateMatrices(const Vector3F& p_position, const Quaternion& p_rotation, const Vector3F& p_scale);
+
+		/**
+		 * @brief Decompose the world matrix and set all the world position, rotation and scale out of it.
+		 */
 		void DecomposeWorldMatrix();
-		
+
+		[[nodiscard]] static std::string DepthIndent(const int p_depth);
+
 	};
 
 	std::ostream& operator<<(std::ostream& p_out, const Transform& p_other);

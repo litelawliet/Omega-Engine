@@ -127,9 +127,6 @@ namespace GPM
         constexpr static Matrix4<T> Orthographic(const T p_left, const T p_right, const T p_bottom, const T p_top, const T p_near = static_cast<T>(0), const T p_far = static_cast<T>(1000));
 #pragma endregion
 
-        //TODO clean these
-        //methods
-        
         constexpr void SetColumn(const int p_column, const Vector4<T>& p_vector);
         constexpr void SetRow(const int p_row, const Vector4<T>& p_vector);
 
@@ -138,7 +135,7 @@ namespace GPM
 
 #pragma region Conversions
 
-        constexpr std::string ToString() const noexcept;
+        [[nodiscard]] constexpr std::string ToString() const noexcept;
         constexpr static std::string ToString(const Matrix4<T>& p_matrix);
 
 #pragma endregion
@@ -277,7 +274,7 @@ namespace GPM
         // static Matrix4<T> Multiply(const Matrix4<T>& p_matrix, const Matrix4<T>& p_other);
         template<typename U>
         static Vector4<T> Multiply(const Matrix4<U>& p_matrix, const Vector4<T>& p_vector);
-        bool Equals(const Matrix4<T>& p_other) const;
+        [[nodiscard]] bool Equals(const Matrix4<T>& p_other) const;
         template<typename U>
         static void Set(Matrix4<T>& p_matrix, const Matrix4<U>& p_other);
 

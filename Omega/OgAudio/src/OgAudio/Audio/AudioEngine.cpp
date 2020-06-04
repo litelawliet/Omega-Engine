@@ -36,9 +36,8 @@ OgEngine::AudioEngine::~AudioEngine()
 		m_filesPath.clear();
 		m_engine->removeAllSoundSources();
 		m_engine->drop();
+		m_engine = nullptr;
 	}
-
-	m_engine = nullptr;
 }
 
 OgEngine::AudioEngine& OgEngine::AudioEngine::operator=(OgEngine::AudioEngine&& p_other) noexcept

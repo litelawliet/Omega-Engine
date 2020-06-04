@@ -1,6 +1,6 @@
 #pragma once
 #include <OgRendering/Resource/Mesh.h>
-#include "OgRendering/Managers/ResourceManager.h"
+#include <OgRendering/Managers/ResourceManager.h>
 
 template <typename ResourceType>
 inline std::shared_ptr<ResourceType> OgEngine::LoaderManager::Load(std::string_view p_file)
@@ -12,16 +12,29 @@ inline std::shared_ptr<ResourceType> OgEngine::LoaderManager::Load(std::string_v
 template <>
 inline std::shared_ptr<OgEngine::Mesh> OgEngine::LoaderManager::Load<OgEngine::Mesh>(std::string_view p_file)
 {
-	Assimp::Importer importer;
-	const aiScene* scene;
-	if (ResourceManager::RaytracingLoadingEnabled())
+	const auto index = p_file.find_last_of(".");
+	if (index == std::string::npos)
 	{
-		scene = importer.ReadFile(p_file.data(), aiProcessPreset_TargetRealtime_Quality & ~aiProcess_JoinIdenticalVertices & ~aiProcess_GenSmoothNormals);
+		std::cerr << "LoaderManager error: " << p_file.data() << " is not a valid 3D mesh.\n";
+		return nullptr;
 	}
-	else
+
+	const std::string_view extension = p_file.data() + index;
+	if (extension == "gltf")
 	{
-		scene = importer.ReadFile(p_file.data(), aiProcessPreset_TargetRealtime_Quality);
-	} 
+		return AssimpLoad<OgEngine::Mesh>(p_file);
+	}
+
+	// Assimp by default
+	return AssimpLoad<OgEngine::Mesh>(p_file);
+
+}
+
+template<typename ResourceType>
+inline std::shared_ptr<ResourceType> OgEngine::LoaderManager::AssimpLoad(const std::string_view p_file)
+{
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(p_file.data(), aiProcessPreset_TargetRealtime_Quality & ~aiProcess_SplitLargeMeshes);
 
 	if (!scene)
 	{
@@ -31,6 +44,7 @@ inline std::shared_ptr<OgEngine::Mesh> OgEngine::LoaderManager::Load<OgEngine::M
 
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
+	std::shared_ptr<Mesh> mainMesh = nullptr;
 
 	for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
 	{
@@ -50,20 +64,22 @@ inline std::shared_ptr<OgEngine::Mesh> OgEngine::LoaderManager::Load<OgEngine::M
 			else
 				vertex.normal = { 1.0f, 1.0f, 1.0f };
 
-			if (mesh->HasTextureCoords(i))
-				vertex.texCoord = { mesh->mTextureCoords[i][j].x, mesh->mTextureCoords[i][j].y };
+			if (mesh->HasTextureCoords(0))
+			{
+				const aiVector3D uv = mesh->mTextureCoords[0][j];
+
+				vertex.texCoord = { uv.x, uv.y };
+			}
 			else
 				vertex.texCoord = { 1.0f, 1.0 };
 
 			if (mesh->HasTangentsAndBitangents())
 			{
 				vertex.tangent = { mesh->mTangents[j].x, mesh->mTangents[j].y, mesh->mTangents[j].z };
-				//vertex.bitangent = { mesh->mBitangents[j].x, mesh->mBitangents[j].y, mesh->mBitangents[j].z };
 			}
 			else
 			{
 				vertex.tangent = { 1.0f, 1.0f, 1.0f };
-				//vertex.bitangent = { 1.0f, 1.0f, 1.0f };
 			}
 
 			vertices.emplace_back(vertex);
@@ -76,7 +92,21 @@ inline std::shared_ptr<OgEngine::Mesh> OgEngine::LoaderManager::Load<OgEngine::M
 				indices.emplace_back(mesh->mFaces[j].mIndices[k]);
 			}
 		}
+
+		if (mainMesh == nullptr)
+		{
+			mainMesh = std::make_shared<Mesh>(vertices, indices);
+			mainMesh->SetMeshName(mesh->mName.C_Str());
+		}
+		else
+		{
+			mainMesh->AddSubMesh(std::make_shared<Mesh>(vertices, indices));
+			mainMesh->SubMeshes().back()->SetMeshName(mesh->mName.C_Str());
+		}
+
+		vertices.clear();
+		indices.clear();
 	}
 
-	return std::make_shared<Mesh>(vertices, indices);
+	return mainMesh;
 }

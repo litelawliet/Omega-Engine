@@ -30,9 +30,10 @@ namespace OgEngine
 		~Renderer() = delete;
 		static void Run();
 		static void InitVkRenderer(const int p_width, const int p_height, const char* p_name);
-		static const std::shared_ptr<OgEngine::VulkanContext>& GetVkContext();
+		static void DestroyVkRenderer();
+		static VulkanContext* GetVkContext();
 	private:
-		static std::shared_ptr<OgEngine::VulkanContext> m_context;
+		static VulkanContext* m_context;
 #endif
 	};
 }

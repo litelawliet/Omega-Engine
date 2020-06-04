@@ -1,6 +1,10 @@
 #pragma once
 #include <string_view>
 
+/**
+ * @brief Print the typename of a class
+ * @return The typename
+ */
 template <typename T>
 constexpr std::string_view type_name()
 {

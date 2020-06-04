@@ -7,41 +7,160 @@
 #include <OgRendering/Rendering/Device.h>
 #include <OgRendering/Resource/Mesh.h>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <OgRendering/UI/imgui/imgui.h>
+#include <OgRendering/Resource/ObjectInstance.h>
+#include <OgRendering/Resource/Texture.h>
+#include <OgRendering/Resource/TextureData.h>
 
+#include <OgRendering/Resource/Camera.h>
+
+
+#define MAX_TEXTURES_RS 64
+#define MAX_OBJECTS_RS 500
 
 namespace OgEngine
 {
 	const uint32_t MAX_FRAMES_IN_FLIGHT = 2u;
-
-	struct RENDERING_API BufferArrayOfMesh
+	
+	struct FrameBufferAttachment
 	{
-		Buffer vertexBuffer{};
-		Buffer indexBuffer{};
-		GPM::Matrix4F model{ Matrix4F::identity };
+		VkImage image;
+		VkDeviceMemory mem;
+		VkImageView view;
+	};
 
-		BufferArrayOfMesh()
-			= default;
+	struct OffscreenPass
+	{
+		int32_t width, height;
+		VkFramebuffer frameBuffer;
+		FrameBufferAttachment color, depth;
+		VkRenderPass renderPass;
+		VkSampler sampler;
+		VkDescriptorImageInfo descriptor;
+	};
+
+	struct Semaphore {
+		// Swap chain image presentation
+		VkSemaphore presentComplete;
+		// Command buffer submission and execution
+		VkSemaphore renderComplete;
 	};
 
 	class RENDERING_API RasterizerPipeline final
 	{
 	public:
+		/**
+		 * @brief Constructor
+		 * @param p_window The GLFW window
+		 * @param p_device Wrapper of vulkan device
+		 * @param p_graphicsQueue Graphics queue of the gpu
+		 * @param p_presentQueue Present queue of the gpu
+		 * @param p_width Width of the window
+		 * @param p_height Height of the window
+		 */
 		RasterizerPipeline(GLFWwindow* p_window, Device& p_device, VkQueue& p_graphicsQueue, VkQueue& p_presentQueue, const uint32_t p_width, const uint32_t p_height);
 
+		/**
+		 * @brief Setup the pipeline of the rasterizer
+		 */
 		void SetupPipeline();
+
+		/**
+		* @brief Clean all the resources of the pipeline
+		*/
 		void CleanPipeline();
-		void Update(const float p_dt, const GPM::Matrix4F& p_modelTransform, const std::shared_ptr<Mesh>& p_mesh);
-		void DrawFrame();
+
+		/**
+		 * @brief Update the internal resources
+		 * @param p_dt The time elapsed between two frames
+		 * @param p_objectID The entity we want to update
+		 * @param p_modelTransform The transform matrix of a mesh
+		 * @param p_mesh The mesh to update
+		 */
+		void Update(const float p_dt, const std::uint64_t p_objectID, const GPM::Matrix4F& p_modelTransform, Mesh* p_mesh, const std::string& p_texture, const std::string& p_normalMap, const GPM::Vector4F& p_color);
+
+		/**
+		 * @brief Draw the frame to the screen
+		 */
+		void RenderFrame();
+
+		/**
+		 * @brief Return the GUI context
+		 * @return A pointer to ImGuiContext
+		 */
 		ImGuiContext* GetUIContext();
+
+		/**
+		 * @brief Prepare a frame for ImGui
+		 */
 		void PrepareIMGUIFrame();
+
+		/**
+		 * @brief Draw the UI (internally used in RenderFrame)
+		 */
 		void DrawUI();
+
+		/**
+		 * @brief Submit the editor layout to an ImGuiFrame
+		 */
 		void DrawEditor();
-			
+
+		/**
+		 * @brief Destroy a mesh reference of the rendering using object ID (Entity of ECS)
+		 * @param p_objectID The object ID
+		 */
+		void DestroyObject(const std::uint64_t p_objectID);
+
+		/**
+		 * @brief Destroy all mesh reference of the rendering
+		 */
+		void CleanAllObjectInstance();
+
+		/**
+		* @brief Loads an image from path in an understandable format for ImGui
+		* @param p_texturePath is the path of the texture to load
+		*/
+        ImTextureID AddUITexture(const char* p_texturePath);
+
+		/**
+		* @brief Add a texture handle in the renderer using the path of the texture.
+		* @param p_texture The name of the texture to add
+		* @param p_textureType The type of the texture. Albedo (aka basic texture) map or normal map
+		*/
+		void CreateTexture(const std::string& p_texture, const TEXTURE_TYPE p_textureType);
+
+		/**
+		* @brief Add a texture handle in the renderer using the handle of the resource manager
+		* @param p_textureAddr is the handle of the texture to load from the resource manager
+		* @param p_textureType The type of the texture. Albedo (aka basic texture) map or normal map
+		*/
+		void CreateTexture(Texture* p_textureAddr, const TEXTURE_TYPE p_textureType);
+
+		/**
+		* @brief Add a texture handle in the renderer using the handle of the resource manager
+		* @param p_position is the handle of the texture to load from the resource manager
+		* @param p_rotation The type of the texture. Albedo (aka basic texture) map or normal map
+		*/
+		void UpdateCamera(const GPM::Vector3F& p_position, const GPM::Vector3F& p_rotation);
+
+		/**
+		* @brief Return the current camera
+		*/
+		Camera& GetCurrentCamera();
 	private:
 #pragma region Helpers
+		/**
+		 * @brief Return all the swap chain capabilities for a gpu
+		 * @param p_gpu The gpu device to check on
+		 * @return The swapchain support details
+		 */
 		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice& p_gpu) const;
+
+		/**
+		 * @brief Find the possible type of family for a gpu
+		 * @param p_physicalDevice The gpu device to check on
+		 */
 		void FindQueueFamilies(VkPhysicalDevice p_physicalDevice);
 		static VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<struct VkSurfaceFormatKHR>& p_availableFormats);
 		static VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& p_availablePresentModes);
@@ -59,8 +178,15 @@ namespace OgEngine
 		void CreateBuffer(const VkDeviceSize p_size, const VkBufferUsageFlags p_usage, VkMemoryPropertyFlags p_properties, VkBuffer& p_buffer, VkDeviceMemory& p_bufferMemory, const size_t p_dynamicOffset = 0) const;
 		VkResult CreateBuffer(VkBufferUsageFlags p_usageFlags, VkMemoryPropertyFlags p_memoryPropertyFlags, Buffer* p_buffer, VkDeviceSize p_size, void* p_data = nullptr) const;
 		void TransitionImageLayout(const VkImage p_image, VkFormat p_format, const VkImageLayout p_oldLayout, const VkImageLayout p_newLayout, const uint32_t p_mipLevels) const;
-		void UpdateUniformBuffer(const uint32_t p_currentImage, const Matrix4F& p_modelMatrix);
 		static void CHECK_ERROR(VkResult p_result);
+		void SetupOffScreenPass();
+		void CopyImage(VkImage p_source);
+
+		void InitFrame();
+		void DisplayFrame();
+		VkResult QueuePresent(VkQueue p_queue, uint32_t p_imageIndex, VkSemaphore p_waitSemaphore = nullptr) const;
+
+		//void HandleSurfaceChanges();
 #pragma endregion
 
 #pragma region PipelineMethods
@@ -73,19 +199,23 @@ namespace OgEngine
 		void CreateColorResources();
 		void CreateDepthResources();
 		void CreateFramebuffers();
-		void CreateTextureImage();
-		void CreateTextureImageView();
-		void CreateTextureSampler();
-		VkDescriptorImageInfo Create2DDescriptor(const VkImage& p_image, const VkSamplerCreateInfo& p_samplerCreateInfo, const VkFormat& p_format, const VkImageLayout& p_layout) const;
+
+		[[nodiscard]] VkDescriptorImageInfo Create2DDescriptor(const VkImage& p_image, const VkSamplerCreateInfo& p_samplerCreateInfo, const VkFormat& p_format, const VkImageLayout& p_layout) const;
 		void CreatePipelineCache();
 
-		void LoadModel();
-		void CreateVertexBuffer(const std::shared_ptr<Mesh>& p_mesh);
-		void CreateIndexBuffer(const std::shared_ptr<Mesh>& p_mesh);
-		void CreateUniformBuffers();
+		void CreateVertexBuffer(Mesh* p_mesh, Buffer* p_objectInstance) const;
+		void CreateIndexBuffer(Mesh* p_mesh, Buffer* p_objectInstance) const;
+		void AllocateBufferArray(ObjectInstance& p_objectInstance) const;
+		void AllocateDescriptorSet(ObjectInstance& p_objectInstance) const;
+		void BindDescriptorSet(ObjectInstance& p_objectInstance) const;
+		void UpdateUniformBuffer(ObjectInstance& p_objectInstance) const;
+		void DestroyObjectInstance(ObjectInstance& p_objectInstance) const;
 
+		void CreateTextureImage(TextureData& p_textureData, const Texture* p_loadedTexture) const;
+		void CreateTextureImageView(TextureData& p_textureData) const;
+		void CreateTextureSampler(TextureData& p_textureData);
+		
 		void CreateDescriptorPool();
-		void CreateDescriptorSets();
 		void CreateCommandBuffers();
 		void CreateSynchronizedObjects();
 		// Cleanup
@@ -98,6 +228,7 @@ namespace OgEngine
 		void SetupImGUIFrameBuffers();
 		void RescaleImGUI();
 		void RenderUI(uint32_t p_id);
+		void FreeImGUIContext();
 		
 #pragma endregion
 
@@ -119,26 +250,23 @@ namespace OgEngine
 		VkDescriptorSetLayout m_descriptorSetLayout{};
 		VkPipelineLayout m_pipelineLayout{};
 		VkPipeline m_graphicsPipeline{};
+
 		// ImGUI
+#pragma region IMGUIMembers
 		VkPipelineCache m_pipelineCache{};
 		VkRenderPass m_ImGUIrenderPass{};
 		VkCommandPool m_ImGUIcommandPool{};
 		VkDescriptorPool m_ImGUIdescriptorPool{};
 		std::vector<VkCommandBuffer> m_ImGUIcommandBuffers;
 		std::vector<VkFramebuffer> m_ImGUIframeBuffers;
+#pragma endregion
 
 		VkDescriptorPool m_descriptorPool{};
-		std::vector<VkDescriptorSet> m_descriptorSets;
 
 		VkCommandPool m_commandPool{};
 		std::vector<VkCommandBuffer> m_commandBuffers;
 
-		VkSampleCountFlagBits m_msaaSamples = VK_SAMPLE_COUNT_4_BIT;
-
-		VkBuffer m_vertexBuffer{};
-		VkDeviceMemory m_vertexBufferMemory{};
-		VkBuffer m_indexBuffer{};
-		VkDeviceMemory m_indexBufferMemory{};
+		VkSampleCountFlagBits m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
 		VkImage m_colorImage{};
 		VkDeviceMemory m_colorImageMemory{};
@@ -148,41 +276,37 @@ namespace OgEngine
 		VkDeviceMemory m_depthImageMemory{};
 		VkImageView m_depthImageView{};
 
+		// TODO : pass those images to a map to store multiple images
+		// map using objectID as key and the handling of the Image (texture) buffers
+		std::unordered_map<Texture*, TextureData> m_textures;
 		uint32_t m_mipLevels{};
 		VkImage m_textureImage{};
 		VkDeviceMemory m_textureImageMemory{};
 		VkImageView m_textureImageView{};
 		VkSampler m_textureSampler{};
-
-		std::vector<VkBuffer> m_uniformBuffers;
-		std::vector<VkDeviceMemory> m_uniformBuffersMemory;
-
-		std::vector<VkBuffer> m_lightsBuffers;
-		std::vector<VkDeviceMemory> m_lightsBuffersMemory;
-
-		std::vector<VkBuffer> m_materialsBuffers;
-		std::vector<VkDeviceMemory> m_materialsBuffersMemory;
-
-		std::vector<VkBuffer> m_lightNumberBuffers;
-		std::vector<VkDeviceMemory> m_lightNumberBuffersMemory;
-
+		
 		std::vector<VkSemaphore> m_imageAvailableSemaphores;
 		std::vector<VkSemaphore> m_renderFinishedSemaphores;
 		std::vector<VkFence> m_inFlightFences;
 		std::vector<VkFence> m_imagesInFlight;
 
-		std::array<uint64_t, 1> m_pushConstants;
+		uint32_t m_currentFrame{ 0u };
+		uint32_t m_imageIndex{ 0u };
 
-		size_t m_currentFrame{ 0u };
+		OffscreenPass m_offScreenPass;
 
-		std::vector<Vertex> m_vertices;
-		std::vector<uint32_t> m_indices;
-
-		std::map<std::shared_ptr<Mesh>, BufferArrayOfMesh> m_buffers;
+		std::unordered_map<std::uint64_t, ObjectInstance> m_buffers;
+		std::unordered_map<Mesh*, std::pair<Buffer, Buffer>> m_meshesBuffers;
 		//Window size
 		uint32_t m_width{ 0u };
 		uint32_t m_height{ 0u };
 		uint32_t m_minImageCount{ 0u };
+		Camera m_camera;
+
+		bool m_prepared = false;
+
+	public:
 		ImTextureID m_sceneID;
+
 	};
 }

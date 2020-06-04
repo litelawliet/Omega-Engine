@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
 #if defined(_WIN32)
 	#define DBG_ASSERT(f) { if(!(f)){ __debugbreak(); }; }
 #else

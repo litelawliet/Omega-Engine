@@ -1,16 +1,14 @@
 #include <OgRendering/Rendering/Renderer.h>
 
 #include <cassert>
-#include <iostream>
 
 #ifdef VULKAN_API
-std::shared_ptr<OgEngine::VulkanContext> OgEngine::Renderer::m_context;
+OgEngine::VulkanContext* OgEngine::Renderer::m_context = nullptr;
 #endif
 
 void OgEngine::Renderer::Run()
 {
     m_context->MainLoop();
-    m_context->DestroyContext();
 }
 
 void OgEngine::Renderer::InitVkRenderer(const int p_width, const int p_height, const char* p_name)
@@ -18,7 +16,7 @@ void OgEngine::Renderer::InitVkRenderer(const int p_width, const int p_height, c
 #ifdef VULKAN_API
     assert(m_context == nullptr);
 
-    m_context = std::make_shared<OgEngine::VulkanContext>();
+    m_context = new OgEngine::VulkanContext();
 
     assert(m_context != nullptr);
     
@@ -29,7 +27,17 @@ void OgEngine::Renderer::InitVkRenderer(const int p_width, const int p_height, c
 #endif
 }
 
-const std::shared_ptr<OgEngine::VulkanContext>& OgEngine::Renderer::GetVkContext()
+void OgEngine::Renderer::DestroyVkRenderer()
+{
+	if (m_context)
+	{
+        m_context->DestroyContext();
+        delete m_context;
+        m_context = nullptr;
+	}
+}
+
+OgEngine::VulkanContext* OgEngine::Renderer::GetVkContext()
 {
     return m_context;
 }
