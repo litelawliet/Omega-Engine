@@ -8,8 +8,8 @@
 #include <cstdint>
 #include <GPM/GPM.h>
 
-#define GPM_USE
-//#define GLM_USE
+//#define GPM_USE
+#define GLM_USE
 
 namespace OgEngine
 {
@@ -24,22 +24,22 @@ namespace OgEngine
 		void UpdateViewMatrix()
 		{
 #ifdef GPM_USE
-			GPM::Matrix4F rotMat = GPM::Matrix4F::identity;
-			rotMat = GPM::Matrix4F::Rotate(rotMat, GPM::Tools::Utils::ToRadians(rotation.x), GPM::Vector3F(1.0f, 0, 0));
-			rotMat = GPM::Matrix4F::Rotate(rotMat, GPM::Tools::Utils::ToRadians(rotation.y), GPM::Vector3F(0, 1.0f, 0));
-			rotMat = GPM::Matrix4F::Rotate(rotMat, GPM::Tools::Utils::ToRadians(rotation.z), GPM::Vector3F(0, 0, 1.0f));
+			glm::mat4 rotMat = glm::mat4::identity;
+			rotMat = glm::mat4::Rotate(rotMat, GPM::Tools::Utils::ToRadians(rotation.x), glm::vec3(1.0f, 0, 0));
+			rotMat = glm::mat4::Rotate(rotMat, GPM::Tools::Utils::ToRadians(rotation.y), glm::vec3(0, 1.0f, 0));
+			rotMat = glm::mat4::Rotate(rotMat, GPM::Tools::Utils::ToRadians(rotation.z), glm::vec3(0, 0, 1.0f));
 
-			GPM::Matrix4F transMat = GPM::Matrix4F::CreateTranslation(
-				GPM::Vector3F(position.x, position.y, position.z));
+			glm::mat4 transMat = glm::mat4::CreateTranslation(
+				glm::vec3(position.x, position.y, position.z));
 
 			const Vector4F fd = rotMat * Vector4F(0, 0, 1, 0);
-			forward = Vector3F(fd.x, fd.y, fd.z);
+			forward = glm::vec3(fd.x, fd.y, fd.z);
 
 			const Vector4F u = rotMat * Vector4F(0, 1, 0, 0);
-			up = Vector3F(u.x, u.y, u.z);
+			up = glm::vec3(u.x, u.y, u.z);
 
-			right = Vector3F::Cross(forward, up);
-			matrices.view = GPM::Matrix4F::LookAt(position, position + Vector3F(fd.x, fd.y, fd.z), Vector3F(u.x, u.y, u.z));
+			right = glm::vec3::Cross(forward, up);
+			matrices.view = glm::mat4::LookAt(position, position + glm::vec3(fd.x, fd.y, fd.z), glm::vec3(u.x, u.y, u.z));
 			//matrices.view(2,2) = -1;
 
 #endif
@@ -65,7 +65,7 @@ namespace OgEngine
 
 		void SetPerspective(const float p_fov, const float p_aspect, const float p_znear, const float p_zfar)
 		{
-			matrices.perspective = GPM::Matrix4F::Perspective(p_fov, p_aspect, p_znear, p_zfar);
+			matrices.perspective = glm::perspective(p_fov, p_aspect, p_znear, p_zfar);
 			//matrices.perspective(1, 1) *= -1;
 			this->fov = p_fov;
 			this->znear = p_znear;
@@ -74,25 +74,25 @@ namespace OgEngine
 			UpdateViewMatrix();
 		}
 
-		void SetPosition(const GPM::Vector3F& p_position)
+		void SetPosition(const glm::vec3& p_position)
 		{
 			this->position = p_position;
 			UpdateViewMatrix();
 		}
 
-		void SetRotation(const GPM::Vector3F& p_rotation)
+		void SetRotation(const glm::vec3& p_rotation)
 		{
 			this->rotation = p_rotation;
 			UpdateViewMatrix();
 		};
 
-		void Rotate(const GPM::Vector3F& p_delta)
+		void Rotate(const glm::vec3& p_delta)
 		{
 			this->rotation += p_delta;
 			UpdateViewMatrix();
 		}
 
-		void Translate(const GPM::Vector3F& p_delta)
+		void Translate(const glm::vec3& p_delta)
 		{
 			this->position += p_delta;
 			UpdateViewMatrix();
@@ -100,19 +100,19 @@ namespace OgEngine
 
 		struct
 		{
-			GPM::Matrix4F perspective;
-			GPM::Matrix4F view;
+			glm::mat4 perspective;
+			glm::mat4 view;
 		} matrices;
 
 	public:
 		float fov;
 		float znear, zfar;
 
-		GPM::Vector3F position{ 0, 0, 0 };
-		GPM::Vector3F rotation{ 0, 0, 0 };
-		Vector3F forward{ 0, 0, 1 };
-		Vector3F up{ 0, 1, 0 };
-		Vector3F right{ 1, 0, 0 };
+		glm::vec3 position{ 0, 0, 0 };
+		glm::vec3 rotation{ 0, 0, 0 };
+		glm::vec3 forward{ 0, 0, 1 };
+		glm::vec3 up{ 0, 1, 0 };
+		glm::vec3 right{ 1, 0, 0 };
 
 		bool DOF;
 		bool useGI;

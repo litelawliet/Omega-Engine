@@ -44,19 +44,19 @@ void OgEngine::Core::Run(float p_dt)
 
 		if (InputManager::IsKeyPressed(KeyCode::W))
 			m_vulkanContext->GetRTPipeline()->m_camera.Translate(
-				m_vulkanContext->GetRTPipeline()->m_camera.forward * p_dt * 10);
+				m_vulkanContext->GetRTPipeline()->m_camera.forward * p_dt * 10.0f);
 
 		if (InputManager::IsKeyPressed(KeyCode::A))
 			m_vulkanContext->GetRTPipeline()->m_camera.Translate(
-				m_vulkanContext->GetRTPipeline()->m_camera.right * -p_dt * 10);
+				m_vulkanContext->GetRTPipeline()->m_camera.right * -p_dt * 10.0f);
 
 		if (InputManager::IsKeyPressed(KeyCode::S))
 			m_vulkanContext->GetRTPipeline()->m_camera.Translate(
-				m_vulkanContext->GetRTPipeline()->m_camera.forward * -p_dt * 10);
+				m_vulkanContext->GetRTPipeline()->m_camera.forward * -p_dt * 10.0f);
 
 		if (InputManager::IsKeyPressed(KeyCode::D))
 			m_vulkanContext->GetRTPipeline()->m_camera.Translate(
-				m_vulkanContext->GetRTPipeline()->m_camera.right * p_dt * 10);
+				m_vulkanContext->GetRTPipeline()->m_camera.right * p_dt * 10.0f);
 	}
 
 	const auto indexScene = static_cast<uint8_t>(SceneManager::CurrentScene());
@@ -221,18 +221,18 @@ void OgEngine::Core::LoadScene(const std::string& p_file)
 					std::getline(file, line);
 					const std::string name = SceneLoader::ExtractNameFromAttribute(line);
 					std::getline(file, line);
-					const Vector3F position = SceneLoader::ExtractVector3FromAttribute(line);
+					const glm::vec3 position = SceneLoader::ExtractVector3FromAttribute(line);
 					std::getline(file, line);
-					const Vector4F rotation = SceneLoader::ExtractVector4FromAttribute(line);
+					const glm::vec4 rotation = SceneLoader::ExtractVector4FromAttribute(line);
 					std::getline(file, line);
-					const Vector3F scale = SceneLoader::ExtractVector3FromAttribute(line);
+					const glm::vec3 scale = SceneLoader::ExtractVector3FromAttribute(line);
 
 					if (SceneManager::HasComponent<Transform>(latestNodes.top()->GetEntity()))
 					{
 						auto* transform = &SceneManager::GetComponent<Transform>(latestNodes.top()->GetEntity());
 						transform->SetName(name);
 						transform->SetPosition(position);
-						transform->SetRotation(Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+						transform->SetRotation(glm::quat(rotation.x, rotation.y, rotation.z, rotation.w));
 						transform->SetScale(scale);
 					}
 				}
@@ -296,13 +296,13 @@ void OgEngine::Core::LoadScene(const std::string& p_file)
 				else if (line.find("<Material>") != std::string::npos)
 				{
 					std::getline(file, line);
-					const Vector3F color = SceneLoader::ExtractVector3FromAttribute(line);
+					const glm::vec3 color = SceneLoader::ExtractVector3FromAttribute(line);
 
 					std::getline(file, line);
-					const Vector4F specular = SceneLoader::ExtractVector4FromAttribute(line);
+					const glm::vec4 specular = SceneLoader::ExtractVector4FromAttribute(line);
 
 					std::getline(file, line);
-					const Vector4F emissive = SceneLoader::ExtractVector4FromAttribute(line);
+					const glm::vec4 emissive = SceneLoader::ExtractVector4FromAttribute(line);
 
 					std::getline(file, line);
 					const float ior = SceneLoader::ExtractFloatFromAttribute(line);
@@ -369,7 +369,7 @@ void OgEngine::Core::LoadScene(const std::string& p_file)
 						}
 
 						Material mat;
-						mat.SetColor(Vector4F(color));
+						mat.SetColor(glm::vec4(color, 1));
 						mat.SetSpecular(specular);
 						mat.SetEmissive(emissive);
 						mat.SetIOR(ior);
@@ -419,10 +419,10 @@ void OgEngine::Core::LoadScene(const std::string& p_file)
 				else if (line.find("<LightSource>") != std::string::npos)
 				{
 					std::getline(file, line);
-					const Vector4F color = SceneLoader::ExtractVector4FromAttribute(line);
+					const glm::vec4 color = SceneLoader::ExtractVector4FromAttribute(line);
 
 					std::getline(file, line);
-					const Vector4F direction = SceneLoader::ExtractVector4FromAttribute(line);
+					const glm::vec4 direction = SceneLoader::ExtractVector4FromAttribute(line);
 
 					std::getline(file, line);
 					const LIGHT_TYPE lightType = static_cast<LIGHT_TYPE>(SceneLoader::ExtractIntegerFromAttribute(line));

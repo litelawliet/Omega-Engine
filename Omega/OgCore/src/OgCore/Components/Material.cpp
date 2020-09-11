@@ -1,7 +1,7 @@
 #include <OgCore/Components/Material.h>
 
 OgEngine::Material::Material()
-	: _color(Vector4F::one), _specular(Vector4F::one), _emissive(Vector4F::zero), _ior(0.0f), _roughness(0.0f), _materialType(1), _texName("default.png"), _texPath("Resources/textures/default.png"), _normName("NONE"), _normPath("NONE")
+	: _color(glm::vec4(1)), _specular(glm::vec4(1)), _emissive(glm::vec4(0)), _ior(0.0f), _roughness(0.0f), _materialType(1), _texName("default.png"), _texPath("Resources/textures/default.png"), _normName("NONE"), _normPath("NONE")
 {
 }
 
@@ -17,7 +17,7 @@ OgEngine::Material::Material(Material&& p_other) noexcept
 
 OgEngine::Material::~Material() = default;
 
-void OgEngine::Material::SetColor(const GPM::Vector4F& p_color)
+void OgEngine::Material::SetColor(const glm::vec4& p_color)
 {
 	_color = p_color;
 
@@ -62,7 +62,7 @@ void OgEngine::Material::SetColor(const GPM::Vector4F& p_color)
 	}
 }
 
-void OgEngine::Material::SetSpecular(const GPM::Vector4F& p_specular)
+void OgEngine::Material::SetSpecular(const glm::vec4& p_specular)
 {
 	_specular = p_specular;
 
@@ -147,7 +147,7 @@ void OgEngine::Material::SetIOR(const float p_ior)
 	}
 }
 
-void OgEngine::Material::SetEmissive(const GPM::Vector4F& p_emissive)
+void OgEngine::Material::SetEmissive(const glm::vec4& p_emissive)
 {
 	_emissive = p_emissive;
 

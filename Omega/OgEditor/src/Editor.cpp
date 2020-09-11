@@ -154,28 +154,28 @@ void OgEngine::Editor::UpdateEditor(float p_dt)
 		ImGui::Text("Position");
 		if (m_engine->m_vulkanContext->IsRaytracing())
 		{
-			const Vector3F position = m_engine->m_vulkanContext->GetRTPipeline()->m_camera.position;
+			const glm::vec3 position = m_engine->m_vulkanContext->GetRTPipeline()->m_camera.position;
 			float pos[3] = { position.x, position.y, position.z };
 			ImGui::DragFloat3("CameraPos", pos);
-			m_engine->m_vulkanContext->GetRTPipeline()->m_camera.SetPosition(Vector3F(pos[0], pos[1], pos[2]));
+			m_engine->m_vulkanContext->GetRTPipeline()->m_camera.SetPosition(glm::vec3(pos[0], pos[1], pos[2]));
 
-			const Vector3F rotation = m_engine->m_vulkanContext->GetRTPipeline()->m_camera.rotation;
+			const glm::vec3 rotation = m_engine->m_vulkanContext->GetRTPipeline()->m_camera.rotation;
 			float rot[3] = { rotation.x, rotation.y, rotation.z };
 			ImGui::DragFloat3("CameraRot", rot);
-			m_engine->m_vulkanContext->GetRTPipeline()->m_camera.SetRotation(Vector3F(rot[0], rot[1], rot[2]));
+			m_engine->m_vulkanContext->GetRTPipeline()->m_camera.SetRotation(glm::vec3(rot[0], rot[1], rot[2]));
 
 		}
 		else
 		{
-			const Vector3F position = m_engine->m_vulkanContext->GetRSPipeline()->GetCurrentCamera().position;
+			const glm::vec3 position = m_engine->m_vulkanContext->GetRSPipeline()->GetCurrentCamera().position;
 			float pos[3] = { position.x, position.y, position.z };
 			ImGui::DragFloat3("CameraPos", pos, 0.5f);
 
-			const Vector3F rotation = m_engine->m_vulkanContext->GetRSPipeline()->GetCurrentCamera().rotation;
+			const glm::vec3 rotation = m_engine->m_vulkanContext->GetRSPipeline()->GetCurrentCamera().rotation;
 			float rot[3] = { rotation.x, rotation.y, rotation.z };
 			ImGui::DragFloat3("CameraRot", rot, 0.5f, -360.0f, 360.0f);
 
-			m_engine->m_vulkanContext->GetRSPipeline()->UpdateCamera(Vector3F(pos[0], pos[1], pos[2]), Vector3F(rot[0], rot[1], rot[2]));
+			m_engine->m_vulkanContext->GetRSPipeline()->UpdateCamera(glm::vec3(pos[0], pos[1], pos[2]), glm::vec3(rot[0], rot[1], rot[2]));
 		}
 	}
 	ImGui::End();
@@ -332,13 +332,13 @@ void OgEngine::Editor::OpenAddMenu(SceneNode* p_node)
 					if (rsMesh->SubMeshes().empty())
 					{
 						m_engine->AddComponent(p_node->LastChild()->GetEntity(), ModelRS(mesh.c_str()));
-						m_engine->GetComponent<ModelRS>(p_node->LastChild()->GetEntity()).Material().SetColor(GPM::Vector4F(1, 1, 1, 1));
+						m_engine->GetComponent<ModelRS>(p_node->LastChild()->GetEntity()).Material().SetColor(glm::vec4(1, 1, 1, 1));
 					}
 					else
 					{
 						m_engine->AddEntity(p_node->LastChild());
 						m_engine->AddComponent(p_node->LastChild()->LastChild()->GetEntity(), ModelRS(mesh.c_str()));
-						m_engine->GetComponent<ModelRS>(p_node->LastChild()->LastChild()->GetEntity()).Material().SetColor(GPM::Vector4F(1, 1, 1, 1));
+						m_engine->GetComponent<ModelRS>(p_node->LastChild()->LastChild()->GetEntity()).Material().SetColor(glm::vec4(1, 1, 1, 1));
 						auto& model = m_engine->GetComponent<ModelRS>(p_node->LastChild()->LastChild()->GetEntity());
 						{
 							for (auto& subMesh : model.GetMesh()->SubMeshes())
@@ -346,7 +346,7 @@ void OgEngine::Editor::OpenAddMenu(SceneNode* p_node)
 								// For each submesh, add a new entity with a new model RS for each mesh
 								m_engine->AddEntity(p_node->LastChild());
 								m_engine->AddComponent(p_node->LastChild()->LastChild()->GetEntity(), ModelRS(subMesh.get()));
-								m_engine->GetComponent<ModelRS>(p_node->LastChild()->LastChild()->GetEntity()).Material().SetColor(GPM::Vector4F(1, 1, 1, 1));
+								m_engine->GetComponent<ModelRS>(p_node->LastChild()->LastChild()->GetEntity()).Material().SetColor(glm::vec4(1, 1, 1, 1));
 							}
 						}
 					}
@@ -393,7 +393,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 			if (currentRotationEntity != entity)
 			{
 				currentRotationEntity = entity;
-				const Vector3F eulerAngles = trans.localRotation.ToEuler();
+				const glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(trans.localRotation));
 				currentEulers[0] = eulerAngles.x;
 				currentEulers[1] = eulerAngles.y;
 				currentEulers[2] = eulerAngles.z;
@@ -406,25 +406,25 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 				y = rot[1] - currentEulers[1];
 				z = rot[2] - currentEulers[2];
 
-				Quaternion q1 = Quaternion::CreateFromAxisAngle(Vector3D(1.0, 0.0, 0.0), GPM::Tools::Utils::ToRadians(x));
-				Quaternion q2 = Quaternion::CreateFromAxisAngle(Vector3D(0.0, 1.0, 0.0), GPM::Tools::Utils::ToRadians(y));
-				Quaternion q3 = Quaternion::CreateFromAxisAngle(Vector3D(0.0, 0.0, 1.0), GPM::Tools::Utils::ToRadians(z));
-				Quaternion newDirection = (q3 * q2) * q1;
-				newDirection.Normalize();
+				glm::quat q1 = glm::angleAxis(glm::radians(x), glm::vec3(1.0, 0.0, 0.0));
+				glm::quat q2 = glm::angleAxis(glm::radians(y), glm::vec3(0.0, 1.0, 0.0));
+				glm::quat q3 = glm::angleAxis(glm::radians(z), glm::vec3(0.0, 0.0, 1.0));
+				glm::quat newDirection = (q3 * q2) * q1;
+				newDirection = glm::normalize(newDirection);
 
 				const double eps = 1e-9;
-				Quaternion qd = Quaternion::Inverse(trans.localRotation) * newDirection;
-				const double angleDistance = 2.0 * std::atan2(qd.GetRotationAxis().Magnitude(), qd.w);
+				glm::quat qd = glm::inverse(trans.localRotation) * newDirection;
+				const double angleDistance = 2.0 * std::atan2(glm::length(glm::eulerAngles(qd)), qd.w);
 
 				if (std::fabs(x) < eps && std::fabs(y) < eps && std::fabs(z) < eps)
 				{
-					trans.SetRotation(Quaternion::MakeFromEuler(0.0f, 0.0f, 0.0f));
+					trans.SetRotation(glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)));
 				}
 				else if (angleDistance > 1.0 - eps)
 				{
-					Quaternion finalRotation = worldRotation ? newDirection * trans.localRotation : trans.localRotation * newDirection;
+					glm::quat finalRotation = worldRotation ? newDirection * trans.localRotation : trans.localRotation * newDirection;
 					trans.SetRotation(finalRotation);
-					trans.SetRotation(Quaternion::Normalize(trans.localRotation));
+					trans.SetRotation(glm::normalize(trans.localRotation));
 				}
 				memcpy_s(currentEulers, sizeof(currentEulers), rot, sizeof(rot));
 			}
@@ -449,11 +449,11 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 				{
 					float color[3] = { mat.color.x, mat.color.y, mat.color.z };
 					ImGui::ColorEdit3(("Color##" + std::to_string(entity) + "material").c_str(), color);
-					mat.SetColor(GPM::Vector4F(color[0], color[1], color[2], 1));
+					mat.SetColor(glm::vec4(color[0], color[1], color[2], 1));
 
 					float specular[3] = { mat.specular.x, mat.specular.y, mat.specular.z };
 					ImGui::ColorEdit3(("Specular##" + std::to_string(entity) + "material").c_str(), specular);
-					mat.SetSpecular(GPM::Vector4F(specular[0], specular[1], specular[2], 1));
+					mat.SetSpecular(glm::vec4(specular[0], specular[1], specular[2], 1));
 
 					float roughness = mat.roughness;
 					ImGui::DragFloat(("Roughness##" + std::to_string(entity) + "material").c_str(), &roughness, 0.05f, 0.0f, 1.0f);
@@ -465,7 +465,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 
 					float emissive[4] = { mat.emissive.x, mat.emissive.y, mat.emissive.z };
 					ImGui::ColorEdit3(("Emissive##" + std::to_string(entity) + "material").c_str(), emissive);
-					mat.SetEmissive(GPM::Vector4F(emissive[0], emissive[1], emissive[2], 1));
+					mat.SetEmissive(glm::vec4(emissive[0], emissive[1], emissive[2], 1));
 
 					int materialType = mat.type;
 					std::vector<std::string> types{ "NONE", "BLINN PHONG", "SPECULAR", "REFRACTION", "EMISSIVE", "GGX" };
@@ -613,7 +613,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 				{
 					float color[3] = { light.color.x , light.color.y, light.color.z };
 					ImGui::ColorEdit3(("Color##" + std::to_string(entity) + "light").c_str(), color);
-					light.color = GPM::Vector4F(color[0], color[1], color[2], light.color.w);
+					light.color = glm::vec4(color[0], color[1], color[2], light.color.w);
 
 					float intensity = light.color.w;
 					ImGui::DragFloat(("Intensity##" + std::to_string(entity) + "light").c_str(), &intensity, 0.1, 0.0, 10000);
@@ -626,7 +626,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 					{
 						float dir[3] = { light.direction.x , light.direction.y, light.direction.z };
 						ImGui::DragFloat3(("Direction##" + std::to_string(entity) + "light").c_str(), dir, 0.02, -1, 1);
-						light.direction = GPM::Vector4F(dir[0], dir[1], dir[2], light.direction.w);
+						light.direction = glm::vec4(dir[0], dir[1], dir[2], light.direction.w);
 					}
 
 					std::string typeItem = types[type];

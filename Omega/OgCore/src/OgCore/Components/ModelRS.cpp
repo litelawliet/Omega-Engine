@@ -126,9 +126,9 @@ const std::string& OgEngine::ModelRS::MeshFilepath() const
 	return m_meshFilepath;
 }
 
-Matrix4F OgEngine::ModelRS::ModelMatrix() const
+glm::mat4 OgEngine::ModelRS::ModelMatrix() const
 {
-	return m_meshTransform ? m_meshTransform->worldMatrix : Matrix4F::identity;
+	return m_meshTransform ? m_meshTransform->worldMatrix : glm::mat4();
 }
 
 OgEngine::ModelRS& OgEngine::ModelRS::operator=(const ModelRS & p_other)

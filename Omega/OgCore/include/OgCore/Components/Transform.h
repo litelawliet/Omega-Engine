@@ -1,6 +1,10 @@
 #pragma once
+#include <string>
 #include <OgCore/Export.h>
-#include <GPM/GPM.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 namespace OgEngine
 {
@@ -9,42 +13,42 @@ namespace OgEngine
 		/**
 		 *	@brief World transform of this gameObject (read-only)
 		 */
-		const Matrix4F& worldMatrix = _worldMatrix;
+		const glm::mat4& worldMatrix = _worldMatrix;
 
 		/**
 		*	@brief Local transform of this gameObject (read-only)
 		*/
-		const Matrix4F& localMatrix = _localMatrix;
+		const glm::mat4& localMatrix = _localMatrix;
 
 		/**
 		 *	@brief World position of this gameObject (read-only)
 		 */
-		const Vector3F& position = _position;
+		const glm::vec3& position = _position;
 
 		/**
 		 *	@brief Local position of this gameObject (read-only)
 		 */
-		const Vector3F& localPosition = _localPosition;
+		const glm::vec3& localPosition = _localPosition;
 
 		/**
 		 *	@brief World scale of this gameObject (read-only)
 		 */
-		const Vector3F& scale = _scale;
+		const glm::vec3& scale = _scale;
 
 		/**
 		 *	@brief Local scale of this gameObject (read-only)
 		 */
-		const Vector3F& localScale = _localScale;
+		const glm::vec3& localScale = _localScale;
 
 		/**
 		 *	@brief World rotation of this gameObject in radians (read-only)
 		 */
-		const Quaternion& rotation = _rotation;
+		const glm::quat& rotation = _rotation;
 
 		/**
 		 *	@brief Local rotation of this gameObject in radians (read-only)
 		 */
-		const Quaternion& localRotation = _localRotation;
+		const glm::quat& localRotation = _localRotation;
 
 		/**
 		 * @brief Name of the gameObject (read-only)
@@ -59,7 +63,7 @@ namespace OgEngine
 		*	@brief Constructor using a matrix
 		*	@param p_matrix The matrix used to set the transform
 		*/
-		explicit Transform(Matrix4F p_matrix);
+		explicit Transform(glm::mat4 p_matrix);
 
 		/**
 		*	@brief Copy constructor
@@ -82,37 +86,37 @@ namespace OgEngine
 		 * @brief Move the current transform of a certain movement.
 		 * @param p_movement Movement to add to the current transform
 		 */
-		void Translate(const Vector3F& p_movement);
+		void Translate(const glm::vec3& p_movement);
 
 		/**
 		 * @brief Scale or Unscale the current transform of a certain amount.
 		 * @param p_scale The new scale
 		 */
-		void Scale(const Vector3F& p_scale);
+		void Scale(const glm::vec3& p_scale);
 
 		/**
 		 * @brief Rotate the transform of a certain angle (in degree).
 		 * @param p_rotation The angle to add
 		 */
-		void Rotate(const Quaternion& p_rotation);
+		void Rotate(const glm::quat& p_rotation);
 
 		/**
 		 * @brief Set the transform to a new position in world space.
 		 * @param p_position The new position in world space
 		 */
-		void SetPosition(const Vector3F& p_position);
+		void SetPosition(const glm::vec3& p_position);
 
 		/**
 		 * @brief Set the transform to a new scale.
 		 * @param p_scale The new scale
 		 */
-		void SetScale(const Vector3F& p_scale);
+		void SetScale(const glm::vec3& p_scale);
 
 		/**
 		 * @brief Set the transform to a new rotation.
-		 * @param p_rotation The rotation quaternion
+		 * @param p_rotation The rotation glm::quat
 		 */
-		void SetRotation(const Quaternion& p_rotation);
+		void SetRotation(const glm::quat& p_rotation);
 
 		/**
 		 * @brief Set the transform to a new rotation.
@@ -125,7 +129,7 @@ namespace OgEngine
 		 * @param p_worldMatrix The new parent of this transform
 		 * @note This method should be used when updating the children of the scenegraph.
 		 */
-		void SetWorldMatrix(const GPM::Matrix4F& p_worldMatrix);
+		void SetWorldMatrix(const glm::mat4& p_worldMatrix);
 
 		/**
 		 * @brief Set the GameObject's name
@@ -139,37 +143,37 @@ namespace OgEngine
 		 * @brief Return the world forward of this transform.
 		 * @return The world forward
 		 */
-		[[nodiscard]] Vector3F WorldForward() const;
+		[[nodiscard]] glm::vec3 WorldForward() const;
 
 		/**
 		 * @brief Return the world up of this transform.
 		 * @return The world up
 		 */
-		[[nodiscard]] Vector3F WorldUp() const;
+		[[nodiscard]] glm::vec3 WorldUp() const;
 
 		/**
 		 * @brief Return the world right of this transform.
 		 * @return The world right
 		 */
-		[[nodiscard]] Vector3F WorldRight() const;
+		[[nodiscard]] glm::vec3 WorldRight() const;
 
 		/**
 		 * @brief Return the local forward of this transform.
 		 * @return The local forward
 		 */
-		[[nodiscard]] Vector3F LocalForward() const;
+		[[nodiscard]] glm::vec3 LocalForward() const;
 
 		/**
 		 * @brief Return the local up of this transform.
 		 * @return The local up
 		 */
-		[[nodiscard]] Vector3F LocalUp() const;
+		[[nodiscard]] glm::vec3 LocalUp() const;
 
 		/**
 		 * @brief Return the local right of this transform.
 		 * @return The local right
 		 */
-		[[nodiscard]] Vector3F LocalRight() const;
+		[[nodiscard]] glm::vec3 LocalRight() const;
 
 		/**
 		* @brief Return parent transform (read-only). If no parent exists, returns nullptr
@@ -199,15 +203,15 @@ namespace OgEngine
 
 
 	private:
-		alignas(64) Matrix4F _worldMatrix;
-		alignas(64) Matrix4F _localMatrix;
-		alignas(16) Vector3F _position;
-		alignas(16) Vector3F _localPosition;
-		alignas(16) Vector3F _scale;
-		alignas(16) Vector3F _localScale;
-		alignas(16) Quaternion _rotation;
-		alignas(16) Quaternion _localRotation;
-		alignas(8) Transform* _parent = nullptr;
+		glm::mat4 _worldMatrix;
+		glm::mat4 _localMatrix;
+		glm::vec3 _position;
+		glm::vec3 _localPosition;
+		glm::vec3 _scale;
+		glm::vec3 _localScale;
+		glm::quat _rotation;
+		glm::quat _localRotation;
+		Transform* _parent = nullptr;
 		std::string _name;
 
 		/**
@@ -216,7 +220,7 @@ namespace OgEngine
 		 * @param p_rotation The local rotation
 		 * @param p_scale The local scale
 		 */
-		void GenerateMatrices(const Vector3F& p_position, const Quaternion& p_rotation, const Vector3F& p_scale);
+		void GenerateMatrices(const glm::vec3& p_position, const glm::quat& p_rotation, const glm::vec3& p_scale);
 
 		/**
 		 * @brief Decompose the world matrix and set all the world position, rotation and scale out of it.

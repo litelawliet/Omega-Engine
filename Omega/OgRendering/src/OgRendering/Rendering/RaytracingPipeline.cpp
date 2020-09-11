@@ -1294,8 +1294,8 @@ void OgEngine::RaytracingPipeline::ResizeWindow()
     SetupPipelineAndBind(true);
 
 }
-void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const GPM::Matrix4F& p_transform, Mesh* p_mesh, std::string p_texID,
-    const char* p_normID, GPM::Vector4F p_albedo, float p_roughness, float p_ior, GPM::Vector4F p_specular, GPM::Vector4F p_emissive, int p_type)
+void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const glm::mat4& p_transform, Mesh* p_mesh, std::string p_texID,
+    const char* p_normID, glm::vec4 p_albedo, float p_roughness, float p_ior, glm::vec4 p_specular, glm::vec4 p_emissive, int p_type)
 {
     int texID = GetTexture(p_texID.c_str());
 
@@ -1323,15 +1323,15 @@ void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const GPM::Matrix
     m_objects.back().ConvertTransform(p_transform);
 }
 
-void OgEngine::RaytracingPipeline::UpdateLight(uint64_t p_id, GPM::Vector4F p_position, GPM::Vector4F p_color, GPM::Vector4F p_direction, int p_type)
+void OgEngine::RaytracingPipeline::UpdateLight(uint64_t p_id, glm::vec4 p_position, glm::vec4 p_color, glm::vec4 p_direction, int p_type)
 {
     std::vector<uint64_t>::iterator it = std::find(m_lightsIDs.begin(), m_lightsIDs.end(), p_id);
     if (it != m_lightsIDs.end())
     {
         int id = std::distance(m_lightsIDs.begin(), it);
         m_lights[id].color = p_color;
-        m_lights[id].pos = GPM::Vector4F({ p_position.x, p_position.y, p_position.z, 1 });
-        m_lights[id].dir = GPM::Vector4F({ p_direction.x, p_direction.y, p_direction.z, (float)p_type });
+        m_lights[id].pos = glm::vec4({ p_position.x, p_position.y, p_position.z, 1 });
+        m_lights[id].dir = glm::vec4({ p_direction.x, p_direction.y, p_direction.z, (float)p_type });
 
         m_shaderData.lightBuffer[id].Map();
         memcpy(m_shaderData.lightBuffer[id].mapped, &m_lights[id], sizeof(m_lights[id]));
@@ -1342,8 +1342,8 @@ void OgEngine::RaytracingPipeline::UpdateLight(uint64_t p_id, GPM::Vector4F p_po
         m_lightsIDs.push_back(p_id);
         RTLight newLight;
         newLight.color = p_color;
-        newLight.pos = GPM::Vector4F({ p_position.x, p_position.y, p_position.z, 1 });
-        newLight.dir = GPM::Vector4F({ p_direction.x, p_direction.y, p_direction.z, (float)p_type });
+        newLight.pos = glm::vec4({ p_position.x, p_position.y, p_position.z, 1 });
+        newLight.dir = glm::vec4({ p_direction.x, p_direction.y, p_direction.z, (float)p_type });
         m_lights.push_back(newLight);
 
         Buffer lightBuffer;
@@ -1382,7 +1382,7 @@ int OgEngine::RaytracingPipeline::GetNormalMap(const char* p_norm)
     }
 }
 
-void OgEngine::RaytracingPipeline::UpdateMaterial(uint64_t p_id, GPM::Vector4F p_albedo, float p_roughness, float p_ior, GPM::Vector4F p_specular, GPM::Vector4F p_emissive, int p_type, int p_texID, int p_normID)
+void OgEngine::RaytracingPipeline::UpdateMaterial(uint64_t p_id, glm::vec4 p_albedo, float p_roughness, float p_ior, glm::vec4 p_specular, glm::vec4 p_emissive, int p_type, int p_texID, int p_normID)
 {
 
     RTMaterial mat;
@@ -2856,11 +2856,11 @@ void RaytracingPipeline::CreateCamera()
 
     //m_camera.setPosition({ 0, 5, 5 });
     m_camera.SetPerspective(90.0f, static_cast<float>(m_width) / static_cast<float>(m_height), 0.1f, 1024.0f);
-    m_cameraData.viewInverse = GPM::Matrix4F::Inverse(m_camera.matrices.view);
-    m_cameraData.projInverse = GPM::Matrix4F::Inverse(m_camera.matrices.perspective);
-    m_cameraData.data = GPM::Vector4F::one;
-    m_cameraData.settings = GPM::Vector4F::zero;
-    m_cameraData.samples = GPM::Vector4F::zero;
+    m_cameraData.viewInverse = glm::inverse(m_camera.matrices.view);
+    m_cameraData.projInverse = glm::inverse(m_camera.matrices.perspective);
+    m_cameraData.data = glm::vec4(0);
+    m_cameraData.settings = glm::vec4(0);
+    m_cameraData.samples = glm::vec4(0);
 
     m_cameraData.samples.x = 2;
     m_cameraData.samples.y = 0;
@@ -2881,8 +2881,8 @@ void RaytracingPipeline::UpdateCamera()
     if (m_cameraBuffer.buffer == VK_NULL_HANDLE)
         return;
 
-    m_cameraData.viewInverse = GPM::Matrix4F::Inverse(m_camera.matrices.view);
-    m_cameraData.projInverse = GPM::Matrix4F::Inverse(m_camera.matrices.perspective);
+    m_cameraData.viewInverse = glm::inverse(m_camera.matrices.view);
+    m_cameraData.projInverse = glm::inverse(m_camera.matrices.perspective);
 
     if (m_cameraData.data.w > 10000)
         m_cameraData.data.w = 0;
@@ -3003,7 +3003,7 @@ void RaytracingPipeline::SetupPipelineAndBind(bool p_resizedWindow)
 
         vkQueueWaitIdle(m_graphicsQueue);
         RTMaterial mat;
-        mat.albedo = { 1, 1, 1 };
+        mat.albedo = glm::vec4( 1, 1, 1, 0);
         mat.data.z = 987654;
         mat.data.x = 0.0;
         AddEntity(99999, ResourceManager::Get<OgEngine::Mesh>("cube.obj"), 0, mat, 12345);

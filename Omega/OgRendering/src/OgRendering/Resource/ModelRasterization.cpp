@@ -2,7 +2,7 @@
 
 #include <utility>
 
-OgEngine::ModelRasterization::ModelRasterization(OgEngine::Mesh* p_mesh, OgEngine::Texture* p_texture, Matrix4F p_modelMatrix)
+OgEngine::ModelRasterization::ModelRasterization(OgEngine::Mesh* p_mesh, OgEngine::Texture* p_texture, glm::mat4 p_modelMatrix)
 	: m_modelMatrix(std::move(p_modelMatrix)), m_mesh(p_mesh)
 {
 }
@@ -22,7 +22,7 @@ void OgEngine::ModelRasterization::SetTexture(OgEngine::Texture* p_newTexture)
 	m_texture = p_newTexture;
 }
 
-void OgEngine::ModelRasterization::UpdateModelMatrix(const GPM::Matrix4F& p_newModelMatrix)
+void OgEngine::ModelRasterization::UpdateModelMatrix(const glm::mat4& p_newModelMatrix)
 {
 	m_modelMatrix = p_newModelMatrix;
 }
@@ -32,17 +32,17 @@ void OgEngine::ModelRasterization::UpdateMaterial(const MaterialRS& p_newMateria
 	m_material = p_newMaterial;
 }
 
-void OgEngine::ModelRasterization::ChangeColor(const GPM::Vector4F& p_newBaseColor)
+void OgEngine::ModelRasterization::ChangeColor(const glm::vec4& p_newBaseColor)
 {
 	m_material.color = p_newBaseColor;
 }
 
-void OgEngine::ModelRasterization::ChangeSpecularColor(const GPM::Vector4F& p_newSpecularColor)
+void OgEngine::ModelRasterization::ChangeSpecularColor(const glm::vec4& p_newSpecularColor)
 {
 	m_material.specular = p_newSpecularColor;
 }
 
-void OgEngine::ModelRasterization::ChangeEmissiveColor(const GPM::Vector4F& p_newEmissiveColor)
+void OgEngine::ModelRasterization::ChangeEmissiveColor(const glm::vec4& p_newEmissiveColor)
 {
 	m_material.emissive = p_newEmissiveColor;
 }
@@ -57,7 +57,7 @@ OgEngine::Texture* OgEngine::ModelRasterization::Texture() const
 	return m_texture;
 }
 
-Matrix4F OgEngine::ModelRasterization::ModelMatrix() const
+glm::mat4 OgEngine::ModelRasterization::ModelMatrix() const
 {
 	return m_modelMatrix;
 }

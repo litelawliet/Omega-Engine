@@ -27,11 +27,11 @@ bool OgEngine::SceneLoader::ExtractBooleanFromAttribute(const std::string& p_att
 	return StringToInt(ExtractDataFromAttribute(p_attributeLine));
 }
 
-GPM::Vector3F OgEngine::SceneLoader::ExtractVector3FromAttribute(const std::string& p_attributeLine)
+glm::vec3 OgEngine::SceneLoader::ExtractVector3FromAttribute(const std::string& p_attributeLine)
 {
 	const std::string data = ExtractDataFromAttribute(p_attributeLine);
 
-	Vector3F returnedVector;
+	glm::vec3 returnedVector;
 	std::istringstream valueStream(data);
 	std::string readValue;
 
@@ -50,11 +50,11 @@ GPM::Vector3F OgEngine::SceneLoader::ExtractVector3FromAttribute(const std::stri
 	return returnedVector;
 }
 
-GPM::Vector4F OgEngine::SceneLoader::ExtractVector4FromAttribute(const std::string& p_attributeLine)
+glm::vec4 OgEngine::SceneLoader::ExtractVector4FromAttribute(const std::string& p_attributeLine)
 {
 	const std::string data = ExtractDataFromAttribute(p_attributeLine);
 
-	Vector4F returnedVector;
+	glm::vec4 returnedVector;
 	std::istringstream valueStream(data);
 	std::string readValue;
 

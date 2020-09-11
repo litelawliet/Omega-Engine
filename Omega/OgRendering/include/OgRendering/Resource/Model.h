@@ -33,19 +33,19 @@ namespace OgEngine
 				m_geometryBuffer.Destroy();
 		}
 
-		void Translate(GPM::Vector3F tr)
+		void Translate(glm::vec3 tr)
 		{
 			m_pos += tr;
 			UpdateTransform();
 		}
 
-		void Rotate(GPM::Vector3F rotation)
+		void Rotate(glm::vec3 rotation)
 		{
 			m_rot += rotation;
 			UpdateTransform();
 		}
 
-		void Scale(GPM::Vector3F scale)
+		void Scale(glm::vec3 scale)
 		{
 			m_geometry.transform[0].x = scale.x;
 			m_geometry.transform[1].y = scale.y;
@@ -53,8 +53,8 @@ namespace OgEngine
 		}
 		void UpdateTransform()
 		{
-			glm::vec3 position = ConvertToGLM(m_pos);
-			glm::vec3 rotation = ConvertToGLM(m_rot);
+			glm::vec3 position = m_pos;//ConvertToGLM(m_pos);
+			glm::vec3 rotation = m_rot;//ConvertToGLM(m_rot);
 
 
 
@@ -67,20 +67,20 @@ namespace OgEngine
 
 		}
 
-		inline void ConvertTransform(GPM::Matrix4F ta)
+		inline void ConvertTransform(glm::mat4 ta)
 		{
 			glm::mat3x4 tb = glm::identity<glm::mat3x4>();
-			tb[0].x = ta(0, 0); tb[0].y = ta(0, 1); tb[0].z = ta(0, 2); tb[0].w = ta(0, 3);
-			tb[1].x = ta(1, 0); tb[1].y = ta(1, 1); tb[1].z = ta(1, 2); tb[1].w = ta(1, 3);
-			tb[2].x = ta(2, 0); tb[2].y = ta(2, 1); tb[2].z = ta(2, 2); tb[2].w = ta(2, 3);
+			tb[0].x = ta[0][0]; tb[0].y = ta[0][1]; tb[0].z = ta[0][2]; tb[0].w = ta[0][3];
+			tb[1].x = ta[1][0]; tb[1].y = ta[1][1]; tb[1].z = ta[1][2]; tb[1].w = ta[1][3];
+			tb[2].x = ta[2][0]; tb[2].y = ta[2][1]; tb[2].z = ta[2][2]; tb[2].w = ta[2][3];
 
-			m_pos = GPM::Vector3F({ tb[0].w, tb[1].w, tb[2].w });
+			m_pos = glm::vec3({ tb[0].w, tb[1].w, tb[2].w });
 			m_geometry.transform = tb;
 
 		}
 
-		GPM::Vector3F m_pos;
-		GPM::Vector3F m_rot;
+		glm::vec3 m_pos;
+		glm::vec3 m_rot;
 
 		OgEngine::Mesh* m_mesh;
 		//std::shared_ptr<OgEngine::RTMesh> m_rtMesh;

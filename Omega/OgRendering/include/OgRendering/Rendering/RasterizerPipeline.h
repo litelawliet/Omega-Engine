@@ -78,7 +78,7 @@ namespace OgEngine
 		 * @param p_modelTransform The transform matrix of a mesh
 		 * @param p_mesh The mesh to update
 		 */
-		void Update(const float p_dt, const std::uint64_t p_objectID, const GPM::Matrix4F& p_modelTransform, Mesh* p_mesh, const std::string& p_texture, const std::string& p_normalMap, const GPM::Vector4F& p_color);
+		void Update(const float p_dt, const std::uint64_t p_objectID, const glm::mat4& p_modelTransform, Mesh* p_mesh, const std::string& p_texture, const std::string& p_normalMap, const glm::vec4& p_color);
 
 		/**
 		 * @brief Draw the frame to the screen
@@ -142,7 +142,7 @@ namespace OgEngine
 		* @param p_position is the handle of the texture to load from the resource manager
 		* @param p_rotation The type of the texture. Albedo (aka basic texture) map or normal map
 		*/
-		void UpdateCamera(const GPM::Vector3F& p_position, const GPM::Vector3F& p_rotation);
+		void UpdateCamera(const glm::vec3& p_position, const glm::vec3& p_rotation);
 
 		/**
 		* @brief Return the current camera

@@ -17,11 +17,11 @@ void OgEngine::PhysicsSystem::Update(const float p_dt, PhysicsEngine& p_physicsE
 
 			p_physicsEngine.UpdateActor(&rb, true);
 			//tr.SetWorldMatrix(rigidBody.ConvertPhysicstoGPM(rb.rigidbody->getGlobalPose()));
-			tr.SetPosition(GPM::Vector3(rb.rigidBody->getGlobalPose().p.x,
+			tr.SetPosition(glm::vec3(rb.rigidBody->getGlobalPose().p.x,
 				rb.rigidBody->getGlobalPose().p.y,
 				rb.rigidBody->getGlobalPose().p.z));
 
-			tr.SetRotation(GPM::Quaternion(rb.rigidBody->getGlobalPose().q.x,
+			tr.SetRotation(glm::quat(rb.rigidBody->getGlobalPose().q.x,
 				rb.rigidBody->getGlobalPose().q.y,
 				rb.rigidBody->getGlobalPose().q.z,
 				rb.rigidBody->getGlobalPose().q.w));

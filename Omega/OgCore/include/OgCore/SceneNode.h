@@ -2,7 +2,7 @@
 #include <list>
 #include <OgCore/Export.h>
 
-#include <GPM/GPM.h>
+#include <glm/glm.hpp>
 
 #include <OgCore/Entities/Types.h>
 #include <vector>
@@ -28,7 +28,7 @@ namespace OgEngine
 		 * @return The world matrix
 		 * @note No discard qualifier.
 		 */
-		[[nodiscard]] Matrix4F GetWorldTransform() const;
+		[[nodiscard]] glm::mat4 GetWorldTransform() const;
 
 		/**
 		 * @brief Return the entity of this scene node

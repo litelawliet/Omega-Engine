@@ -3,6 +3,7 @@
 #include <OgCore/Export.h>
 
 #include <OgCore/Components/Transform.h>
+#include <memory>
 
 namespace OgEngine
 {

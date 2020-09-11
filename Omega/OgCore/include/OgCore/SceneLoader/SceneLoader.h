@@ -1,8 +1,10 @@
 #pragma once
 #include <OgCore/Export.h>
 #include <string>
+#include <vector>
 #include <OgCore/Export.h>
-#include <GPM/GPM.h>
+#include <glm/glm.hpp>
+#include <sstream>
 
 namespace OgEngine
 {
@@ -12,8 +14,8 @@ namespace OgEngine
 		static float ExtractFloatFromAttribute(const std::string& p_attributeLine);
 		static int ExtractIntegerFromAttribute(const std::string& p_attributeLine);
 		static bool ExtractBooleanFromAttribute(const std::string& p_attributeLine);
-		static GPM::Vector3F ExtractVector3FromAttribute(const std::string& p_attributeLine);
-		static GPM::Vector4F ExtractVector4FromAttribute(const std::string& p_attributeLine);
+		static glm::vec3 ExtractVector3FromAttribute(const std::string& p_attributeLine);
+		static glm::vec4 ExtractVector4FromAttribute(const std::string& p_attributeLine);
 		static bool SceneFileIntegrityCheck(const std::string& p_file);
 
 	private:

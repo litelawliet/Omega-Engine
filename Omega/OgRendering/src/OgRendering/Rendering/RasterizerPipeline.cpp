@@ -87,11 +87,11 @@ void OgEngine::RasterizerPipeline::CleanPipeline()
 void OgEngine::RasterizerPipeline::Update(
 	const float                  p_dt,
 	const std::uint64_t p_objectID,
-	const GPM::Matrix4F& p_modelTransform,
+	const glm::mat4& p_modelTransform,
 	Mesh* p_mesh,
 	const std::string& p_texture,
 	const std::string& p_normalMap,
-	const GPM::Vector4F& p_color)
+	const glm::vec4& p_color)
 {
 	const auto iterator = m_buffers.find(p_objectID);
 	// Object does not exists yet in OgRendering memory
@@ -747,10 +747,10 @@ void OgEngine::RasterizerPipeline::UpdateUniformBuffer(ObjectInstance& p_objectI
 
 	ubo.model = p_objectInstance.model.ModelMatrix();
 	ubo.view = m_camera.matrices.view;
-		//GPM::Matrix4F::LookAt(GPM::Vector3F(0.0f, 1.0f, -4.0), GPM::Vector3F(0.0f, 0.0f, 0.0f),
-		//GPM::Vector3F(0.0f, 1.0f, 0.0f));
+		//glm::mat4::LookAt(glm::vec3(0.0f, 1.0f, -4.0), glm::vec3(0.0f, 0.0f, 0.0f),
+		//glm::vec3(0.0f, 1.0f, 0.0f));
 	ubo.proj = m_camera.matrices.perspective;
-		//GPM::Matrix4F::Perspective((45.0f), m_chainExtent.width / static_cast<float>(m_chainExtent.height), 0.1f,
+		//glm::mat4::Perspective((45.0f), m_chainExtent.width / static_cast<float>(m_chainExtent.height), 0.1f,
 		//2000.0f);
 
 	// Mapping a default mvp
@@ -760,10 +760,10 @@ void OgEngine::RasterizerPipeline::UpdateUniformBuffer(ObjectInstance& p_objectI
 	vkUnmapMemory(m_vulkanDevice.logicalDevice, p_objectInstance.uniformBufferMemory);
 
 	UniformLightInfo lightUniform = {};
-	lightUniform.diffuse = GPM::Vector4F{ 1.0f, 1.0f, 1.0f, 1.0 };
-	lightUniform.ambient = GPM::Vector4F{ 0.2f, 0.0f, 0.0f, 1.0 };
-	lightUniform.specular = GPM::Vector4F{ 1.0f, 1.0f, 1.0f, 1.0 };
-	lightUniform.position = GPM::Vector4F{ 0.0f, 0.0f, 1.0f, 1.0f };
+	lightUniform.diffuse = glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0 };
+	lightUniform.ambient = glm::vec4{ 0.2f, 0.0f, 0.0f, 1.0 };
+	lightUniform.specular = glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0 };
+	lightUniform.position = glm::vec4{ 0.0f, 0.0f, 1.0f, 1.0f };
 	void* lightData;
 	CHECK_ERROR(vkMapMemory(m_vulkanDevice.logicalDevice, p_objectInstance.lightsBufferMemory, 0, sizeof(lightUniform), 0, &lightData));
 	memcpy_s(lightData, sizeof(lightUniform), &lightUniform, sizeof(lightUniform));
@@ -839,8 +839,8 @@ void OgEngine::RasterizerPipeline::CreateTexture(Texture* p_textureAddr, const T
 	}
 }
 
-void OgEngine::RasterizerPipeline::UpdateCamera(const GPM::Vector3F& p_position,
-	const GPM::Vector3F& p_rotation)
+void OgEngine::RasterizerPipeline::UpdateCamera(const glm::vec3& p_position,
+	const glm::vec3& p_rotation)
 {
 	m_camera.SetPosition(p_position);
 	m_camera.SetRotation(p_rotation);

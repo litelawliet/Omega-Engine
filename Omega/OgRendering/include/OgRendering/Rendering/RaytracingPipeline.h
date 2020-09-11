@@ -35,26 +35,26 @@ struct Semaphore {
 
 struct RTMaterial
 {
-    alignas(alignof(GPM::Vector4F)) GPM::Vector4F albedo;
-    alignas(alignof(GPM::Vector4F)) GPM::Vector4F specular;
-    alignas(alignof(GPM::Vector4F)) GPM::Vector4F data;
-    alignas(alignof(GPM::Vector4F)) GPM::Vector4F emissive;
+    glm::vec4 albedo;
+    glm::vec4 specular;
+    glm::vec4 data;
+    glm::vec4 emissive;
 };
 
 struct RTLight
 {
-    alignas(alignof(GPM::Vector4F)) GPM::Vector4F pos;
-    alignas(alignof(GPM::Vector4F)) GPM::Vector4F color;
-    alignas(alignof(GPM::Vector4F)) GPM::Vector4F dir;
+    glm::vec4 pos;
+    glm::vec4 color;
+    glm::vec4 dir;
 };
 
 struct UniformData
 {
-    GPM::Matrix4F viewInverse;
-    GPM::Matrix4F projInverse;
-    GPM::Vector4F data;
-    GPM::Vector4F settings;
-    GPM::Vector4F samples;
+    glm::mat4 viewInverse;
+    glm::mat4 projInverse;
+    glm::vec4 data;
+    glm::vec4 settings;
+    glm::vec4 samples;
 };
 
 struct ShaderData
@@ -101,7 +101,7 @@ struct SwapChain {
     VkFormat colorFormat{};
     VkSwapchainKHR swapChain{};
     VkExtent2D extent{};
-    uint32_t imageCount;
+    uint32_t imageCount{};
     std::vector<VkImage> images;
     std::vector<VkImageView> views;
     //uint32_t queueNodeIndex = 5000000;
@@ -381,9 +381,9 @@ namespace OgEngine
         *   @param p_type is the material type
         *   @note in fact we need to send the material data by parameters as the pipeline needs a different data structure to be used by the shaders
         */
-        void UpdateObject(uint64_t p_id, const GPM::Matrix4F& p_transform, Mesh* p_mesh, std::string p_texID,
+        void UpdateObject(uint64_t p_id, const glm::mat4& p_transform, Mesh* p_mesh, std::string p_texID,
  const char* p_normID,
-            GPM::Vector4F p_albedo, float p_roughness, float p_ior, GPM::Vector4F p_specular, GPM::Vector4F p_emissive, int p_type);
+            glm::vec4 p_albedo, float p_roughness, float p_ior, glm::vec4 p_specular, glm::vec4 p_emissive, int p_type);
 
         void DestroyObject(uint64_t p_id);
 
@@ -399,9 +399,9 @@ namespace OgEngine
         *   @param p_reflectance is the material reflectance (currently unused)
         *   @param p_type is the material type
         */
-        void UpdateMaterial(uint64_t p_id, GPM::Vector4F p_albedo, float p_roughness, float p_ior, GPM::Vector4F p_specular, GPM::Vector4F p_emissive, int p_type, int p_texID, int p_normID);
+        void UpdateMaterial(uint64_t p_id, glm::vec4 p_albedo, float p_roughness, float p_ior, glm::vec4 p_specular, glm::vec4 p_emissive, int p_type, int p_texID, int p_normID);
 
-        void UpdateLight(uint64_t p_id, GPM::Vector4F p_position, GPM::Vector4F p_color, GPM::Vector4F p_direction, int p_type);
+        void UpdateLight(uint64_t p_id, glm::vec4 p_position, glm::vec4 p_color, glm::vec4 p_direction, int p_type);
 
         int GetTexture(const char* p_tex);
         int GetNormalMap(const char* p_norm);

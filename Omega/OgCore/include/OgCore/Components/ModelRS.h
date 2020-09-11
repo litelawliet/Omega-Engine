@@ -3,6 +3,7 @@
 #include <OgRendering/Resource/Mesh.h>
 
 #include <OgCore/Components/Material.h>
+#include <glm/glm.hpp>
 
 namespace OgEngine
 {
@@ -27,7 +28,7 @@ namespace OgEngine
 		[[nodiscard]] const std::string& MeshName() const;
 		[[nodiscard]] const std::string& ParentMeshName() const;
 		[[nodiscard]] const std::string& MeshFilepath() const;
-		[[nodiscard]] Matrix4F ModelMatrix() const;
+		[[nodiscard]] glm::mat4 ModelMatrix() const;
 
 		ModelRS& operator=(const ModelRS& p_other);
 		ModelRS& operator=(ModelRS&& p_other) noexcept;

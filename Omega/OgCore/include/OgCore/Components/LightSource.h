@@ -1,6 +1,7 @@
 #pragma once
+#include <string>
 #include <OgCore/Export.h>
-#include <GPM/GPM.h>
+#include <glm/vec4.hpp>
 
 namespace OgEngine
 {
@@ -19,10 +20,10 @@ namespace OgEngine
 		LightSource(LightSource&& p_other) noexcept;
 
 		//color of the light, light intensity is the w component of this vector to pack data easily
-		alignas(16) GPM::Vector4F color{};
+		glm::vec4 color{};
 
 		//Only if DIRECTIONNAL_TYPE
-		alignas(16) GPM::Vector4F direction{};
+		glm::vec4 direction{};
 
 		LIGHT_TYPE lightType{ LIGHT_TYPE::POINT_TYPE };
 

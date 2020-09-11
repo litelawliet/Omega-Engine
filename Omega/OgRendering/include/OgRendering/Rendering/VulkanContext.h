@@ -47,22 +47,22 @@ namespace OgEngine
 {
 	struct UniformBufferObject
 	{
-		alignas(16) Matrix4F model;
-		alignas(16) Matrix4F view;
-		alignas(16) Matrix4F proj;
+		alignas(16) glm::mat4 model;
+		alignas(16) glm::mat4 view;
+		alignas(16) glm::mat4 proj;
 	};
 
 	struct UniformLightInfo
 	{
-		alignas(16) GPM::Vector4F position;
-		alignas(16) GPM::Vector4F ambient;
-		alignas(16) GPM::Vector4F diffuse;
-		alignas(16) GPM::Vector4F specular;
+		alignas(16) glm::vec4 position;
+		alignas(16) glm::vec4 ambient;
+		alignas(16) glm::vec4 diffuse;
+		alignas(16) glm::vec4 specular;
 	};
 
 	struct UniformMaterialInfo
 	{
-		alignas(16) GPM::Vector4F color;
+		alignas(16) glm::vec4 color;
 		alignas(4) float rough;
 		alignas(1) bool metal;
 	};

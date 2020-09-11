@@ -12,7 +12,7 @@ OgEngine::SceneNode::~SceneNode()
 	SceneManager::DestroyEntity(m_entity);
 }
 
-Matrix4F OgEngine::SceneNode::GetWorldTransform() const
+glm::mat4 OgEngine::SceneNode::GetWorldTransform() const
 {
 	return SceneManager::GetComponent<Transform>(m_entity).worldMatrix;
 }

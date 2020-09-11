@@ -3,14 +3,15 @@
 
 #include <OgRendering/Resource/Mesh.h>
 #include <OgRendering/Resource/Texture.h>
+#include <glm/glm.hpp>
 
 namespace OgEngine
 {
 	struct MaterialRS
 	{
-		alignas(16) GPM::Vector4F color = { 1.0f, 1.0f, 1.0f, 1.0f };
-		alignas(16) GPM::Vector4F specular = { 1.0f, 1.0f, 1.0f, 1.0f };
-		alignas(16) GPM::Vector4F emissive = { 1.0f, 1.0f, 1.0f, 1.0f };
+		alignas(16) glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+		alignas(16) glm::vec4 specular = { 1.0f, 1.0f, 1.0f, 1.0f };
+		alignas(16) glm::vec4 emissive = { 1.0f, 1.0f, 1.0f, 1.0f };
 		
 		bool operator==(const MaterialRS& p_other) const
 		{
@@ -25,27 +26,27 @@ namespace OgEngine
 	class RENDERING_API ModelRasterization
 	{
 	public:
-		ModelRasterization(Mesh* p_mesh = nullptr, OgEngine::Texture* p_texture = nullptr, Matrix4F p_modelMatrix = Matrix4F::identity);
+		ModelRasterization(Mesh* p_mesh = nullptr, OgEngine::Texture* p_texture = nullptr, glm::mat4 p_modelMatrix = glm::mat4());
 		~ModelRasterization();
 
 		void SetMesh(Mesh* p_newMesh);
 		void SetTexture(Texture* p_newTexture);
-		void UpdateModelMatrix(const Matrix4F& p_newModelMatrix);
+		void UpdateModelMatrix(const glm::mat4& p_newModelMatrix);
 		void UpdateMaterial(const MaterialRS& p_newMaterial);
-		void ChangeColor(const GPM::Vector4F& p_newBaseColor);
-		void ChangeSpecularColor(const GPM::Vector4F& p_newSpecularColor);
-		void ChangeEmissiveColor(const GPM::Vector4F& p_newEmissiveColor);
+		void ChangeColor(const glm::vec4& p_newBaseColor);
+		void ChangeSpecularColor(const glm::vec4& p_newSpecularColor);
+		void ChangeEmissiveColor(const glm::vec4& p_newEmissiveColor);
 
 		[[nodiscard]] Mesh* Mesh() const;
 		[[nodiscard]] Texture* Texture() const;
-		[[nodiscard]] Matrix4F ModelMatrix() const;
+		[[nodiscard]] glm::mat4 ModelMatrix() const;
 		[[nodiscard]] MaterialRS Material() const;
 
 		bool operator==(const ModelRasterization& p_other) const;
 		bool operator!=(const ModelRasterization& p_other) const;
 
 	private:
-		Matrix4F m_modelMatrix;
+		glm::mat4 m_modelMatrix;
 		MaterialRS m_material;
 		OgEngine::Texture* m_texture;
 		OgEngine::Mesh* m_mesh;

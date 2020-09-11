@@ -3,19 +3,19 @@
 #include <utility>
 
 OgEngine::Transform::Transform()
-	: _worldMatrix(Matrix4F::identity), _localMatrix(Matrix4F::identity),
-	_position(Vector3F::zero), _localPosition(Vector3F::zero),
-	_scale(Vector3F::one), _localScale(Vector3F::one),
+	: _worldMatrix(glm::mat4()), _localMatrix(glm::mat4()),
+	_position(glm::vec3(0)), _localPosition(glm::vec3(0)),
+	_scale(glm::vec3(1)), _localScale(glm::vec3(1)),
 	_rotation(0.0, 0.0, 0.0, 1.0), _localRotation(0.0, 0.0, 0.0, 1.0)
 {
 	_name.resize(32);
 }
 
-OgEngine::Transform::Transform(Matrix4F p_matrix)
+OgEngine::Transform::Transform(glm::mat4 p_matrix)
 	:
-	_worldMatrix(Matrix4F::identity), _localMatrix(std::move(p_matrix)),
-	_position(Vector3F::zero), _localPosition(Vector3F::zero),
-	_scale(Vector3F::one), _localScale(Vector3F::one),
+	_worldMatrix(glm::mat4()), _localMatrix(p_matrix),
+	_position(glm::vec3(0)), _localPosition(glm::vec3(0)),
+	_scale(glm::vec3(1)), _localScale(glm::vec3(1)),
 	_rotation(0.0, 0.0, 0.0, 1.0), _localRotation(0.0, 0.0, 0.0, 1.0)
 {
 	_name.resize(32);
@@ -40,32 +40,32 @@ OgEngine::Transform::Transform(Transform&& p_other) noexcept
 {
 }
 
-void OgEngine::Transform::Translate(const Vector3F& p_movement)
+void OgEngine::Transform::Translate(const glm::vec3& p_movement)
 {
 	SetPosition(_localPosition + p_movement);
 }
 
-void OgEngine::Transform::Scale(const Vector3F& p_scale)
+void OgEngine::Transform::Scale(const glm::vec3& p_scale)
 {
-	SetScale(Vector3F(_localScale.x * p_scale.x, _localScale.y * p_scale.y, _localScale.z * p_scale.z));
+	SetScale(glm::vec3(_localScale.x * p_scale.x, _localScale.y * p_scale.y, _localScale.z * p_scale.z));
 }
 
-void OgEngine::Transform::Rotate(const Quaternion& p_rotation)
+void OgEngine::Transform::Rotate(const glm::quat& p_rotation)
 {
 	SetRotation(_localRotation * p_rotation);
 }
 
-void OgEngine::Transform::SetPosition(const Vector3F& p_position)
+void OgEngine::Transform::SetPosition(const glm::vec3& p_position)
 {
 	GenerateMatrices(p_position, _localRotation, _localScale);
 }
 
-void OgEngine::Transform::SetScale(const Vector3F& p_scale)
+void OgEngine::Transform::SetScale(const glm::vec3& p_scale)
 {
 	GenerateMatrices(_localPosition, _localRotation, p_scale);
 }
 
-void OgEngine::Transform::SetRotation(const Quaternion& p_rotation)
+void OgEngine::Transform::SetRotation(const glm::quat& p_rotation)
 {
 	GenerateMatrices(_localPosition, p_rotation, _localScale);
 }
@@ -75,7 +75,7 @@ void OgEngine::Transform::SetParent(Transform* p_parent)
 	_parent = p_parent;
 }
 
-void OgEngine::Transform::SetWorldMatrix(const GPM::Matrix4F& p_worldMatrix)
+void OgEngine::Transform::SetWorldMatrix(const glm::mat4& p_worldMatrix)
 {
 	_worldMatrix = p_worldMatrix;
 
@@ -97,34 +97,34 @@ std::string OgEngine::Transform::Serialize(const int p_depth) const
 		+ DepthIndent(p_depth) + "</Transform>\n");
 }
 
-Vector3F OgEngine::Transform::WorldForward() const
+glm::vec3 OgEngine::Transform::WorldForward() const
 {
-	return _rotation * Vector3F::forward;
+	return _rotation * glm::vec4(0,0,1,1);
 }
 
-Vector3F OgEngine::Transform::WorldUp() const
+glm::vec3 OgEngine::Transform::WorldUp() const
 {
-	return _rotation * Vector3F::up;
+	return _rotation * glm::vec4(0,1,0, 1);
 }
 
-Vector3F OgEngine::Transform::WorldRight() const
+glm::vec3 OgEngine::Transform::WorldRight() const
 {
-	return _rotation * Vector3F::right;
+	return _rotation * glm::vec4(1,0,0,1);
 }
 
-Vector3F OgEngine::Transform::LocalForward() const
+glm::vec3 OgEngine::Transform::LocalForward() const
 {
-	return _localRotation * Vector3F::forward;
+	return _localRotation * glm::vec4(0,0,1,1);
 }
 
-Vector3F OgEngine::Transform::LocalUp() const
+glm::vec3 OgEngine::Transform::LocalUp() const
 {
-	return _localRotation * Vector3F::up;
+	return _localRotation * glm::vec4(0,1,0, 1);
 }
 
-Vector3F OgEngine::Transform::LocalRight() const
+glm::vec3 OgEngine::Transform::LocalRight() const
 {
-	return _localRotation * Vector3F::right;
+	return _localRotation * glm::vec4(1,0,0,1);
 }
 
 const OgEngine::Transform* OgEngine::Transform::GetParent() const
@@ -172,10 +172,10 @@ OgEngine::Transform& OgEngine::Transform::operator=(Transform&& p_other) noexcep
 	return *this;
 }
 
-void OgEngine::Transform::GenerateMatrices(const Vector3F& p_position, const Quaternion& p_rotation,
-	const Vector3F& p_scale)
+void OgEngine::Transform::GenerateMatrices(const glm::vec3& p_position, const glm::quat& p_rotation,
+	const glm::vec3& p_scale)
 {
-	_localMatrix = Matrix4F::CreateTranslation(p_position) * Quaternion::Normalize(p_rotation).ToMatrix4() * Matrix4F::CreateScale(p_scale);
+	_localMatrix = glm::translate(glm::mat4(), glm::vec3(p_position)) * glm::mat4(glm::normalize(p_rotation)) * glm::scale(glm::mat4(), p_scale);
 	_localPosition = p_position;
 	_localRotation = p_rotation;
 	_localScale = p_scale;
@@ -183,20 +183,20 @@ void OgEngine::Transform::GenerateMatrices(const Vector3F& p_position, const Qua
 
 void OgEngine::Transform::DecomposeWorldMatrix()
 {
-	_position.x = _worldMatrix(0, 3);
-	_position.y = _worldMatrix(1, 3);
-	_position.z = _worldMatrix(2, 3);
+	_position.x = _worldMatrix[0][3];
+	_position.y = _worldMatrix[1][3];
+	_position.z = _worldMatrix[2][3];
 
-	Vector3F columns[3] =
+	glm::vec3 columns[3] =
 	{
-		{ _worldMatrix(0, 0), _worldMatrix(1, 0), _worldMatrix(2, 0)},
-		{ _worldMatrix(0, 1), _worldMatrix(1, 1), _worldMatrix(2, 1)},
-		{ _worldMatrix(0, 2), _worldMatrix(1, 2), _worldMatrix(2, 2)},
+		{ _worldMatrix[0][0], _worldMatrix[1][0], _worldMatrix[2][0]},
+		{ _worldMatrix[0][1], _worldMatrix[1][1], _worldMatrix[2][1]},
+		{ _worldMatrix[0][2], _worldMatrix[1][2], _worldMatrix[2][2]},
 	};
 
-	_scale.x = columns[0].Magnitude();
-	_scale.y = columns[1].Magnitude();
-	_scale.z = columns[2].Magnitude();
+	_scale.x = glm::length(columns[0]);
+	_scale.y = glm::length(columns[1]);
+	_scale.z = glm::length(columns[2]);
 
 	if (_scale.x)
 	{
@@ -211,14 +211,14 @@ void OgEngine::Transform::DecomposeWorldMatrix()
 		columns[2] /= _scale.z;
 	}
 
-	const Matrix3F rotationMatrix
+	const glm::mat3 rotationMatrix
 	(
 		columns[0].x, columns[1].x, columns[2].x,
 		columns[0].y, columns[1].y, columns[2].y,
 		columns[0].z, columns[1].z, columns[2].z
 	);
 
-	_rotation = Quaternion(rotationMatrix);
+	_rotation = glm::quat(rotationMatrix);
 }
 
 std::string OgEngine::Transform::DepthIndent(const int p_depth)
@@ -234,6 +234,6 @@ std::string OgEngine::Transform::DepthIndent(const int p_depth)
 
 std::ostream& OgEngine::operator<<(std::ostream& p_out, const Transform& p_other)
 {
-	p_out << "Transform of " << p_other.name << ":\nWorld matrix: \n" << p_other.worldMatrix << "Local matrix: \n" << p_other.localMatrix << "Position: " << p_other.position << "\nScale: " << p_other.scale << "\nRotation: " << p_other.rotation.ToEuler() << '\n';
+	p_out << "Transform of " << p_other.name << ":\nWorld matrix: \n" << glm::to_string(p_other.worldMatrix) << "Local matrix: \n" << glm::to_string(p_other.localMatrix) << "Position: " << glm::to_string(p_other.position) << "\nScale: " << glm::to_string(p_other.scale) << "\nRotation: " << glm::to_string(glm::degrees(glm::eulerAngles(p_other.rotation))) << '\n';
 	return p_out;
 }

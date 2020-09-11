@@ -1,6 +1,7 @@
 #pragma once
+#include <string>
 #include <OgCore/Export.h>
-#include <GPM/GPM.h>
+#include <glm/glm.hpp>
 
 namespace OgEngine
 {
@@ -11,17 +12,17 @@ namespace OgEngine
 		/**
 		 * @brief The color of the material (read-only)
 		 */
-		const Vector4F& color = _color;
+		const glm::vec4& color = _color;
 
 		/**
 		* @brief The specular of the material (read-only)
 		*/
-		const Vector4F& specular = _specular;
+		const glm::vec4& specular = _specular;
 
 		/**
 		 * @brief The emissive of the material (read-only)
 		 */
-		const Vector4F& emissive = _emissive;
+		const glm::vec4& emissive = _emissive;
 
 		/**
 		 * @brief The roughness of the material (read-only)
@@ -84,13 +85,13 @@ namespace OgEngine
 		 * @brief Define the color of the material
 		 * @param p_color The new color
 		 */
-		void SetColor(const GPM::Vector4F& p_color);
+		void SetColor(const glm::vec4& p_color);
 
 		/**
 		 * @brief Define the specular of the material
 		 * @param p_specular The new color
 		 */
-		void SetSpecular(const GPM::Vector4F& p_specular);
+		void SetSpecular(const glm::vec4& p_specular);
 
 		/**
 		 * @brief Define the roughness of the material
@@ -120,7 +121,7 @@ namespace OgEngine
 		 * @brief Define the emissiveness of the material
 		 * @param p_emissive The new emissiveness.
 		 */
-		void SetEmissive(const GPM::Vector4F& p_emissive);
+		void SetEmissive(const glm::vec4& p_emissive);
 
 		/**
 		 * @brief Change the material type
@@ -151,9 +152,9 @@ namespace OgEngine
 		inline Material& operator=(Material&& p_other) noexcept;
 
 	private:
-		Vector4F _color;
-		Vector4F _specular;
-		Vector4F _emissive;
+		glm::vec4 _color;
+		glm::vec4 _specular;
+		glm::vec4 _emissive;
 		float _ior;
 		float _roughness;
 		int _materialType;
