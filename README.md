@@ -22,9 +22,6 @@ II. Releases note
 - Dependencies
 	Vulkan upgraded to 1.2.135.0, previous was 1.1.130.0.
 	GLFW updated to 3.3.2, previous was 3.3.1.
-- Pipeline production
-	Added network compilation through local devices. Reduce up to 50% compilation time.
 
-For testing Raytracing pipeline, please use the RT_Pipeline branch.
 Also, be aware of the needed models and textures inside the ain.cpp which may cause a crash if not in the Resources folders. You can use your owns.
-glm is not added in dependencies but is needed for raytracing. Please add it ;anually for now since it will be removed lately.
+glm is not added in dependencies but is needed for raytracing. Please add it manually for now since it will be removed lately.
