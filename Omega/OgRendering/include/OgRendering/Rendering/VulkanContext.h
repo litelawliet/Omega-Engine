@@ -16,7 +16,7 @@
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
-const bool enableValidationLayers = true;
+const bool enableValidationLayers = false;
 #endif
 
 struct QueueFamilyIndices
@@ -135,8 +135,7 @@ namespace OgEngine
 		// ##### members #####
 		const std::vector<const char*> m_validationLayers =
 		{
-			//"VK_LAYER_KHRONOS_validation",
-			"VK_LAYER_LUNARG_standard_validation"
+			"VK_LAYER_KHRONOS_validation"
 		};
 
 		std::vector<const char*> m_gpuExtensions =

@@ -40,19 +40,23 @@ void OgEngine::VulkanContext::InitWindow(const int p_width, const int p_height, 
 {
 	if (glfwInit() == GLFW_FALSE)
 		throw std::exception("GLFW couldn't initialize.\n");
+
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
 	m_window = glfwCreateWindow(p_width, p_height, p_name, nullptr, nullptr);
+
 	glfwSetWindowUserPointer(m_window, this);
 	glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
+
 	std::cout << "Window " << p_width << 'x' << p_height << " Successfully created!\n";
+
 	m_width = p_width;
 	m_height = p_height;
 	isUsingVsync = p_vsync;
 
 	OgEngine::InputManager::SetWindow(&m_window);
 	OgEngine::InputManager::SetAllCallbacks();
-	std::cout << "window ref set\n";
 }
 
 void OgEngine::VulkanContext::DestroyContext() const
@@ -150,6 +154,7 @@ void OgEngine::VulkanContext::DestroyDebugUtilsMessengerEXT(VkInstance p_instanc
 		func(p_instance, p_debugMessenger, p_allocator);
 	}
 }
+
 void OgEngine::VulkanContext::InitInstance()
 {
 	/*if (!CheckValidationLayers())
@@ -181,7 +186,7 @@ void OgEngine::VulkanContext::InitInstance()
 
 		debugCreateInfo = {};
 		debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 		debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 		debugCreateInfo.pfnUserCallback = DebugCallback;
 		createInfo.pNext = static_cast<VkDebugUtilsMessengerCreateInfoEXT*>(&debugCreateInfo);
@@ -189,7 +194,6 @@ void OgEngine::VulkanContext::InitInstance()
 	else
 	{
 		createInfo.enabledLayerCount = 0;
-
 		createInfo.pNext = nullptr;
 	}
 

@@ -1,0 +1,132 @@
+﻿  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\cube.mtl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\cube.obj
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\plane.mtl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\plane.obj
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\sphere.mtl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\sphere.obj
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\compileShaders.bat
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\glslangValidator.exe
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\helpers.glsl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\payload.glsl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\random.glsl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\rast_frag.frag
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\rast_vert.vert
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_chit.rchit
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_gen.rgen
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_miss.rmiss
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_shadow.rmiss
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_smiss.rmiss
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\rast_frag.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\rast_vert.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\ray_chit.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\ray_gen.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\ray_miss.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\ray_shadow.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\old\frag.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\old\fshader.frag
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\old\vert.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\old\vshader.vert
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\chalet.jpg
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\clock_bomb.tga
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\default.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\error.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\errorNormal.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\fox.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\link.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\peach.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\sheik.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\back.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\global.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\light.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\local.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\material.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\pause_icon.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\play_icon.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\preview_dir.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\preview_error.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\preview_model.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\rigidbody.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\transform.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\trash.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\fonts\engine_font.ttf
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\fonts\font_basic.ttf
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\fonts\font_bold.ttf
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\fonts\font_regular.ttf
+  54 fichier(s) copié(s)
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\cube.mtl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\cube.obj
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\plane.mtl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\plane.obj
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\sphere.mtl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\models\sphere.obj
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\compileShaders.bat
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\glslangValidator.exe
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\helpers.glsl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\payload.glsl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\random.glsl
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\rast_frag.frag
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\rast_vert.vert
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_chit.rchit
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_gen.rgen
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_miss.rmiss
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_shadow.rmiss
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\ray_smiss.rmiss
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\rast_frag.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\rast_vert.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\ray_chit.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\ray_gen.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\ray_miss.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\bin\ray_shadow.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\old\frag.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\old\fshader.frag
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\old\vert.spv
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\shaders\old\vshader.vert
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\chalet.jpg
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\clock_bomb.tga
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\default.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\error.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\errorNormal.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\fox.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\link.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\peach.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\sheik.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\back.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\global.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\light.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\local.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\material.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\pause_icon.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\play_icon.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\preview_dir.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\preview_error.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\preview_model.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\rigidbody.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\transform.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\trash.png
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\fonts\engine_font.ttf
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\fonts\font_basic.ttf
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\fonts\font_bold.ttf
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Resources\textures\internal\fonts\font_regular.ttf
+  54 fichier(s) copié(s)
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\OgCore\imgui.ini
+  1 fichier(s) copié(s)
+  Editor.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\shared\minwindef.h(130,1): warning C4005: 'APIENTRY': macro redefinition
+C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\Dependencies\glfw\include\GLFW\glfw3.h(123): message : see previous definition of 'APIENTRY'
+C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\OgEditor\src\Editor.cpp(26,24): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\OgEditor\src\Editor.cpp(499,17): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\OgEditor\src\Editor.cpp(512,19): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\OgEditor\src\Editor.cpp(534,17): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\OgEditor\src\Editor.cpp(551,19): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\OgEditor\src\Editor.cpp(619,110): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\OgEditor\src\Editor.cpp(628,101): warning C4305: 'argument': truncation from 'double' to 'float'
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\dll\OgCore\x64\Debug\OgCore.dll
+  1 fichier(s) copié(s)
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\dll\OgAudio\x64\Debug\OgAudio.dll
+  1 fichier(s) copié(s)
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\dll\OgRendering\x64\Debug\OgRendering.dll
+  1 fichier(s) copié(s)
+  C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\dll\OgPhysics\x64\Debug\OgPhysics.dll
+  1 fichier(s) copié(s)
+  OgEditor.vcxproj -> C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\bin\x64\Debug\OgEditor.exe
+  OgEditor.vcxproj -> C:\Users\victo\Desktop\Moteur\Omega-Engine\Omega\bin\x64\Debug\OgEditor.pdb (Partial -> Full PDB)
