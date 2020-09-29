@@ -1292,7 +1292,7 @@ void OgEngine::RaytracingPipeline::ResizeWindow()
     SetupFramebuffer();
 
     SetupPipelineAndBind(true);
-
+    
 }
 void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const glm::mat4& p_transform, Mesh* p_mesh, std::string p_texID,
     const char* p_normID, glm::vec4 p_albedo, float p_roughness, float p_ior, glm::vec4 p_specular, glm::vec4 p_emissive, int p_type)
@@ -1306,7 +1306,7 @@ void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const glm::mat4& 
     if (id != -1)
     {
         m_objects[id].m_geometry.instanceId = id;
-        m_objects[id].ConvertTransform(p_transform);
+        m_objects[id].SetTransform(p_transform);
         UpdateMaterial(id, p_albedo, p_roughness, p_ior, p_specular, p_emissive, p_type, texID, normalMapID);
         return;
     }
@@ -1320,7 +1320,7 @@ void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const glm::mat4& 
     newMaterial.data.z = p_type;
 
     AddEntity(p_id, p_mesh, texID, newMaterial, 12345);
-    m_objects.back().ConvertTransform(p_transform);
+    m_objects.back().SetTransform(p_transform);
 }
 
 void OgEngine::RaytracingPipeline::UpdateLight(uint64_t p_id, glm::vec4 p_position, glm::vec4 p_color, glm::vec4 p_direction, int p_type)

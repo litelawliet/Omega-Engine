@@ -9,6 +9,7 @@
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 
 namespace OgEngine
@@ -53,8 +54,8 @@ namespace OgEngine
 		}
 		void UpdateTransform()
 		{
-			glm::vec3 position = m_pos;//ConvertToGLM(m_pos);
-			glm::vec3 rotation = m_rot;//ConvertToGLM(m_rot);
+			glm::vec3 position = m_pos;
+			glm::vec3 rotation = m_rot;
 
 
 
@@ -63,20 +64,13 @@ namespace OgEngine
 			rotationMat *= glm::rotate(glm::mat4(1.0f), rotation.y, glm::vec3(0, 1, 0));
 			rotationMat *= glm::rotate(glm::mat4(1.0f), rotation.z, glm::vec3(0, 0, 1));
 			glm::mat4 convertedMat = transMat * rotationMat;
-			m_geometry.transform = glm::transpose(convertedMat);
+			m_geometry.transform = convertedMat;
 
 		}
 
-		inline void ConvertTransform(glm::mat4 ta)
+		inline void SetTransform(glm::mat4 ta)
 		{
-			glm::mat3x4 tb = glm::identity<glm::mat3x4>();
-			tb[0].x = ta[0][0]; tb[0].y = ta[0][1]; tb[0].z = ta[0][2]; tb[0].w = ta[0][3];
-			tb[1].x = ta[1][0]; tb[1].y = ta[1][1]; tb[1].z = ta[1][2]; tb[1].w = ta[1][3];
-			tb[2].x = ta[2][0]; tb[2].y = ta[2][1]; tb[2].z = ta[2][2]; tb[2].w = ta[2][3];
-
-			m_pos = glm::vec3({ tb[0].w, tb[1].w, tb[2].w });
-			m_geometry.transform = tb;
-
+			m_geometry.transform = glm::transpose(ta);
 		}
 
 		glm::vec3 m_pos;

@@ -1,15 +1,11 @@
 #pragma once
 #include <OgRendering/Export.h>
-#include <glm/glm.hpp>
+#include <cstdint>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <cstdint>
-#include <GPM/GPM.h>
-
-//#define GPM_USE
-#define GLM_USE
 
 namespace OgEngine
 {
@@ -23,50 +19,24 @@ namespace OgEngine
 
 		void UpdateViewMatrix()
 		{
-#ifdef GPM_USE
-			glm::mat4 rotMat = glm::mat4::identity;
-			rotMat = glm::mat4::Rotate(rotMat, GPM::Tools::Utils::ToRadians(rotation.x), glm::vec3(1.0f, 0, 0));
-			rotMat = glm::mat4::Rotate(rotMat, GPM::Tools::Utils::ToRadians(rotation.y), glm::vec3(0, 1.0f, 0));
-			rotMat = glm::mat4::Rotate(rotMat, GPM::Tools::Utils::ToRadians(rotation.z), glm::vec3(0, 0, 1.0f));
+			glm::mat4 rotMat = glm::mat4(1.0f);
+			rotMat = glm::rotate(rotMat, glm::radians(rotation.x), glm::vec3(1.0f, 0, 0));
+			rotMat = glm::rotate(rotMat, glm::radians(rotation.y), glm::vec3(0, 1.0f, 0));
+			rotMat = glm::rotate(rotMat, glm::radians(rotation.z), glm::vec3(0, 0, 1.0f));
 
-			glm::mat4 transMat = glm::mat4::CreateTranslation(
-				glm::vec3(position.x, position.y, position.z));
-
-			const Vector4F fd = rotMat * Vector4F(0, 0, 1, 0);
+			const glm::vec4 fd = rotMat * glm::vec4(0, 0, 1, 0);
 			forward = glm::vec3(fd.x, fd.y, fd.z);
 
-			const Vector4F u = rotMat * Vector4F(0, 1, 0, 0);
+			const glm::vec4 u = rotMat * glm::vec4(0, 1, 0, 0);
 			up = glm::vec3(u.x, u.y, u.z);
 
-			right = glm::vec3::Cross(forward, up);
-			matrices.view = glm::mat4::LookAt(position, position + glm::vec3(fd.x, fd.y, fd.z), glm::vec3(u.x, u.y, u.z));
-			//matrices.view(2,2) = -1;
-
-#endif
-#ifdef GLM_USE
-			glm::mat4 rotM = glm::mat4(1.0f);
-
-			rotM = glm::rotate(rotM, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-			rotM = glm::rotate(rotM, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-			rotM = glm::rotate(rotM, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-
-			glm::mat4 transM = glm::translate(glm::mat4(1.0f), position);
-
-			for (int i = 0; i < 4; ++i)
-				std::cout << transM[i].x << '/' << transM[i].y << '/' << transM[i].z << '/' << transM[i].w << '\n';
-
-			for (int i = 0; i < 4; ++i)
-				std::cout << rotM[i].x << '/' << rotM[i].y << '/' << rotM[i].z << '/' << rotM[i].w << '\n';
-
-			matrices.view = transM * rotM;
-			matrices.view[2][2] = -1;
-#endif
+			right = glm::cross(forward, up);
+			matrices.view = glm::lookAt(position, position + glm::vec3(fd.x, fd.y, fd.z), glm::vec3(u.x, u.y, u.z));
 		}
 
 		void SetPerspective(const float p_fov, const float p_aspect, const float p_znear, const float p_zfar)
 		{
 			matrices.perspective = glm::perspective(p_fov, p_aspect, p_znear, p_zfar);
-			//matrices.perspective(1, 1) *= -1;
 			this->fov = p_fov;
 			this->znear = p_znear;
 			this->zfar = p_zfar;

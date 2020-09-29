@@ -128,7 +128,7 @@ const std::string& OgEngine::ModelRS::MeshFilepath() const
 
 glm::mat4 OgEngine::ModelRS::ModelMatrix() const
 {
-	return m_meshTransform ? m_meshTransform->worldMatrix : glm::mat4();
+	return m_meshTransform ? m_meshTransform->worldMatrix : glm::mat4(1.0f);
 }
 
 OgEngine::ModelRS& OgEngine::ModelRS::operator=(const ModelRS & p_other)

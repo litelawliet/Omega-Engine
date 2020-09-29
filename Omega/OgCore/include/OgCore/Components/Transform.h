@@ -1,10 +1,12 @@
 #pragma once
 #include <string>
+#include <iostream>
 #include <OgCore/Export.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace OgEngine
 {

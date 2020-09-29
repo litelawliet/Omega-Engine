@@ -3,7 +3,7 @@
 #include <utility>
 
 OgEngine::Transform::Transform()
-	: _worldMatrix(glm::mat4()), _localMatrix(glm::mat4()),
+	: _worldMatrix(glm::mat4(1.0f)), _localMatrix(glm::mat4(1.0f)),
 	_position(glm::vec3(0)), _localPosition(glm::vec3(0)),
 	_scale(glm::vec3(1)), _localScale(glm::vec3(1)),
 	_rotation(0.0, 0.0, 0.0, 1.0), _localRotation(0.0, 0.0, 0.0, 1.0)
@@ -13,7 +13,7 @@ OgEngine::Transform::Transform()
 
 OgEngine::Transform::Transform(glm::mat4 p_matrix)
 	:
-	_worldMatrix(glm::mat4()), _localMatrix(p_matrix),
+	_worldMatrix(glm::mat4(1.0f)), _localMatrix(p_matrix),
 	_position(glm::vec3(0)), _localPosition(glm::vec3(0)),
 	_scale(glm::vec3(1)), _localScale(glm::vec3(1)),
 	_rotation(0.0, 0.0, 0.0, 1.0), _localRotation(0.0, 0.0, 0.0, 1.0)
@@ -175,7 +175,12 @@ OgEngine::Transform& OgEngine::Transform::operator=(Transform&& p_other) noexcep
 void OgEngine::Transform::GenerateMatrices(const glm::vec3& p_position, const glm::quat& p_rotation,
 	const glm::vec3& p_scale)
 {
-	_localMatrix = glm::translate(glm::mat4(), glm::vec3(p_position)) * glm::mat4(glm::normalize(p_rotation)) * glm::scale(glm::mat4(), p_scale);
+	const glm::mat4 tr = glm::translate(glm::mat4(1.0), p_position);
+	const glm::mat4 ro = glm::toMat4(p_rotation);
+
+	const glm::mat4 sc = glm::scale(glm::mat4(1.0), p_scale);
+	_localMatrix = sc * ro * tr;
+	
 	_localPosition = p_position;
 	_localRotation = p_rotation;
 	_localScale = p_scale;

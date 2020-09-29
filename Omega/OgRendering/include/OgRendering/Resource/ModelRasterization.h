@@ -26,7 +26,7 @@ namespace OgEngine
 	class RENDERING_API ModelRasterization
 	{
 	public:
-		ModelRasterization(Mesh* p_mesh = nullptr, OgEngine::Texture* p_texture = nullptr, glm::mat4 p_modelMatrix = glm::mat4());
+		ModelRasterization(Mesh* p_mesh = nullptr, OgEngine::Texture* p_texture = nullptr, glm::mat4 p_modelMatrix = glm::mat4(1.0f));
 		~ModelRasterization();
 
 		void SetMesh(Mesh* p_newMesh);
