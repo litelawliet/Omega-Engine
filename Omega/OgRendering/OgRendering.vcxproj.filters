@@ -78,9 +78,6 @@
     <ClInclude Include="include\OgRendering\Utils\VulkanTools.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\OgRendering\Resource\RTMesh.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="include\OgRendering\Utils\Debugger.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
@@ -133,6 +130,9 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="include\OgRendering\Managers\Loaders\GltfLoader\stb_image_write.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\OgRendering\Utils\RaytracingTools.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

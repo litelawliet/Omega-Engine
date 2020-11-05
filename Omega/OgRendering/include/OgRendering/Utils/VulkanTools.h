@@ -1,19 +1,13 @@
 #pragma once
 #include <iostream>
-#include <OgRendering/Utils/Initializers.h>
-#include <glm/glm.hpp>
-#include <GPM/GPM.h>
 #include <fstream>
+#include <OgRendering/Rendering/Device.h>
 
-struct GeometryInstance
-{
-	glm::mat3x4 transform;
-	uint32_t instanceId : 24;
-	uint32_t mask : 8;
-	uint32_t instanceOffset : 24;
-	uint32_t flags : 8;
-	uint64_t accelerationStructureHandle;
-};
+#include <glm/glm.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 enum TEXTURE_TYPE : std::uint8_t
 {
@@ -22,43 +16,37 @@ enum TEXTURE_TYPE : std::uint8_t
 };
 
 /**
- * @brief Convert a GPM::Vector3<float> to a glm::vec3<float>
- * @param p_vector The vector to convert : GPM::Vector3<float>
- * @return The converted vector 3 of type glm::vec3<float>
- */
-inline glm::vec3 ConvertToGLM(const GPM::Vector3F& p_vector)
+*   @brief returns the memory type used by the gpu
+*   @param p_typeBits is the memory type bits coming from the memory requierements
+*   @param p_properties are the memory properties
+*   @param p_memTypeFound is a check returning if the memory type is found
+*   @returns the type found by the function
+*/
+uint32_t GetMemoryType(Device& p_device, uint32_t p_typeBits, VkMemoryPropertyFlags p_properties, VkBool32* p_memTypeFound = nullptr)
 {
-	return glm::vec3(p_vector.x, p_vector.y, p_vector.z);
+    for (uint32_t i = 0; i < p_device.gpuMemoryProperties.memoryTypeCount; i++)
+    {
+        if ((p_typeBits & 1) == 1)
+        {
+            if ((p_device.gpuMemoryProperties.memoryTypes[i].propertyFlags & p_properties) == p_properties)
+            {
+                if (p_memTypeFound)
+                {
+                    *p_memTypeFound = true;
+                }
+                return i;
+            }
+        }
+        p_typeBits >>= 1;
+    }
+
+    if (p_memTypeFound)
+    {
+        *p_memTypeFound = false;
+        return 0;
+    }
+    throw std::runtime_error("Could not find a matching memory type");
 }
-
-/**
- * @brief Convert a GPM::Matrix4<float> to a glm::mat4<float>
- * @param p_matrix The matrix to convert : GPM::Matrix4<float>
- * @return The converted matrix 4x4 of type glm::mat4<float>
- */
-inline glm::mat4 ConvertToGLM(GPM::Matrix4F p_matrix)
-{
-	/*return glm::mat4(
-		p_matrix(0, 0), p_matrix(1, 0), p_matrix(2, 0), p_matrix(3, 0),
-		p_matrix(0, 1), p_matrix(1, 1), p_matrix(2, 1), p_matrix(3, 1),
-		p_matrix(0, 2), p_matrix(1, 2), p_matrix(2, 2), p_matrix(3, 2),
-		p_matrix(0, 3), p_matrix(1, 3), p_matrix(2, 3), p_matrix(3, 3)
-		);*/
-
-	return glm::mat4(
-		p_matrix(0, 0), p_matrix(0, 1), p_matrix(0, 2), p_matrix(0, 3),
-		p_matrix(1, 0), p_matrix(1, 1), p_matrix(1, 2), p_matrix(1, 3),
-		p_matrix(2, 0), p_matrix(2, 1), p_matrix(2, 2), p_matrix(2, 3),
-		p_matrix(3, 0), p_matrix(3, 1), p_matrix(3, 2), p_matrix(3, 3)
-	);
-}
-
-struct AccelerationStructure
-{
-	VkDeviceMemory memory{};
-	VkAccelerationStructureNV accelerationStructure{};
-	uint64_t handle{ 0u };
-};
 
 /**
  * @brief Change the layout of a VkImage to a new layout
@@ -240,6 +228,16 @@ struct Buffer
 	[[nodiscard]] VkResult Bind(VkDeviceSize p_offset = 0) const
 	{
 		return vkBindBufferMemory(device, buffer, memory, p_offset);
+	}
+
+	VkDeviceAddress GetBufferAdress() const
+	{
+		VkBufferDeviceAddressInfo info;
+		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+		info.buffer = buffer;
+		info.pNext = VK_NULL_HANDLE;
+
+		return vkGetBufferDeviceAddress(device, &info);
 	}
 
 	/**

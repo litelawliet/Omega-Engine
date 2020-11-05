@@ -266,7 +266,6 @@ call compileShaders.bat</Command>
     <ClInclude Include="include\OgRendering\Resource\Mesh.h" />
     <ClInclude Include="include\OgRendering\Resource\Model.h" />
     <ClInclude Include="include\OgRendering\Resource\ModelRasterization.h" />
-    <ClInclude Include="include\OgRendering\Resource\RTMesh.h" />
     <ClInclude Include="include\OgRendering\Resource\Texture.h" />
     <ClInclude Include="include\OgRendering\Resource\TextureData.h" />
     <ClInclude Include="include\OgRendering\Resource\Vertex.h" />
@@ -280,6 +279,7 @@ call compileShaders.bat</Command>
     <ClInclude Include="include\OgRendering\UI\imgui\imstb_textedit.h" />
     <ClInclude Include="include\OgRendering\UI\imgui\imstb_truetype.h" />
     <ClInclude Include="include\OgRendering\Utils\Initializers.h" />
+    <ClInclude Include="include\OgRendering\Utils\RaytracingTools.h" />
     <ClInclude Include="include\OgRendering\Utils\TemplateTypename.h" />
     <ClInclude Include="include\OgRendering\Utils\ThreadPool.h" />
     <ClInclude Include="include\OgRendering\Rendering\RaytracingPipeline.h" />

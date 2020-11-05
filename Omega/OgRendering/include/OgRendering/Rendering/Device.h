@@ -1,5 +1,5 @@
 #pragma once
-#include <vulkan/vulkan.h>
+#include <OgRendering/Utils/Initializers.h>
 #include <GLFW/glfw3.h>
 
 #include <vector>

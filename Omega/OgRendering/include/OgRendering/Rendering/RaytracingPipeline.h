@@ -5,14 +5,9 @@
 #include <optional>
 #include <vector>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <OgRendering/Rendering/Device.h>
 #include <OgRendering/Resource/Model.h>
 #include <OgRendering/Resource/Camera.h>
 #include <OgRendering/Resource/TextureData.h>
-#include <OgRendering/Utils/VulkanTools.h>
 #include <OgRendering/Managers/ResourceManager.h>
 #include <OgRendering/Rendering/SwapChainSupportDetails.h>
 #include <OgRendering/UI/imgui/imgui.h>
@@ -219,8 +214,29 @@ namespace OgEngine
         *   @brief Create geometry data structure that is used by the NV_RAYTRACING extension
         *   @param p_geometries pointer to the previously filled with a mesh and generated
         */
-        void CreateBottomLevelAccelerationStructure(const VkGeometryNV* p_geometries);
+        std::pair<const char*, AccelerationStructure>* ObjectToGeometry(const Mesh* p_mesh);
 
+
+        int IsAccelerationInMemory(const Mesh* p_mesh);
+
+        /**
+        *   @brief Creates a buffer with a size and its data
+        *   @param p_usageFlags is the flag defining how the buffer will be used as
+        *   @param p_buffer is the actual buffer that we will fill
+        *   @param p_size is the size that the buffer will take
+        *   @param p_data is the actual data that we will put in the buffer
+        *   @returns function validation result
+        */
+        VkResult CreateVkBuffer(Device& p_device, VkBufferUsageFlags p_usageFlags, Buffer* p_buffer, VkDeviceSize p_size, void * p_data) const;
+
+        void AllocateAccelerationStructure(AccelerationStructure& acc, VkAccelerationStructureCreateInfoKHR* asCreateInfo);
+
+        void BuildBottomLevelAccelerationStructure(std::pair<const char*, AccelerationStructure>& bottomAccel);
+
+        AccelerationStructure CreateBottomLevelAccelerationStructure(VkAccelerationStructureGeometryKHR& geometry, VkAccelerationStructureBuildOffsetInfoKHR& offset, VkAccelerationStructureCreateGeometryTypeInfoKHR& createInfo, GeometryBuffer* p_buffer);
+
+        VkDeviceMemory AllocateMemory(VkMemoryAllocateInfo& allocateInfo);
+        
         /**
         *   @brief Create instance data structure that is used by the NV_RAYTRACING extension
         *   @param p_accelerationStruct acceleration structure selected to be filled
@@ -381,8 +397,7 @@ namespace OgEngine
         *   @param p_type is the material type
         *   @note in fact we need to send the material data by parameters as the pipeline needs a different data structure to be used by the shaders
         */
-        void UpdateObject(uint64_t p_id, const glm::mat4& p_transform, Mesh* p_mesh, std::string p_texID,
- const char* p_normID,
+        void UpdateObject(uint64_t p_id, const glm::mat4& p_transform, Mesh* p_mesh, std::string p_texID, const char* p_normID,
             glm::vec4 p_albedo, float p_roughness, float p_ior, glm::vec4 p_specular, glm::vec4 p_emissive, int p_type);
 
         void DestroyObject(uint64_t p_id);
@@ -543,15 +558,6 @@ namespace OgEngine
         VkCommandBuffer CreateCommandBuffer(VkCommandBufferLevel p_level, bool p_begin) const;
 
         /**
-        *   @brief returns the memory type used by the gpu
-        *   @param p_typeBits is the memory type bits coming from the memory requierements
-        *   @param p_properties are the memory properties
-        *   @param p_memTypeFound is a check returning if the memory type is found
-        *   @returns the type found by the function
-        */
-        uint32_t GetMemoryType(uint32_t p_typeBits, VkMemoryPropertyFlags p_properties, VkBool32* p_memTypeFound = nullptr) const;
-
-        /**
         *   @brief loads a shader from a file and returns its stage creation info
         *   @param p_fileName is the file path to the shader
         *   @param p_stage is the shader stage flag
@@ -584,22 +590,8 @@ namespace OgEngine
         *   @returns function validation result
         */
         VkResult QueuePresent(VkQueue p_queue, uint32_t p_imageIndex, VkSemaphore p_waitSemaphore);
-
-        
-        /**
-        *   @brief Creates a buffer with a size and its data
-        *   @param p_usageFlags is the flag defining how the buffer will be used as
-        *   @param p_memoryPropertyFlags are the memory propertie flags
-        *   @param p_buffer is the actual buffer that we will fill
-        *   @param p_size is the size that the buffer will take
-        *   @param p_data is the actual data that we will put in the buffer
-        *   @returns function validation result
-        */
-        VkResult CreateBuffer(VkBufferUsageFlags p_usageFlags, VkMemoryPropertyFlags p_memoryPropertyFlags, Buffer* p_buffer, VkDeviceSize p_size, void* p_data = nullptr) const;
-        
+ 
         int FindObjectID(uint64_t p_id);
-
-        int CheckForExistingMesh(Mesh* p_mesh);
 
 #pragma endregion
 
@@ -639,11 +631,8 @@ namespace OgEngine
         std::vector<VkCommandBuffer> m_ImGUIcommandBuffers;
         std::vector<VkFramebuffer> m_swapchainFrameBuffers;
         std::vector<VkFramebuffer> m_ImGUIframeBuffers;
-        //std::vector<uint32_t> m_BLASTriangleCount;
         std::vector<uint32_t> m_objectAccIDs;
-        std::vector<AccelerationStructure> m_BLAS;
-        std::vector<std::shared_ptr<Mesh>> m_BLASmeshes;
-        std::vector<GeometryInstance> m_instances;
+        std::vector<GeometryInstance> m_geometryInstances;
         std::vector<Model> m_objects;
         std::vector<uint64_t> m_objectIDs;
         std::vector<RTMaterial> m_materials;
@@ -657,12 +646,13 @@ namespace OgEngine
         std::vector<TextureData> m_normalMaps;
         std::vector<std::string> m_normalMapsCtr;
         
-        std::vector<std::pair<Mesh*, int>> m_instanceTracker;
         std::vector<Buffer> m_meshVertexBuffers;
         std::vector<Buffer> m_meshIndexBuffers;
 
         std::vector<RTLight> m_lights;
         std::vector<uint64_t> m_lightsIDs;
+
+        std::vector<std::pair<const char*, AccelerationStructure>> m_BLAS;
 
 #pragma endregion
 
@@ -690,7 +680,7 @@ namespace OgEngine
         VkDescriptorPool m_ImGUIdescriptorPool{};
 
         VkFormat m_depthFormat{};
-        VkPhysicalDeviceRayTracingPropertiesNV m_raytracingProperties{};
+        VkPhysicalDeviceRayTracingPropertiesKHR m_raytracingProperties{};
         VkPipelineCache m_pipelineCache{};
         VkSubmitInfo m_submitInfo{};
         VkPipelineStageFlags submitPipelineStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;

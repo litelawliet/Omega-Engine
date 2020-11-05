@@ -1,15 +1,9 @@
 #pragma once
 #include <OgRendering/Export.h>
 #include <OgRendering/Resource/Mesh.h>
-#include <OgRendering/Resource/RTMesh.h>
-#include <OgRendering/Utils/VulkanTools.h>
+#include <OgRendering/Utils/RaytracingTools.h>
 
 #include <memory>
-
-#include <vulkan/vulkan.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 
 namespace OgEngine
@@ -18,7 +12,7 @@ namespace OgEngine
 	{
 	public:
 		Model() = default;
-		Model(OgEngine::Mesh* p_mesh, bool useRT)
+		Model(const OgEngine::Mesh* p_mesh)
 		{
 			m_mesh = p_mesh;
 
@@ -30,8 +24,8 @@ namespace OgEngine
 
 		~Model()
 		{
-			if(m_geometryBuffer.mapped != nullptr)
-				m_geometryBuffer.Destroy();
+			/*if(m_geometryBuffer.mapped != nullptr)
+				m_geometryBuffer.Destroy();*/
 		}
 
 		void Translate(glm::vec3 tr)
@@ -76,14 +70,11 @@ namespace OgEngine
 		glm::vec3 m_pos;
 		glm::vec3 m_rot;
 
-		OgEngine::Mesh* m_mesh;
+		const OgEngine::Mesh* m_mesh;
 		//std::shared_ptr<OgEngine::RTMesh> m_rtMesh;
 
 		GeometryInstance m_geometry;
 		uint64_t m_id;
-		Buffer m_geometryBuffer;
-		Buffer m_vertBuffer;
-		Buffer m_indexBuffer;
 	};
 
 }
