@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 namespace OgEngine
 {
@@ -41,6 +42,11 @@ namespace OgEngine
 		 *	@brief Local scale of this gameObject (read-only)
 		 */
 		const glm::vec3& localScale = _localScale;
+
+		/**
+		 *	@brief Inspector rotation of this gameObject in degrees (read-only)
+		 */
+		const glm::vec3& editorRotation = _editorRotation;
 
 		/**
 		 *	@brief World rotation of this gameObject in radians (read-only)
@@ -119,6 +125,12 @@ namespace OgEngine
 		 * @param p_rotation The rotation glm::quat
 		 */
 		void SetRotation(const glm::quat& p_rotation);
+
+		/**
+		 * @brief Set the inspector rotation to a new rotation.
+		 * @param p_editorRotation The rotation glm::vec3
+		 */
+		void SetEditorRotation(const glm::vec3 & p_editorRotation);
 
 		/**
 		 * @brief Set the transform to a new rotation.
@@ -211,6 +223,7 @@ namespace OgEngine
 		glm::vec3 _localPosition;
 		glm::vec3 _scale;
 		glm::vec3 _localScale;
+		glm::vec3 _editorRotation;
 		glm::quat _rotation;
 		glm::quat _localRotation;
 		Transform* _parent = nullptr;

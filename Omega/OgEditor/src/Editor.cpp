@@ -393,39 +393,32 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 			if (currentRotationEntity != entity)
 			{
 				currentRotationEntity = entity;
-				const glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(trans.localRotation));
-				currentEulers[0] = eulerAngles.x;
-				currentEulers[1] = eulerAngles.y;
-				currentEulers[2] = eulerAngles.z;
 			}
-			float rot[3] = { currentEulers[0], currentEulers[1], currentEulers[2] };
+			float rot[3] = { trans.editorRotation.x, trans.editorRotation.y, trans.editorRotation.z };
 			if (ImGui::DragFloat3(rotationID.c_str(), rot, 0.05f))
 			{
-				float x, y, z = 0.0f;
-				x = rot[0] - currentEulers[0];
-				y = rot[1] - currentEulers[1];
-				z = rot[2] - currentEulers[2];
+				float x, y, z;
+				x = rot[0] - trans.editorRotation.x;
+				y = rot[1] - trans.editorRotation.y;
+				z = rot[2] - trans.editorRotation.z;
 
 				glm::quat q1 = glm::angleAxis(glm::radians(x), glm::vec3(1.0, 0.0, 0.0));
 				glm::quat q2 = glm::angleAxis(glm::radians(y), glm::vec3(0.0, 1.0, 0.0));
 				glm::quat q3 = glm::angleAxis(glm::radians(z), glm::vec3(0.0, 0.0, 1.0));
-				glm::quat newDirection = (q3 * q2) * q1;
+				glm::quat newDirection = q1 * q2 * q3;
+				trans.SetEditorRotation(glm::vec3(rot[0], rot[1], rot[2]));
 				newDirection = glm::normalize(newDirection);
 
-				const double eps = 1e-9;
-				glm::quat qd = glm::inverse(trans.localRotation) * newDirection;
-				const double angleDistance = 2.0 * std::atan2(glm::length(glm::eulerAngles(qd)), qd.w);
+				//if (std::fabs(x) > 0 && std::fabs(y) > 0 && std::fabs(z) > 0)
+				//{
+				if(worldRotation)
+					trans.SetRotation(newDirection * trans.localRotation);
+				else
+					trans.SetRotation(trans.localRotation * newDirection);
+				//}
 
-				if (std::fabs(x) < eps && std::fabs(y) < eps && std::fabs(z) < eps)
-				{
-					trans.SetRotation(glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)));
-				}
-				else if (angleDistance > 1.0 - eps)
-				{
-					glm::quat finalRotation = worldRotation ? newDirection * trans.localRotation : trans.localRotation * newDirection;
-					trans.SetRotation(finalRotation);
-					trans.SetRotation(glm::normalize(trans.localRotation));
-				}
+				//glm::quat finalRotation = worldRotation ? trans.rotation * newDirection : trans.localRotation * newDirection;
+				//trans.SetRotation(finalRotation);
 				memcpy_s(currentEulers, sizeof(currentEulers), rot, sizeof(rot));
 			}
 

@@ -5,7 +5,7 @@
 OgEngine::Transform::Transform()
 	: _worldMatrix(glm::mat4(1.0f)), _localMatrix(glm::mat4(1.0f)),
 	_position(glm::vec3(0)), _localPosition(glm::vec3(0)),
-	_scale(glm::vec3(1)), _localScale(glm::vec3(1)),
+	_scale(glm::vec3(1)), _localScale(glm::vec3(1)), _editorRotation(glm::vec3(0)),
 	_rotation(0.0, 0.0, 0.0, 1.0), _localRotation(0.0, 0.0, 0.0, 1.0)
 {
 	_name.resize(32);
@@ -15,7 +15,7 @@ OgEngine::Transform::Transform(glm::mat4 p_matrix)
 	:
 	_worldMatrix(glm::mat4(1.0f)), _localMatrix(p_matrix),
 	_position(glm::vec3(0)), _localPosition(glm::vec3(0)),
-	_scale(glm::vec3(1)), _localScale(glm::vec3(1)),
+	_scale(glm::vec3(1)), _localScale(glm::vec3(1)), _editorRotation(glm::vec3(0)),
 	_rotation(0.0, 0.0, 0.0, 1.0), _localRotation(0.0, 0.0, 0.0, 1.0)
 {
 	_name.resize(32);
@@ -25,7 +25,7 @@ OgEngine::Transform::Transform(const Transform& p_other)
 	:
 	_worldMatrix(p_other.worldMatrix), _localMatrix(p_other.localMatrix),
 	_position(p_other.position), _localPosition(p_other.localPosition),
-	_scale(p_other.scale), _localScale(p_other.localScale),
+	_scale(p_other.scale), _localScale(p_other.localScale), _editorRotation(p_other.editorRotation),
 	_rotation(p_other.rotation), _localRotation(p_other.localRotation),
 	_name(p_other._name)
 {
@@ -34,7 +34,7 @@ OgEngine::Transform::Transform(const Transform& p_other)
 OgEngine::Transform::Transform(Transform&& p_other) noexcept
 	: _worldMatrix(std::move(p_other._worldMatrix)), _localMatrix(std::move(p_other._localMatrix)),
 	_position(p_other.position), _localPosition(p_other.localPosition),
-	_scale(p_other.scale), _localScale(p_other.localScale),
+	_scale(p_other.scale), _localScale(p_other.localScale), _editorRotation(p_other.editorRotation),
 	_rotation(p_other.rotation), _localRotation(p_other.localRotation),
 	_name(p_other._name)
 {
@@ -63,6 +63,11 @@ void OgEngine::Transform::SetPosition(const glm::vec3& p_position)
 void OgEngine::Transform::SetScale(const glm::vec3& p_scale)
 {
 	GenerateMatrices(_localPosition, _localRotation, p_scale);
+}
+
+void OgEngine::Transform::SetEditorRotation(const glm::vec3& p_editorRotation)
+{
+	_editorRotation = p_editorRotation;
 }
 
 void OgEngine::Transform::SetRotation(const glm::quat& p_rotation)
@@ -179,7 +184,7 @@ void OgEngine::Transform::GenerateMatrices(const glm::vec3& p_position, const gl
 	const glm::mat4 ro = glm::toMat4(p_rotation);
 
 	const glm::mat4 sc = glm::scale(glm::mat4(1.0), p_scale);
-	_localMatrix = sc * ro * tr;
+	_localMatrix = tr * ro * sc;
 	
 	_localPosition = p_position;
 	_localRotation = p_rotation;
@@ -188,7 +193,11 @@ void OgEngine::Transform::GenerateMatrices(const glm::vec3& p_position, const gl
 
 void OgEngine::Transform::DecomposeWorldMatrix()
 {
-	_position.x = _worldMatrix[0][3];
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(_worldMatrix, _scale, _rotation, _position, skew, perspective);
+
+	/*_position.x = _worldMatrix[0][3];
 	_position.y = _worldMatrix[1][3];
 	_position.z = _worldMatrix[2][3];
 
@@ -223,7 +232,7 @@ void OgEngine::Transform::DecomposeWorldMatrix()
 		columns[0].z, columns[1].z, columns[2].z
 	);
 
-	_rotation = glm::quat(rotationMatrix);
+	_rotation = glm::quat(rotationMatrix);*/
 }
 
 std::string OgEngine::Transform::DepthIndent(const int p_depth)
