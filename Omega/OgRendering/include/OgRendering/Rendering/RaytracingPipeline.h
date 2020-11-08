@@ -161,7 +161,7 @@ namespace OgEngine
         *   @brief Setup the buffers and properties of the pipeline, and bind it to Vulkan
         *   @param p_resizedWindow if the window is resized, only recreates some parts of the pipeline
         */
-        void SetupPipelineAndBind(bool p_resizedWindow);
+        void SetupPipelineAndBind();
 
         /**
         *   @brief Configure the Raytracing Commands required by the NV_RAYTRACING extension
@@ -250,11 +250,6 @@ namespace OgEngine
         void ReloadShaders();
 
         /**
-        *   @brief Setup and allocate the synchronization primitives
-        */
-        void CreateSynchronizationPrimitives();
-
-        /**
         *   @brief Allocate a pipeline cache for Vulkan
         */
         void CreatePipelineCache();
@@ -267,7 +262,7 @@ namespace OgEngine
         *   @brief Prepare the descriptors sets with the bindings previously bound with CreatePipeline
         *   @param p_resizedWindow receives the window resize event (has been resized or not)
         */
-        void CreateDescriptorSets(bool p_resizedWindow);
+        void CreateDescriptorSets();
 
         /**
         *   @brief Update the editor camera with the new previously set values
@@ -382,7 +377,7 @@ namespace OgEngine
         *   @note in fact we need to send the material data by parameters as the pipeline needs a different data structure to be used by the shaders
         */
         void UpdateObject(uint64_t p_id, const glm::mat4& p_transform, Mesh* p_mesh, std::string p_texID,
- const char* p_normID,
+            const char* p_normID,
             glm::vec4 p_albedo, float p_roughness, float p_ior, glm::vec4 p_specular, glm::vec4 p_emissive, int p_type);
 
         void DestroyObject(uint64_t p_id);
@@ -477,7 +472,7 @@ namespace OgEngine
         *   @brief Loads the raytracing shaders
         *   @param p_piepeline is the pipeline where we will load the shaders in
         */
-        void LoadShaders(VkPipeline& p_pipeline);
+        void LoadShaders();
 
         /**
         *   @brief Gets the ImGui context
@@ -585,7 +580,7 @@ namespace OgEngine
         */
         VkResult QueuePresent(VkQueue p_queue, uint32_t p_imageIndex, VkSemaphore p_waitSemaphore);
 
-        
+
         /**
         *   @brief Creates a buffer with a size and its data
         *   @param p_usageFlags is the flag defining how the buffer will be used as
@@ -596,7 +591,7 @@ namespace OgEngine
         *   @returns function validation result
         */
         VkResult CreateBuffer(VkBufferUsageFlags p_usageFlags, VkMemoryPropertyFlags p_memoryPropertyFlags, Buffer* p_buffer, VkDeviceSize p_size, void* p_data = nullptr) const;
-        
+
         int FindObjectID(uint64_t p_id);
 
         int CheckForExistingMesh(Mesh* p_mesh);
@@ -634,12 +629,10 @@ namespace OgEngine
         Camera m_camera{};
 
         std::vector<VkShaderModule> m_shaderModules;
-        std::vector<VkFence> m_waitFences;
         std::vector<VkCommandBuffer> m_commandBuffers;
         std::vector<VkCommandBuffer> m_ImGUIcommandBuffers;
-        std::vector<VkFramebuffer> m_swapchainFrameBuffers;
         std::vector<VkFramebuffer> m_ImGUIframeBuffers;
-        //std::vector<uint32_t> m_BLASTriangleCount;
+        std::vector<VkFramebuffer> m_swapchainFrameBuffers;
         std::vector<uint32_t> m_objectAccIDs;
         std::vector<AccelerationStructure> m_BLAS;
         std::vector<std::shared_ptr<Mesh>> m_BLASmeshes;
@@ -656,7 +649,7 @@ namespace OgEngine
         std::vector<uint32_t> m_normalMapIDs;
         std::vector<TextureData> m_normalMaps;
         std::vector<std::string> m_normalMapsCtr;
-        
+
         std::vector<std::pair<Mesh*, int>> m_instanceTracker;
         std::vector<Buffer> m_meshVertexBuffers;
         std::vector<Buffer> m_meshIndexBuffers;
@@ -667,6 +660,7 @@ namespace OgEngine
 #pragma endregion
 
 #pragma region Vulkan Direct Variables
+
         VkQueue m_graphicsQueue{};
         VkQueue m_presentQueue{};
         VkCommandPool m_commandPool{};
@@ -693,7 +687,7 @@ namespace OgEngine
         VkPhysicalDeviceRayTracingPropertiesNV m_raytracingProperties{};
         VkPipelineCache m_pipelineCache{};
         VkSubmitInfo m_submitInfo{};
-        VkPipelineStageFlags submitPipelineStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
 #pragma endregion
 
 #pragma region Vulkan Function Pointers

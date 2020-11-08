@@ -289,9 +289,6 @@ void RaytracingPipeline::CleanPipeline()
 
     vkDestroyPipelineCache(m_vulkanDevice.logicalDevice, m_pipelineCache, nullptr);
 
-    for (auto fence : m_waitFences)
-        vkDestroyFence(m_vulkanDevice.logicalDevice, fence, nullptr);
-
     vkDestroyCommandPool(m_vulkanDevice.logicalDevice, m_commandPool, nullptr);
     DestroyShaderBuffers(false);
     vkQueueWaitIdle(m_graphicsQueue);
@@ -317,13 +314,9 @@ void OgEngine::RaytracingPipeline::ResizeCleanup()
     }
 
     vkFreeCommandBuffers(m_vulkanDevice.logicalDevice, m_commandPool, m_commandBuffers.size(), m_commandBuffers.data());
-    vkDestroyPipelineLayout(m_vulkanDevice.logicalDevice, m_pipelineLayout, nullptr);
-    vkDestroyPipeline(m_vulkanDevice.logicalDevice, m_pipeline, nullptr);
     vkDestroyRenderPass(m_vulkanDevice.logicalDevice, m_renderpass, nullptr);
 
     vkDestroySwapchainKHR(m_vulkanDevice.logicalDevice, m_swapChain.swapChain, nullptr);
-    vkDestroyDescriptorPool(m_vulkanDevice.logicalDevice, m_descriptorPool, nullptr);
-    vkDestroyDescriptorSetLayout(m_vulkanDevice.logicalDevice, m_descriptorSetLayout, nullptr);
     vkDestroyImage(m_vulkanDevice.logicalDevice, m_depthStencil.m_stencilImage, nullptr);
     vkDestroyImageView(m_vulkanDevice.logicalDevice, m_depthStencil.m_stencilView, nullptr);
     vkDestroyImage(m_vulkanDevice.logicalDevice, m_storageImage.image, nullptr);
@@ -331,7 +324,10 @@ void OgEngine::RaytracingPipeline::ResizeCleanup()
 
     vkFreeMemory(m_vulkanDevice.logicalDevice, m_depthStencil.m_stencilMemory, nullptr);
 
+    vkDestroyDescriptorPool(m_vulkanDevice.logicalDevice, m_descriptorPool, nullptr);
+    vkDestroyDescriptorSetLayout(m_vulkanDevice.logicalDevice, m_descriptorSetLayout, nullptr);
     vkDestroyPipelineCache(m_vulkanDevice.logicalDevice, m_pipelineCache, nullptr);
+    vkDestroyPipeline(m_vulkanDevice.logicalDevice, m_pipeline, nullptr);
 
     vkDestroyCommandPool(m_vulkanDevice.logicalDevice, m_commandPool, nullptr);
 
@@ -713,13 +709,12 @@ void OgEngine::RaytracingPipeline::SetupRaytracingPipeline()
     SetupSwapchain(m_width, m_height, false);
     SetupOffScreenPass();
     CreateCommandBuffers();
-    CreateSynchronizationPrimitives();
     SetupDepthStencil();
     SetupRenderPass();
     CreatePipelineCache();
     SetupFramebuffer();
 
-    SetupPipelineAndBind(false);
+    SetupPipelineAndBind();
 }
 
 void OgEngine::RaytracingPipeline::DestroyObject(uint64_t p_id)
@@ -738,7 +733,7 @@ void OgEngine::RaytracingPipeline::DestroyObject(uint64_t p_id)
         m_instances.erase(m_instances.begin() + id);
         m_shaderData.materialBuffer.erase(m_shaderData.materialBuffer.begin() + id);
         m_objects[id].m_geometryBuffer.Destroy();
-        
+
         //vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, m_BLAS[id].accelerationStructure, nullptr);
         std::vector<std::pair<Mesh*, int>>::iterator it;
         int meshID = 0;
@@ -794,7 +789,7 @@ void OgEngine::RaytracingPipeline::DestroyAllObjects()
     m_lights.erase(m_lights.begin() + 1, m_lights.end());
     m_lightsIDs.erase(m_lightsIDs.begin() + 1, m_lightsIDs.end());
     m_shaderData.lightBuffer.erase(m_shaderData.lightBuffer.begin() + 1, m_shaderData.lightBuffer.end());
-    
+
     vkQueueWaitIdle(m_graphicsQueue);
 
     //CRASH WHEN TRYING TO FREE THE ACCELERATION STRUCTURES FROM PREVIOUS OBJECTS, TO BE FIXED, CAUSES MEMORY LEAKS IN GPU
@@ -979,7 +974,7 @@ void OgEngine::RaytracingPipeline::UpdateDescriptorSets()
     const VkWriteDescriptorSet objectBLASWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 9, &m_shaderData.objectBLASbuffer.descriptor);
     const VkWriteDescriptorSet normalMapIDWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10, &m_shaderData.normalMapIDBuffer.descriptor);
     const VkWriteDescriptorSet lightWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 12, lightDescriptor.data(), static_cast<uint32_t>(m_shaderData.lightBuffer.size()));
-    
+
     std::vector<VkWriteDescriptorSet> writeDescriptorSets =
     {
         accelerationStructureWrite,
@@ -1262,38 +1257,6 @@ void OgEngine::RaytracingPipeline::RenderUI(uint32_t p_id)
     QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
 
 }
-
-void OgEngine::RaytracingPipeline::ResizeWindow()
-{
-    int width = 0, height = 0;
-    glfwGetFramebufferSize(m_window, &width, &height);
-    while (width == 0 || height == 0)
-    {
-        glfwGetFramebufferSize(m_window, &width, &height);
-        glfwWaitEvents();
-    }
-    m_width = width;
-    m_height = height;
-
-    vkDeviceWaitIdle(m_vulkanDevice.logicalDevice);
-    ResizeCleanup();
-    vkQueueWaitIdle(m_graphicsQueue);
-    vkQueueWaitIdle(m_presentQueue);
-
-    FindQueueFamilies();
-    CreateCommandPool();
-    SetupSwapchain(m_width, m_height, false);
-    SetupOffScreenPass();
-    CreateCommandBuffers();
-    CreateSynchronizationPrimitives();
-    SetupDepthStencil();
-    SetupRenderPass();
-    CreatePipelineCache();
-    SetupFramebuffer();
-
-    SetupPipelineAndBind(true);
-    
-}
 void OgEngine::RaytracingPipeline::UpdateObject(uint64_t p_id, const glm::mat4& p_transform, Mesh* p_mesh, std::string p_texID,
     const char* p_normID, glm::vec4 p_albedo, float p_roughness, float p_ior, glm::vec4 p_specular, glm::vec4 p_emissive, int p_type)
 {
@@ -1405,7 +1368,7 @@ void OgEngine::RaytracingPipeline::UpdateMaterial(uint64_t p_id, glm::vec4 p_alb
 
 
 
-VkResult RaytracingPipeline::AcquireNextImage( uint32_t* p_imageIndex) const
+VkResult RaytracingPipeline::AcquireNextImage(uint32_t* p_imageIndex) const
 {
     if (m_swapChain.swapChain == VK_NULL_HANDLE)
         std::runtime_error("No swapchain available, swapchain -> NULL");
@@ -1671,13 +1634,13 @@ void RaytracingPipeline::AddEntity(uint64_t p_id, Mesh* p_mesh, uint32_t p_textu
         &p_material));
 
     m_shaderData.materialBuffer.push_back(materialBuffer);
-    
+
     int meshBuffersID = CheckForExistingMesh(p_mesh);
 
     object.m_id = p_id;
     object.m_geometry.instanceId = FindObjectID(p_id);
     object.m_geometry.accelerationStructureHandle = m_BLAS[meshBuffersID].handle;
-    
+
     m_objectIDs.push_back(p_id);
     m_objectAccIDs.push_back(meshBuffersID);
     m_textureIDs.push_back(p_textureID);
@@ -1709,7 +1672,7 @@ ImTextureID OgEngine::RaytracingPipeline::AddUITexture(const char* p_texture)
         pixels = ResourceManager::Get<Texture>(fileName)->Pixels();
     }
 
-    
+
     VkDeviceSize bufferSize = width * height * sizeof(glm::u8vec4);
     VkExtent2D extent;
     extent.width = width;
@@ -1813,9 +1776,9 @@ void OgEngine::RaytracingPipeline::AddTexture(const std::string& p_texture, cons
 
     if (ResourceManager::Get<Texture>(fileName) == nullptr)
     {
-            pixels = ResourceManager::Get<Texture>("error.png")->Pixels();
-            width = ResourceManager::Get<Texture>("error.png")->Width();
-            height = ResourceManager::Get<Texture>("error.png")->Height();
+        pixels = ResourceManager::Get<Texture>("error.png")->Pixels();
+        width = ResourceManager::Get<Texture>("error.png")->Width();
+        height = ResourceManager::Get<Texture>("error.png")->Height();
     }
     else
     {
@@ -2103,18 +2066,18 @@ void RaytracingPipeline::CreatePipeline()
     pipelineLayoutCreateInfo.pSetLayouts = &m_descriptorSetLayout;
 
     vkCreatePipelineLayout(m_vulkanDevice.logicalDevice, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout);
-    LoadShaders(m_pipeline);
+    LoadShaders();
 }
 void RaytracingPipeline::ReloadShaders()
 {
 
+    // vkFreeCommandBuffers(m_vulkanDevice.logicalDevice, m_commandPool, m_commandBuffers.size(), m_commandBuffers.data());
     vkDestroyPipeline(m_vulkanDevice.logicalDevice, m_pipeline, nullptr);
-    LoadShaders(m_pipeline);
-    vkFreeCommandBuffers(m_vulkanDevice.logicalDevice, m_commandPool, m_commandBuffers.size(), m_commandBuffers.data());
-    CreateCommandBuffers();
+    LoadShaders();
+    // CreateCommandBuffers();
     StartCastingRays();
 }
-void RaytracingPipeline::LoadShaders(VkPipeline& p_pipeline)
+void RaytracingPipeline::LoadShaders()
 {
     const uint32_t shaderIndexRaygen = 0;
     const uint32_t shaderIndexMiss = 1;
@@ -2165,9 +2128,9 @@ void RaytracingPipeline::LoadShaders(VkPipeline& p_pipeline)
     rayPipelineInfo.pStages = shaderStages.data();
     rayPipelineInfo.groupCount = static_cast<uint32_t>(groups.size());
     rayPipelineInfo.pGroups = groups.data();
-    rayPipelineInfo.maxRecursionDepth = 2;
+    rayPipelineInfo.maxRecursionDepth = 8;
     rayPipelineInfo.layout = m_pipelineLayout;
-    vkCreateRayTracingPipelinesNV(m_vulkanDevice.logicalDevice, nullptr, 1, &rayPipelineInfo, nullptr, &p_pipeline);
+    vkCreateRayTracingPipelinesNV(m_vulkanDevice.logicalDevice, nullptr, 1, &rayPipelineInfo, nullptr, &m_pipeline);
 }
 
 inline ImGuiContext* OgEngine::RaytracingPipeline::GetUIContext()
@@ -2189,17 +2152,6 @@ VkPipelineShaderStageCreateInfo RaytracingPipeline::LoadShader(const std::string
     assert(shaderStage.module != VK_NULL_HANDLE);
     m_shaderModules.push_back(shaderStage.module);
     return shaderStage;
-}
-
-void RaytracingPipeline::CreateSynchronizationPrimitives()
-{
-
-    VkFenceCreateInfo fenceCreateInfo = Initializers::fenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-    m_waitFences.resize(m_commandBuffers.size());
-    for (auto& fence : m_waitFences)
-    {
-        vkCreateFence(m_vulkanDevice.logicalDevice, &fenceCreateInfo, nullptr, &fence);
-    }
 }
 
 void RaytracingPipeline::CreatePipelineCache()
@@ -2430,7 +2382,7 @@ int OgEngine::RaytracingPipeline::CheckForExistingMesh(Mesh* p_mesh)
 {
     std::vector<std::pair<Mesh*, int>>::iterator it;
     int meshID = 0;
-    for(it = m_instanceTracker.begin(); it != m_instanceTracker.end(); it++)
+    for (it = m_instanceTracker.begin(); it != m_instanceTracker.end(); it++)
     {
         if (it->first->MeshName().compare(p_mesh->MeshName()) == 0)
         {
@@ -2441,7 +2393,7 @@ int OgEngine::RaytracingPipeline::CheckForExistingMesh(Mesh* p_mesh)
         ++meshID;
     }
 
-    if(it == m_instanceTracker.end())
+    if (it == m_instanceTracker.end())
     {
         VkCommandBuffer cmdBuffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -2522,7 +2474,7 @@ int OgEngine::RaytracingPipeline::CheckForExistingMesh(Mesh* p_mesh)
         vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
         QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
         scratchBuffer.Destroy();
-        m_instanceTracker.push_back(std::make_pair(p_mesh, 1)); 
+        m_instanceTracker.push_back(std::make_pair(p_mesh, 1));
     }
     return meshID;
 }
@@ -2696,7 +2648,7 @@ VkDeviceSize RaytracingPipeline::CopyShaderIdentifier(uint8_t* p_data, const uin
     return shaderGroupHandleSize;
 }
 
-void RaytracingPipeline::CreateDescriptorSets(bool p_resizedWindow)
+void RaytracingPipeline::CreateDescriptorSets()
 {
     const std::vector<VkDescriptorPoolSize> poolSizes =
     {
@@ -2780,28 +2732,6 @@ void RaytracingPipeline::CreateDescriptorSets(bool p_resizedWindow)
         lightDescriptor.push_back(buf.descriptor);
     }
 
-    if (!p_resizedWindow)
-    {
-        CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &m_shaderData.textureIDBuffer,
-            MAX_OBJECTS * sizeof(uint32_t),
-            m_textureIDs.data()));
-
-        CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &m_shaderData.normalMapIDBuffer,
-            MAX_OBJECTS * sizeof(uint32_t),
-            m_normalMapIDs.data()));
-
-        CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &m_shaderData.objectBLASbuffer,
-            MAX_OBJECTS * sizeof(uint32_t),
-            m_objectAccIDs.data()));
-
-    }
-
     VkWriteDescriptorSet textureDescriptor{};
     textureDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     textureDescriptor.dstSet = m_descriptorSet;
@@ -2875,8 +2805,8 @@ void RaytracingPipeline::CreateCamera()
 void RaytracingPipeline::UpdateCamera()
 {
 
-    if(isRefreshing)
-       m_cameraData.samples.y = 0;
+    if (isRefreshing)
+        m_cameraData.samples.y = 0;
 
     if (m_cameraBuffer.buffer == VK_NULL_HANDLE)
         return;
@@ -2980,7 +2910,47 @@ void RaytracingPipeline::StartCastingRays()
     }
 }
 
-void RaytracingPipeline::SetupPipelineAndBind(bool p_resizedWindow)
+void OgEngine::RaytracingPipeline::ResizeWindow()
+{
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(m_window, &width, &height);
+    while (width == 0 || height == 0)
+    {
+        glfwGetFramebufferSize(m_window, &width, &height);
+        glfwWaitEvents();
+    }
+    m_width = width;
+    m_height = height;
+
+    vkDeviceWaitIdle(m_vulkanDevice.logicalDevice);
+    vkQueueWaitIdle(m_graphicsQueue);
+    vkQueueWaitIdle(m_presentQueue);
+    ResizeCleanup();
+
+    FindQueueFamilies();
+    CreateCommandPool();
+    SetupSwapchain(m_width, m_height, false);
+    SetupOffScreenPass();
+    CreateCommandBuffers();
+    SetupDepthStencil();
+    SetupRenderPass();
+    SetupFramebuffer();
+
+    RescaleImGUI();
+    SetupImGUIFrameBuffers();
+
+    CreatePipelineCache();
+    CreateStorageImage(m_storageImage);
+
+    CreatePipeline();
+    CreateShaderBindingTable();
+    CreateDescriptorSets();
+    StartCastingRays();
+    //SetupPipelineAndBind(true);
+
+}
+
+void RaytracingPipeline::SetupPipelineAndBind()
 {
     m_raytracingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
     VkPhysicalDeviceProperties2 deviceProps2{};
@@ -2988,49 +2958,59 @@ void RaytracingPipeline::SetupPipelineAndBind(bool p_resizedWindow)
     deviceProps2.pNext = &m_raytracingProperties;
     vkGetPhysicalDeviceProperties2(m_vulkanDevice.gpu, &deviceProps2);
 
+    VkSemaphoreCreateInfo semaphoreInfo{};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+
     m_submitInfo = Initializers::submitInfo();
-    m_submitInfo.pWaitDstStageMask = &submitPipelineStages;
+    const VkPipelineStageFlags flags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    m_submitInfo.pWaitDstStageMask = &flags;
     m_submitInfo.waitSemaphoreCount = 0;
     m_submitInfo.pWaitSemaphores = nullptr;
     m_submitInfo.signalSemaphoreCount = 0;
     m_submitInfo.pSignalSemaphores = nullptr;
 
+    AddTexture("default.png");
+    AddTexture("default.png", TEXTURE_TYPE::NORMAL);
 
-    if (!p_resizedWindow)
-    {
-        AddTexture("default.png");
-        AddTexture("default.png", TEXTURE_TYPE::NORMAL);
-
-        vkQueueWaitIdle(m_graphicsQueue);
-        RTMaterial mat;
-        mat.albedo = glm::vec4( 1, 1, 1, 0);
-        mat.data.z = 987654;
-        mat.data.x = 0.0;
-        AddEntity(99999, ResourceManager::Get<OgEngine::Mesh>("cube.obj"), 0, mat, 12345);
-        UpdateLight(123456789, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 0);
-        CreateTopLevelAccelerationStructure();
-        CreateCamera();
-    }
+    vkQueueWaitIdle(m_graphicsQueue);
+    RTMaterial mat;
+    mat.albedo = glm::vec4(1, 1, 1, 0);
+    mat.data.z = 987654;
+    mat.data.x = 0.0;
+    AddEntity(99999, ResourceManager::Get<OgEngine::Mesh>("cube.obj"), 0, mat, 12345);
+    UpdateLight(123456789, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 0);
+    CreateTopLevelAccelerationStructure();
+    CreateCamera();
 
     CreateStorageImage(m_storageImage);
-
     CreatePipeline();
     CreateShaderBindingTable();
-    CreateDescriptorSets(p_resizedWindow);
 
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &m_shaderData.textureIDBuffer,
+        MAX_OBJECTS * sizeof(uint32_t),
+        m_textureIDs.data()));
 
-    if (p_resizedWindow)
-    {
-        RescaleImGUI();
-        SetupImGUIFrameBuffers();
-    }
-    else
-    {
-        StartCastingRays();
-        InitImGUI();
-        SetupImGUIFrameBuffers();
-        SetupImGUI();
-    }
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &m_shaderData.normalMapIDBuffer,
+        MAX_OBJECTS * sizeof(uint32_t),
+        m_normalMapIDs.data()));
+
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &m_shaderData.objectBLASbuffer,
+        MAX_OBJECTS * sizeof(uint32_t),
+        m_objectAccIDs.data()));
+
+    CreateDescriptorSets();
+
+    InitImGUI();
+    SetupImGUIFrameBuffers();
+    SetupImGUI();
+    StartCastingRays();
 }
 
 void RaytracingPipeline::InitFrame()
