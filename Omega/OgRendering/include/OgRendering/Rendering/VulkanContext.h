@@ -9,14 +9,10 @@
 #include <vector>
 #include <optional>
 
-//RT
-//#include <windows.h>
-//#include <vulkan/vulkan_win32.h>
-
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
-const bool enableValidationLayers = false;
+const bool enableValidationLayers = true;
 #endif
 
 struct QueueFamilyIndices
@@ -66,7 +62,7 @@ namespace OgEngine
 		alignas(4) float rough;
 		alignas(1) bool metal;
 	};
-	
+
 	using namespace OgEngine;
 
 	class RENDERING_API VulkanContext final
@@ -89,9 +85,9 @@ namespace OgEngine
 		double TimeOfContext() const;
 		bool IsRendering() const;
 		bool IsRaytracing() const;
-	
+
 		GLFWwindow* GetWindow() const;
-		
+
 		OgEngine::RaytracingPipeline* GetRTPipeline() const { return m_RTPipeline; }
 		OgEngine::RasterizerPipeline* GetRSPipeline() const { return m_RSPipeline; }
 		static bool                                   framebufferResized;
