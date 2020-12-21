@@ -29,7 +29,7 @@ public:
 
 namespace OgEngine
 {
-	enum RB_COLLIDER_TYPE
+	enum class RB_COLLIDER_TYPE : uint8_t
 	{
 		RB_COLLIDER_TYPE_SPHERE,
 		RB_COLLIDER_TYPE_BOX,
@@ -49,7 +49,7 @@ namespace OgEngine
 		bool isStatic{ false };
 		RB_COLLIDER_TYPE colliderType;
 
-		PRigidBody(const RB_COLLIDER_TYPE p_colliderType = RB_COLLIDER_TYPE_BOX)
+		PRigidBody(const RB_COLLIDER_TYPE p_colliderType = RB_COLLIDER_TYPE::RB_COLLIDER_TYPE_BOX)
 			: shapeSizeX(1.0f), shapeSizeY(1.0f), shapeSizeZ(1.0f), mass(1.0f), useGravity(true), isStatic(false), colliderType(p_colliderType)
 		{
 			

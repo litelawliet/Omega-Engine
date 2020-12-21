@@ -81,7 +81,7 @@ std::string OgEngine::RigidBody::Serialize(const int p_depth) const
 		+ DepthIndent(p_depth + 1) + "<shapeSizeY>" + std::to_string(m_shapeSizeY) + "</shapeSizeY>\n"
 		+ DepthIndent(p_depth + 1) + "<shapeSizeZ>" + std::to_string(m_shapeSizeZ) + "</shapeSizeZ>\n"
 		+ DepthIndent(p_depth + 1) + "<mass>" + std::to_string(m_mass) + "</mass>\n"
-		+ DepthIndent(p_depth + 1) + "<type>" + std::to_string(m_rigidBodyType) + "</type>\n"
+		+ DepthIndent(p_depth + 1) + "<type>" + std::to_string(static_cast<uint8_t>(m_rigidBodyType)) + "</type>\n"
 		+ DepthIndent(p_depth + 1) + "<gravity>" + std::to_string(m_useGravity) + "</gravity>\n"
 		+ DepthIndent(p_depth + 1) + "<static>" + std::to_string(m_isStatic) + "</static>\n"
 		+ DepthIndent(p_depth) + "</RigidBody>\n");

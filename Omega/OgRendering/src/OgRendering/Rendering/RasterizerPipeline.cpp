@@ -29,7 +29,6 @@ void OgEngine::RasterizerPipeline::SetupPipeline()
 	CreateDepthResources();
 	CreateFramebuffers();
 
-
 	CreateTexture(ResourceManager::Get<Texture>("default.png"), TEXTURE_TYPE::TEXTURE);
 	CreateTexture(ResourceManager::Get<Texture>("error.png"), TEXTURE_TYPE::TEXTURE);
 
@@ -1335,7 +1334,7 @@ void OgEngine::RasterizerPipeline::CreateRenderPass()
 {
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = m_chainColorFormat;
-	colorAttachment.samples = m_msaaSamples;
+	colorAttachment.samples = m_vulkanDevice.msaaSamples;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -1345,7 +1344,7 @@ void OgEngine::RasterizerPipeline::CreateRenderPass()
 
 	VkAttachmentDescription depthAttachment = {};
 	depthAttachment.format = FindDepthFormat();
-	depthAttachment.samples = m_msaaSamples;
+	depthAttachment.samples = m_vulkanDevice.msaaSamples;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -1385,10 +1384,10 @@ void OgEngine::RasterizerPipeline::CreateRenderPass()
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0u;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	dependency.srcAccessMask = 0u;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 	std::array<VkAttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
 	//std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, colorAttachmentResolve };
@@ -1477,8 +1476,8 @@ void OgEngine::RasterizerPipeline::CreateGraphicsPipeline()
 
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = m_msaaSamples;
+	multisampling.sampleShadingEnable = VK_TRUE;
+	multisampling.rasterizationSamples = m_vulkanDevice.msaaSamples;
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -1776,23 +1775,25 @@ void OgEngine::RasterizerPipeline::CreateTextureImage(TextureData& p_textureData
 		vkMapMemory(m_vulkanDevice.logicalDevice, stagingBufferMemory, 0, texture->ImageSize(), 0, &data);
 		memcpy_s(data, static_cast<size_t>(texture->ImageSize()), texture->Pixels(),
 			static_cast<size_t>(texture->ImageSize()));
-		vkUnmapMemory(m_vulkanDevice.logicalDevice, stagingBufferMemory);
+		vkUnmapMemory(m_vulkanDevice.logicalDevice, stagingBufferMemory); // Ok
 
-		CreateImage(texture->Width(), texture->Height(), texture->MipmapLevels(), VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_UNORM,
+		CreateImage(texture->Width(), texture->Height(), texture->MipmapLevels(), VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB,
 			VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, p_textureData.img, p_textureData.memory);
 
-		TransitionImageLayout(p_textureData.img, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+		TransitionImageLayout(p_textureData.img, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture->MipmapLevels());
 		CopyBufferToImage(stagingBuffer, p_textureData.img, static_cast<uint32_t>(texture->Width()),
 			static_cast<uint32_t>(texture->Height()));
 		//transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
+		TransitionImageLayout(p_textureData.img, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture->MipmapLevels());
 
 		vkDestroyBuffer(m_vulkanDevice.logicalDevice, stagingBuffer, nullptr);
 		vkFreeMemory(m_vulkanDevice.logicalDevice, stagingBufferMemory, nullptr);
 
-		GenerateMipmaps(m_textureImage, VK_FORMAT_R8G8B8A8_UNORM, texture->Width(), texture->Height(), texture->MipmapLevels());
+		GenerateMipmaps(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, texture->Width(), texture->Height(), texture->MipmapLevels());
 	}
 }
 
@@ -1827,6 +1828,9 @@ void OgEngine::RasterizerPipeline::CreateTextureImageView(TextureData& p_texture
 
 void OgEngine::RasterizerPipeline::CreateTextureSampler(TextureData& p_textureData)
 {
+	VkPhysicalDeviceProperties properties{};
+	vkGetPhysicalDeviceProperties(m_vulkanDevice.gpu, &properties);
+
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -1835,15 +1839,15 @@ void OgEngine::RasterizerPipeline::CreateTextureSampler(TextureData& p_textureDa
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = 16;
+	samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.minLod = 0;
+	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = static_cast<float>(p_textureData.mipLevels);
-	samplerInfo.mipLodBias = 0;
+	samplerInfo.mipLodBias = 0.0f;
 
 	if (vkCreateSampler(m_vulkanDevice.logicalDevice, &samplerInfo, nullptr, &p_textureData.sampler) != VK_SUCCESS)
 	{
@@ -2052,7 +2056,7 @@ void OgEngine::RasterizerPipeline::CreateColorResources()
 {
 	const VkFormat colorFormat = m_chainColorFormat;
 
-	CreateImage(m_chainExtent.width, m_chainExtent.height, 1, m_msaaSamples, colorFormat, VK_IMAGE_TILING_OPTIMAL,
+	CreateImage(m_chainExtent.width, m_chainExtent.height, 1, m_vulkanDevice.msaaSamples, colorFormat, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_colorImage, m_colorImageMemory);
 	m_colorImageView = CreateImageView(m_colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
@@ -2062,7 +2066,7 @@ void OgEngine::RasterizerPipeline::CreateDepthResources()
 {
 	const VkFormat depthFormat = FindDepthFormat();
 
-	CreateImage(m_chainExtent.width, m_chainExtent.height, 1, m_msaaSamples, depthFormat, VK_IMAGE_TILING_OPTIMAL,
+	CreateImage(m_chainExtent.width, m_chainExtent.height, 1, m_vulkanDevice.msaaSamples, depthFormat, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_depthImage,
 		m_depthImageMemory);
 	m_depthImageView = CreateImageView(m_depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);

@@ -15,7 +15,7 @@ struct GeometryInstance
 	uint64_t accelerationStructureHandle;
 };
 
-enum TEXTURE_TYPE : std::uint8_t
+enum class TEXTURE_TYPE : std::uint8_t
 {
 	TEXTURE = 0u,
 	NORMAL = 1u

@@ -27,6 +27,8 @@ struct Device
     std::vector<std::string> supportedExtensions;
     /** @brief Vulkan Instance */
     VkInstance instance;
+    /** @brief Device MSAA sample */
+    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
     std::optional<uint32_t> graphicFamily{};
     std::optional<uint32_t> presentFamily{};
