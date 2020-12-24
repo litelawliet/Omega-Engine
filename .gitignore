@@ -352,11 +352,12 @@ MigrationBackup/
 
 # End of https://www.gitignore.io/api/visualstudio
 
-Omega/Dependencies/glm/
+# Generated folders and resources
+Omega/OgEditor/Resources/
 Omega/ScriptingBinder/build/
 Omega/ScriptingBinder/Sources/
 Omega/Resources/shaders/bin/
 *Resources/
 
-
-Omega/ScriptingBinder/Sources/
+# Editor save files
+*.omega
