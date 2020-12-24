@@ -3,7 +3,7 @@
 #include <array>
 #include <GPM/GPM.h>
 #include <cstddef>
-#include <vulkan/vulkan.h>
+#include <OgRendering/Utils/volk.h>
 #include <functional>
 
 namespace OgEngine

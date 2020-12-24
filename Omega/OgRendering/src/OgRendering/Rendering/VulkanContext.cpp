@@ -4,6 +4,10 @@
 #include <fstream>
 #include <set>
 #include <OgRendering/Utils/Debugger.h>
+#include <OgRendering/Utils/volk.h>
+//#include <vulkan/vulkan.h>
+//#include <GLFW/glfw3.h>
+
 
 #include <OgRendering/Managers/InputManager.h>
 
@@ -38,6 +42,8 @@ void OgEngine::VulkanContext::InitAPI()
 
 void OgEngine::VulkanContext::InitWindow(const int p_width, const int p_height, const char* p_name, bool p_vsync)
 {
+	//volkInitialize();
+
 	if (glfwInit() == GLFW_FALSE)
 		throw std::exception("GLFW couldn't initialize.\n");
 
@@ -157,10 +163,8 @@ void OgEngine::VulkanContext::DestroyDebugUtilsMessengerEXT(VkInstance p_instanc
 
 void OgEngine::VulkanContext::InitInstance()
 {
-	if (!CheckValidationLayers())
-	{
-		throw std::runtime_error("validation layers requested, but not available!");
-	}
+	bool validationLayersChecked = CheckValidationLayers();
+	DBG_ASSERT_MSG(validationLayersChecked, "validation layers requested, but not available!");
 
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -198,16 +202,14 @@ void OgEngine::VulkanContext::InitInstance()
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
-	if (vkCreateInstance(&createInfo, nullptr, &m_instance) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create instance!");
-	}
-	const VkResult err = glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_vulkanDevice.surface);
-
+	VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
+	DBG_ASSERT_VULKAN_MSG(result, "failed to create instance!");
+	
 	m_vulkanDevice.instance = m_instance;
-
-	if (err)
-		throw std::runtime_error("failed to create surface!");
+	//volkLoadInstance(m_instance);
+	
+	result = glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_vulkanDevice.surface);
+	DBG_ASSERT_VULKAN_MSG(result, "failed to create surface!");
 }
 
 void OgEngine::VulkanContext::InitGpuDevice()

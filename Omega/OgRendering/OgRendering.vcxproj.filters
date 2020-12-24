@@ -135,6 +135,9 @@
     <ClInclude Include="include\OgRendering\Managers\Loaders\GltfLoader\stb_image_write.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\OgRendering\Utils\volk.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\OgRendering\Rendering\Renderer.cpp">
@@ -210,6 +213,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\OgRendering\Resource\ModelRasterization.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OgRendering\Utils\volk.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

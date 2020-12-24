@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <GPM/GPM.h>
 #include <fstream>
+#include <GLFW/glfw3.h>
 
 struct GeometryInstance
 {

@@ -1,6 +1,5 @@
 #pragma once
 #include <OgRendering/Export.h>
-
 #include <OgRendering/Rendering/Device.h>
 
 #include <OgRendering/Rendering/RaytracingPipeline.h>

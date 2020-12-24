@@ -1,6 +1,7 @@
 #pragma once
-
 #include <OgRendering/Export.h>
+
+#include <OgRendering/Utils/volk.h>
 #include <OgRendering/Utils/VulkanTools.h>
 #include <OgRendering/Rendering/SwapChainSupportDetails.h>
 #include <OgRendering/Resource/Vertex.h>
