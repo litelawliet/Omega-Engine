@@ -4,6 +4,10 @@
 #include <fstream>
 #include <set>
 #include <OgRendering/Utils/Debugger.h>
+#include <OgRendering/Utils/volk.h>
+//#include <vulkan/vulkan.h>
+//#include <GLFW/glfw3.h>
+
 
 #include <OgRendering/Managers/InputManager.h>
 
@@ -38,6 +42,8 @@ void OgEngine::VulkanContext::InitAPI()
 
 void OgEngine::VulkanContext::InitWindow(const int p_width, const int p_height, const char* p_name, bool p_vsync)
 {
+	//volkInitialize();
+
 	if (glfwInit() == GLFW_FALSE)
 		throw std::exception("GLFW couldn't initialize.\n");
 
@@ -157,17 +163,15 @@ void OgEngine::VulkanContext::DestroyDebugUtilsMessengerEXT(VkInstance p_instanc
 
 void OgEngine::VulkanContext::InitInstance()
 {
-	if (!CheckValidationLayers())
-	{
-		throw std::runtime_error("validation layers requested, but not available!");
-	}
+	bool validationLayersChecked = CheckValidationLayers();
+	DBG_ASSERT_MSG(validationLayersChecked, "validation layers requested, but not available!");
 
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = "Omega";
-	appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 1);
+	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "Omega";
-	appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 1);
+	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_2;
 
 	VkInstanceCreateInfo createInfo = {};
@@ -198,16 +202,14 @@ void OgEngine::VulkanContext::InitInstance()
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
-	if (vkCreateInstance(&createInfo, nullptr, &m_instance) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create instance!");
-	}
-	const VkResult err = glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_vulkanDevice.surface);
-
+	VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
+	DBG_ASSERT_VULKAN_MSG(result, "failed to create instance!");
+	
 	m_vulkanDevice.instance = m_instance;
-
-	if (err)
-		throw std::runtime_error("failed to create surface!");
+	//volkLoadInstance(m_instance);
+	
+	result = glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_vulkanDevice.surface);
+	DBG_ASSERT_VULKAN_MSG(result, "failed to create surface!");
 }
 
 void OgEngine::VulkanContext::InitGpuDevice()
@@ -242,6 +244,7 @@ void OgEngine::VulkanContext::InitGpuDevice()
 			m_vulkanDevice.gpu = GPUs[id];
 			m_vulkanDevice.gpuEnabledFeatures = m_vulkanDevice.gpuFeatures[id];
 			vkGetPhysicalDeviceMemoryProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuMemoryProperties);
+			m_vulkanDevice.msaaSamples = GetMaxUsableSampleCount();
 			break;
 		}
 		std::cout << "Device is not suitable for the Renderer! \n";
@@ -275,6 +278,7 @@ void OgEngine::VulkanContext::InitLogicalDevice()
 	}
 
 	m_vulkanDevice.gpuEnabledFeatures.samplerAnisotropy = VK_TRUE;
+	m_vulkanDevice.gpuEnabledFeatures.sampleRateShading = VK_TRUE;
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -352,7 +356,8 @@ std::vector<const char*> OgEngine::VulkanContext::GetRequieredExtensions()
 
 	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-	if (enableValidationLayers) {
+	if (enableValidationLayers)
+	{
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
 
@@ -375,8 +380,17 @@ VKAPI_ATTR VkBool32 VKAPI_CALL OgEngine::VulkanContext::DebugCallback(VkDebugUti
 void OgEngine::VulkanContext::InitDebugMessenger(VkDebugUtilsMessengerCreateInfoEXT& p_createInfo)
 {
 	p_createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-	p_createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-	p_createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	if constexpr (enableValidationLayers)
+	{
+		p_createInfo.messageSeverity =  VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		p_createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+	}
+	else
+	{
+		p_createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		p_createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	}
+
 	p_createInfo.pfnUserCallback = DebugCallback;
 	p_createInfo.pUserData = nullptr; // Optional
 	p_createInfo.pNext = nullptr;
@@ -469,6 +483,21 @@ SupportDetails OgEngine::VulkanContext::SwapChainSupport(VkPhysicalDevice p_devi
 	}
 
 	return details;
+}
+
+VkSampleCountFlagBits OgEngine::VulkanContext::GetMaxUsableSampleCount() {
+	VkPhysicalDeviceProperties physicalDeviceProperties;
+	vkGetPhysicalDeviceProperties(m_vulkanDevice.gpu, &physicalDeviceProperties);
+
+	VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+	if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+	if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+	if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+	if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+	if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+	if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+	return VK_SAMPLE_COUNT_1_BIT;
 }
 
 QueueFamilyIndices OgEngine::VulkanContext::FindQueueFamilies(VkPhysicalDevice p_gpu)

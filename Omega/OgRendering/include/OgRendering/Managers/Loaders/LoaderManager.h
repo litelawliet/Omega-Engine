@@ -16,7 +16,7 @@ namespace OgEngine
 		template<typename ResourceType>
 		static inline std::shared_ptr<ResourceType> Load(std::string_view p_file);
 
-		static inline bool CheckValidMesh(const std::string_view p_file);
+		static inline bool CheckValidMesh(std::string_view p_file);
 
 	private:
 		LoaderManager() = default;

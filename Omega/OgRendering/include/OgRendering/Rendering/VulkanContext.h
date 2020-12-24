@@ -1,6 +1,5 @@
 #pragma once
 #include <OgRendering/Export.h>
-
 #include <OgRendering/Rendering/Device.h>
 
 #include <OgRendering/Rendering/RaytracingPipeline.h>
@@ -117,6 +116,7 @@ namespace OgEngine
 		bool           IsPhysicalDeviceSuitable(VkPhysicalDevice p_gpu);
 		bool           CheckDeviceExtensionSupport(VkPhysicalDevice device);
 		SupportDetails SwapChainSupport(VkPhysicalDevice p_device);
+		VkSampleCountFlagBits GetMaxUsableSampleCount();
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice p_gpu);
 

@@ -88,18 +88,22 @@ void OgEngine::Services::TextureService::MultithreadedLoading(std::string_view p
 	if (index != std::string::npos && index == 2 && lectorID != std::string::npos)
 	{
 		// Loading using full path
-		FILE* fp;
+		FILE* fp = nullptr;
 		errno_t err;
 		if ((err = fopen_s(&fp, p_filePath.data(), "r")) == 0)
 		{
 			pixels = stbi_load_from_file(fp, &texWidth, &texHeight, &texChannels,
 				STBI_rgb_alpha);
 		}
-		fclose(fp);
+
+		if (fp)
+		{
+			fclose(fp);
+		}
 	}
 	else
 	{
-		// loading using relative path
+		// Loading using relative path
 		pixels = stbi_load(p_filePath.data(), &texWidth, &texHeight, &texChannels,
 			STBI_rgb_alpha);
 	}

@@ -1,5 +1,5 @@
 #pragma once
-#include <vulkan/vulkan.h>
+#include <OgRendering/Utils/volk.h>
 #include <cstdint>
 
 struct TextureData
@@ -9,5 +9,5 @@ struct TextureData
 	VkDeviceMemory memory;
 	VkSampler sampler;
 	VkImageView view;
-	std::uint32_t mipLevels;
+	uint32_t mipLevels;
 };

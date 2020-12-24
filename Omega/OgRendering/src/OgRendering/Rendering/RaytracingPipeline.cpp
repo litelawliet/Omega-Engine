@@ -899,11 +899,11 @@ void OgEngine::RaytracingPipeline::UpdateDescriptorSets()
     storageImageDescriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
     std::vector<VkDescriptorImageInfo> textureInfos;
-    for (auto tex : m_textures)
+    for (const auto& tex : m_textures)
         textureInfos.push_back(tex.info);
 
     std::vector<VkDescriptorImageInfo> normalMapInfos;
-    for (auto norm : m_normalMaps)
+    for (const auto& norm : m_normalMaps)
         normalMapInfos.push_back(norm.info);
 
     std::vector<VkDescriptorBufferInfo> vertexDescriptor;
@@ -1371,7 +1371,7 @@ void OgEngine::RaytracingPipeline::UpdateMaterial(uint64_t p_id, glm::vec4 p_alb
 VkResult RaytracingPipeline::AcquireNextImage(uint32_t* p_imageIndex) const
 {
     if (m_swapChain.swapChain == VK_NULL_HANDLE)
-        std::runtime_error("No swapchain available, swapchain -> NULL");
+        throw std::runtime_error("No swapchain available, swapchain -> NULL");
 
     VkFenceCreateInfo fenceInfo = Initializers::fenceCreateInfo(0);
     VkFence fence;
@@ -1795,7 +1795,7 @@ void OgEngine::RaytracingPipeline::AddTexture(const std::string& p_texture, cons
     auto imgSize = extent;
 
     VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
-    if (p_type == 1)
+    if (p_type == TEXTURE_TYPE::NORMAL)
     {
         format = VK_FORMAT_R8G8B8A8_UNORM;
     }
@@ -1884,12 +1884,12 @@ void OgEngine::RaytracingPipeline::AddTexture(const std::string& p_texture, cons
     QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
     stagingBuffer.Destroy();
     CreateTextureMipmaps(data.img, format, width, height, mipLevels);
-    if (p_type == 0)
+    if (p_type == TEXTURE_TYPE::TEXTURE)
     {
         m_textures.push_back(data);
         m_textureCtr.emplace_back(p_texture);
     }
-    else if (p_type == 1)
+    else if (p_type == TEXTURE_TYPE::NORMAL)
     {
         m_normalMaps.push_back(data);
         m_normalMapsCtr.emplace_back(p_texture);

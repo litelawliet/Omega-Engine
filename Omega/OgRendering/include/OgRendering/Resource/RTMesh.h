@@ -1,7 +1,7 @@
 #pragma once
 #include <OgRendering/Export.h>
 #include <glm/glm.hpp>
-#include <vulkan/vulkan.h>
+#include <OgRendering/Utils/volk.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <OgRendering/Utils/Initializers.h>
 #include <OgRendering/Utils/VulkanTools.h>

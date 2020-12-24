@@ -1,4 +1,5 @@
 #pragma once
+#define VK_NO_PROTOTYPES
 #include <OgCore/Export.h>
 #include <OgCore/Systems/System.h>
 #include <OgCore/Components/LightSource.h>

@@ -23,7 +23,7 @@ int main()
 OgEngine::Editor::Editor(const uint64_t p_width, const uint64_t p_height, const char* p_title)
 	: currentRotationEntity(UINT64_MAX), worldRotation(true)
 {
-	memset(currentEulers, 0.0f, sizeof(currentEulers));
+	memset(currentEulers, 0x0, sizeof(currentEulers));
 	OgEngine::ResourceManager::Add<OgEngine::Mesh>("Resources/models/cube.obj");
 	m_modelNames.emplace_back("cube.obj");
 	OgEngine::ResourceManager::Add<OgEngine::Mesh>("Resources/models/sphere.obj");
@@ -241,41 +241,41 @@ bool OgEngine::Editor::LoopOnChild(OgEngine::SceneNode* p_node)
 					if (ImGui::MenuItem("PLANE"))
 					{
 						m_engine->AddComponent<RigidBody>(p_node->GetEntity(),
-							RigidBody(OgEngine::RB_COLLIDER_TYPE_PLANE, false));
+							RigidBody(OgEngine::RB_COLLIDER_TYPE::RB_COLLIDER_TYPE_PLANE, false));
 						m_engine->AddRigidBodyToPhysics(p_node->GetEntity());
 					}
 
 					if (ImGui::MenuItem("BOX"))
 					{
 						m_engine->AddComponent<RigidBody>(p_node->GetEntity(),
-							RigidBody(OgEngine::RB_COLLIDER_TYPE_BOX, false));
+							RigidBody(OgEngine::RB_COLLIDER_TYPE::RB_COLLIDER_TYPE_BOX, false));
 						m_engine->AddRigidBodyToPhysics(p_node->GetEntity());
 					}
 
 					if (ImGui::MenuItem("SPHERE"))
 					{
 						m_engine->AddComponent<RigidBody>(p_node->GetEntity(),
-							RigidBody(OgEngine::RB_COLLIDER_TYPE_SPHERE, false));
+							RigidBody(OgEngine::RB_COLLIDER_TYPE::RB_COLLIDER_TYPE_SPHERE, false));
 						m_engine->AddRigidBodyToPhysics(p_node->GetEntity());
 					}
 
 					if (ImGui::MenuItem("PLANE STATIC"))
 					{
 						m_engine->AddComponent<RigidBody>(p_node->GetEntity(),
-							RigidBody(OgEngine::RB_COLLIDER_TYPE_PLANE, true));
+							RigidBody(OgEngine::RB_COLLIDER_TYPE::RB_COLLIDER_TYPE_PLANE, true));
 						m_engine->AddRigidBodyToPhysics(p_node->GetEntity());
 					}
 					if (ImGui::MenuItem("BOX STATIC "))
 					{
 						m_engine->AddComponent<RigidBody>(p_node->GetEntity(),
-							RigidBody(OgEngine::RB_COLLIDER_TYPE_BOX, true));
+							RigidBody(OgEngine::RB_COLLIDER_TYPE::RB_COLLIDER_TYPE_BOX, true));
 						m_engine->AddRigidBodyToPhysics(p_node->GetEntity());
 
 					}
 					if (ImGui::MenuItem("SPHERE STATIC "))
 					{
 						m_engine->AddComponent<RigidBody>(p_node->GetEntity(),
-							RigidBody(OgEngine::RB_COLLIDER_TYPE_SPHERE, true));
+							RigidBody(OgEngine::RB_COLLIDER_TYPE::RB_COLLIDER_TYPE_SPHERE, true));
 						m_engine->AddRigidBodyToPhysics(p_node->GetEntity());
 					}
 
@@ -489,7 +489,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 					std::vector<std::string>::iterator it = std::find(m_previewTexturesName.begin(), m_previewTexturesName.end(), textureItem);
 					if (it != m_previewTexturesName.end())
 					{
-						int index = std::distance(m_previewTexturesName.begin(), it);
+						auto index = std::distance(m_previewTexturesName.begin(), it);
 						ImGui::Image(m_previewTextures[index], ImVec2(64, 64));
 					}
 					ImGui::SameLine();
@@ -502,7 +502,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 							std::vector<std::string>::iterator tex = std::find(m_previewTexturesName.begin(), m_previewTexturesName.end(), textureData.first);
 							if (tex != m_previewTexturesName.end())
 							{
-								int index = std::distance(m_previewTexturesName.begin(), tex);
+								auto index = std::distance(m_previewTexturesName.begin(), tex);
 								ImGui::Image(m_previewTextures[index], ImVec2(16, 16));
 							}
 							ImGui::SameLine();
@@ -524,7 +524,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 					std::vector<std::string>::iterator itn = std::find(m_previewTexturesName.begin(), m_previewTexturesName.end(), normalMapItem);
 					if (itn != m_previewTexturesName.end())
 					{
-						int index = std::distance(m_previewTexturesName.begin(), itn);
+						auto index = std::distance(m_previewTexturesName.begin(), itn);
 						ImGui::Image(m_previewTextures[index], ImVec2(64, 64));
 					}
 					else
@@ -541,7 +541,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 							std::vector<std::string>::iterator norm = std::find(m_previewTexturesName.begin(), m_previewTexturesName.end(), normalMapData.first);
 							if (norm != m_previewTexturesName.end())
 							{
-								int index = std::distance(m_previewTexturesName.begin(), norm);
+								auto index = std::distance(m_previewTexturesName.begin(), norm);
 								ImGui::Image(m_previewTextures[index], ImVec2(16, 16));
 							}
 							ImGui::SameLine();
@@ -609,7 +609,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 					light.color = glm::vec4(color[0], color[1], color[2], light.color.w);
 
 					float intensity = light.color.w;
-					ImGui::DragFloat(("Intensity##" + std::to_string(entity) + "light").c_str(), &intensity, 0.1, 0.0, 10000);
+					ImGui::DragFloat(("Intensity##" + std::to_string(entity) + "light").c_str(), &intensity, 0.1f, 0.0f, 10000.0f);
 					light.color.w = intensity;
 
 					int type = light.lightType;
@@ -618,7 +618,7 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 					if (light.lightType == 1)
 					{
 						float dir[3] = { light.direction.x , light.direction.y, light.direction.z };
-						ImGui::DragFloat3(("Direction##" + std::to_string(entity) + "light").c_str(), dir, 0.02, -1, 1);
+						ImGui::DragFloat3(("Direction##" + std::to_string(entity) + "light").c_str(), dir, 0.02f, -1.0f, 1.0f);
 						light.direction = glm::vec4(dir[0], dir[1], dir[2], light.direction.w);
 					}
 

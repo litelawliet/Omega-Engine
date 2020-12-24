@@ -1,6 +1,5 @@
 #pragma once
-#include <vulkan/vulkan.h>
-#include <GLFW/glfw3.h>
+#include <OgRendering/Utils/volk.h>
 
 #include <vector>
 #include <string>
@@ -27,6 +26,8 @@ struct Device
     std::vector<std::string> supportedExtensions;
     /** @brief Vulkan Instance */
     VkInstance instance;
+    /** @brief Device MSAA sample */
+    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
     std::optional<uint32_t> graphicFamily{};
     std::optional<uint32_t> presentFamily{};

@@ -1,6 +1,7 @@
 #pragma once
-
 #include <OgRendering/Export.h>
+
+#include <OgRendering/Utils/volk.h>
 #include <OgRendering/Utils/VulkanTools.h>
 #include <OgRendering/Rendering/SwapChainSupportDetails.h>
 #include <OgRendering/Resource/Vertex.h>
@@ -218,6 +219,7 @@ namespace OgEngine
 		void CreateDescriptorPool();
 		void CreateCommandBuffers();
 		void CreateSynchronizedObjects();
+
 		// Cleanup
 		void CleanupSwapChain();
 		void RecreateSwapChain();
@@ -266,7 +268,6 @@ namespace OgEngine
 		VkCommandPool m_commandPool{};
 		std::vector<VkCommandBuffer> m_commandBuffers;
 
-		VkSampleCountFlagBits m_msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
 		VkImage m_colorImage{};
 		VkDeviceMemory m_colorImageMemory{};

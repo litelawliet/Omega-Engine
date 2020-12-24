@@ -340,11 +340,11 @@ void OgEngine::Core::LoadScene(const std::string& p_file)
 							{
 								textureName = "error.png";
 								texturePath = "Resources/textures/error.png";
-								AddTexture(textureName, TEXTURE);
+								AddTexture(textureName, TEXTURE_TYPE::TEXTURE);
 							}
 							else
 							{
-								AddTexture(textureName, TEXTURE);
+								AddTexture(textureName, TEXTURE_TYPE::TEXTURE);
 							}
 						}
 						if (normalName != "NONE")
@@ -359,11 +359,11 @@ void OgEngine::Core::LoadScene(const std::string& p_file)
 								{
 									normalName = "error.png";
 									normalPath = "Resources/textures/error.png";
-									AddTexture(normalName, TEXTURE);
+									AddTexture(normalName, TEXTURE_TYPE::TEXTURE);
 								}
 								else
 								{
-									AddTexture(normalName, TEXTURE);
+									AddTexture(normalName, TEXTURE_TYPE::TEXTURE);
 								}
 							}
 						}
@@ -654,7 +654,7 @@ void OgEngine::Core::CreateChildrenOf(SceneNode* p_parent, SceneNode* p_parentTo
 			SceneManager::ChangeScene(Scene::EDITOR_SCENE);
 			if (HasComponent<RigidBody>(child->GetEntity()))
 			{
-				const auto componentEditor = SceneManager::GetComponent<RigidBody>(child->GetEntity());
+				const auto& componentEditor = SceneManager::GetComponent<RigidBody>(child->GetEntity());
 				SceneManager::ChangeScene(Scene::PLAY_SCENE);
 				SceneManager::AddComponent(p_parent->LastChild()->GetEntity(), componentEditor);
 			}
@@ -668,7 +668,7 @@ void OgEngine::Core::CreateChildrenOf(SceneNode* p_parent, SceneNode* p_parentTo
 			SceneManager::ChangeScene(Scene::EDITOR_SCENE);
 			if (HasComponent<LightSource>(child->GetEntity()))
 			{
-				const auto componentEditor = SceneManager::GetComponent<LightSource>(child->GetEntity());
+				const auto& componentEditor = SceneManager::GetComponent<LightSource>(child->GetEntity());
 				SceneManager::ChangeScene(Scene::PLAY_SCENE);
 				SceneManager::AddComponent(p_parent->LastChild()->GetEntity(), componentEditor);
 			}

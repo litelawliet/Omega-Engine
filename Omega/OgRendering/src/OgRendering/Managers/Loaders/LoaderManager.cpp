@@ -1,6 +1,6 @@
 #include <OgRendering/Managers/Loaders/LoaderManager.h>
 
-inline bool OgEngine::LoaderManager::CheckValidMesh(const std::string_view p_file)
+inline bool OgEngine::LoaderManager::CheckValidMesh(std::string_view p_file)
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(p_file.data(), aiProcessPreset_TargetRealtime_Quality);
