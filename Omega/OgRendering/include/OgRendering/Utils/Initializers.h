@@ -1,6 +1,7 @@
 #pragma once
-#include <OgRendering/Utils/volk.h>
 #include <vector>
+#include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
 
 namespace Initializers
 {

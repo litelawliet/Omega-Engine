@@ -1,8 +1,8 @@
 #pragma once
 #include <OgCore/Export.h>
+
 #include <OgCore/Entities/Types.h>
 #include <set>
-
 
 namespace OgEngine
 {

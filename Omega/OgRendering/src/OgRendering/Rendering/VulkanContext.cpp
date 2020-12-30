@@ -3,12 +3,8 @@
 #include <algorithm>
 #include <fstream>
 #include <set>
+
 #include <OgRendering/Utils/Debugger.h>
-#include <OgRendering/Utils/volk.h>
-//#include <vulkan/vulkan.h>
-//#include <GLFW/glfw3.h>
-
-
 #include <OgRendering/Managers/InputManager.h>
 
 bool OgEngine::VulkanContext::framebufferResized = false;
@@ -42,10 +38,8 @@ void OgEngine::VulkanContext::InitAPI()
 
 void OgEngine::VulkanContext::InitWindow(const int p_width, const int p_height, const char* p_name, bool p_vsync)
 {
-	//volkInitialize();
 
-	if (glfwInit() == GLFW_FALSE)
-		throw std::exception("GLFW couldn't initialize.\n");
+	DBG_ASSERT_MSG(glfwInit(), "GLFW couldn't initialize.\n");
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -55,7 +49,7 @@ void OgEngine::VulkanContext::InitWindow(const int p_width, const int p_height, 
 	glfwSetWindowUserPointer(m_window, this);
 	glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
 
-	std::cout << "Window " << p_width << 'x' << p_height << " Successfully created!\n";
+	std::cout << p_name << "'s window (" << p_width << 'x' << p_height << ") created.\n";
 
 	m_width = p_width;
 	m_height = p_height;
@@ -67,8 +61,6 @@ void OgEngine::VulkanContext::InitWindow(const int p_width, const int p_height, 
 
 void OgEngine::VulkanContext::DestroyContext() const
 {
-	/*if (isUsingRaytracing && m_RTPipeline)
-		m_RTPipeline->CleanPipeline();*/
 	if (m_RSPipeline)
 		m_RSPipeline->CleanPipeline();
 
@@ -95,7 +87,7 @@ void OgEngine::VulkanContext::DestroyContext() const
 		delete m_RTPipeline;
 	}
 
-	std::cout << "\nContext Successfully Destroyed! \n";
+	std::cout << "\nContext successfully destroyed.\n";
 }
 
 void OgEngine::VulkanContext::MainLoop() const
@@ -156,7 +148,8 @@ void OgEngine::VulkanContext::DestroyDebugUtilsMessengerEXT(VkInstance p_instanc
 {
 	auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(
 		p_instance, "vkDestroyDebugUtilsMessengerEXT"));
-	if (func != nullptr) {
+	if (func != nullptr)
+	{
 		func(p_instance, p_debugMessenger, p_allocator);
 	}
 }
@@ -164,7 +157,7 @@ void OgEngine::VulkanContext::DestroyDebugUtilsMessengerEXT(VkInstance p_instanc
 void OgEngine::VulkanContext::InitInstance()
 {
 	bool validationLayersChecked = CheckValidationLayers();
-	DBG_ASSERT_MSG(validationLayersChecked, "validation layers requested, but not available!");
+	DBG_ASSERT_MSG(validationLayersChecked, "Validation layers requested, but not available.");
 
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -203,13 +196,12 @@ void OgEngine::VulkanContext::InitInstance()
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
 	VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
-	DBG_ASSERT_VULKAN_MSG(result, "failed to create instance!");
+	DBG_ASSERT_VULKAN_MSG(result, "Failed to create instance.");
 	
 	m_vulkanDevice.instance = m_instance;
-	//volkLoadInstance(m_instance);
 	
 	result = glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_vulkanDevice.surface);
-	DBG_ASSERT_VULKAN_MSG(result, "failed to create surface!");
+	DBG_ASSERT_VULKAN_MSG(result, "Failed to create window surface.");
 }
 
 void OgEngine::VulkanContext::InitGpuDevice()
@@ -220,13 +212,13 @@ void OgEngine::VulkanContext::InitGpuDevice()
 	vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
 
 	if (deviceCount == 0)
-		throw std::runtime_error("No GPU support found For the Renderer");
+		throw std::runtime_error("No GPU support found for the renderer.");
 
 	std::vector<VkPhysicalDevice> GPUs(deviceCount);
 
 	vkEnumeratePhysicalDevices(m_instance, &deviceCount, GPUs.data());
 
-	std::cout << "GPUs available: \n";
+	std::cout << "GPUs available:\n";
 	for (size_t i = 0; i < GPUs.size(); ++i)
 	{
 		memset(&m_vulkanDevice.gpuProperties, 0, sizeof(m_vulkanDevice.gpuProperties));
@@ -247,7 +239,7 @@ void OgEngine::VulkanContext::InitGpuDevice()
 			m_vulkanDevice.msaaSamples = GetMaxUsableSampleCount();
 			break;
 		}
-		std::cout << "Device is not suitable for the Renderer! \n";
+		std::cout << "Device is not suitable for the renderer.\n";
 	}
 	vkGetPhysicalDeviceProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuProperties);
 
@@ -255,7 +247,7 @@ void OgEngine::VulkanContext::InitGpuDevice()
 
 	if (m_vulkanDevice.gpu == nullptr)
 	{
-		throw std::runtime_error("failed to find a suitable GPU!");
+		throw std::runtime_error("Failed to find a suitable GPU!");
 	}
 }
 
@@ -310,7 +302,7 @@ void OgEngine::VulkanContext::InitLogicalDevice()
 
 	if (vkCreateDevice(m_vulkanDevice.gpu, &createInfo, nullptr, &m_vulkanDevice.logicalDevice) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to create logical device!");
+		throw std::runtime_error("Failed to create logical device.");
 	}
 
 	vkGetDeviceQueue(m_vulkanDevice.logicalDevice, indices.graphicsFamily.value(), 0, &m_graphicsQueue);
@@ -404,10 +396,9 @@ void OgEngine::VulkanContext::SetupDebugMessenger()
 	VkDebugUtilsMessengerCreateInfoEXT infos;
 	InitDebugMessenger(infos);
 
-	if (CreateDebugUtilsMessengerEXT(m_instance, &infos, nullptr, &m_debugMessenger) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to set up debug messenger!");
-	}
+	DBG_ASSERT_VULKAN_MSG(
+		CreateDebugUtilsMessengerEXT(m_instance, &infos, nullptr, &m_debugMessenger),
+		"Failed to setup debug messenger.");
 }
 
 bool OgEngine::VulkanContext::IsPhysicalDeviceSuitable(VkPhysicalDevice p_gpu)
@@ -430,7 +421,7 @@ bool OgEngine::VulkanContext::IsPhysicalDeviceSuitable(VkPhysicalDevice p_gpu)
 	}
 	else
 	{
-		std::cout << "Extension isn't supported by the GPU!\n";
+		std::cout << "Extension isn't supported by the GPU.\n";
 	}
 	return indices.isComplete() && extensionsSupported && swapChainAdequate;
 }
@@ -606,7 +597,7 @@ void OgEngine::VulkanContext::CheckRaytracingSupport()
 
 	if (!Is64BitProcess())
 	{
-		std::cout << "Raytracing isn't supported on x86 platform!\n";
+		std::cout << "Raytracing isn't supported on x86 platform.\n";
 		isUsingRaytracing = false;
 		return;
 	}
@@ -614,12 +605,14 @@ void OgEngine::VulkanContext::CheckRaytracingSupport()
 	if (!isRaytracingAvailable)
 	{
 		isUsingRaytracing = false;
-		std::cout << "Rasterisation renderer selected!\n";
+		std::cout << "Rasterisation renderer selected.\n";
 		return;
 	}
 
-	std::cout << "\nDo you want to use Raytracing Rendering? (yes/no)\n -> ";
+	std::cout << "\nDo you want to use Raytracing rendering? (yes/no)\n -> ";
 	std::cin >> input;
+	std::transform(input.begin(), input.end(), input.begin(),
+		[](unsigned char c) { return std::tolower(c); });
 
 	if (input == "yes")
 		useRT = true;
@@ -628,20 +621,20 @@ void OgEngine::VulkanContext::CheckRaytracingSupport()
 	else
 	{
 		useRT = false;
-		std::cout << "Invalid answer, selecting Rasterisation\n";
+		std::cout << "Invalid answer, selecting Rasterization.\n";
 		isUsingRaytracing = false;
 		return;
 	}
 
 	if (useRT == true)
 	{
-		std::cout << "RayTracing renderer selected!\n";
+		std::cout << "Raytracing renderer selected.\n";
 		isUsingRaytracing = true;
 		return;
 	}
 	else
 	{
-		std::cout << "Rasterisation renderer selected!\n";
+		std::cout << "Rasterization renderer selected.\n";
 		isUsingRaytracing = false;
 		return;
 	}

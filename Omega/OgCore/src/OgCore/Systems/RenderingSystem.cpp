@@ -1,7 +1,6 @@
 #include<OgCore/Systems/RenderingSystem.h>
-#include <OgCore/Components/Transform.h>
-#include <OgCore/Managers/SceneManager.h>
-#include <OgRendering/Rendering/VulkanContext.h>
+
+
 
 void OgEngine::RenderingSystem::Init()
 {

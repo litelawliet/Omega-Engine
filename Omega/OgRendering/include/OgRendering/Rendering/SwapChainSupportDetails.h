@@ -1,7 +1,7 @@
 #pragma once
 #include <OgRendering/Export.h>
 #include <vector>
-#include <OgRendering/Utils/volk.h>
+#include <vulkan/vulkan.h>
 
 namespace OgEngine
 {

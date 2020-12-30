@@ -1,10 +1,12 @@
 #pragma once
 #include <OgRendering/Export.h>
+
 #include <array>
-#include <GPM/GPM.h>
 #include <cstddef>
-#include <OgRendering/Utils/volk.h>
 #include <functional>
+#include <vulkan/vulkan.h>
+
+#include <GPM/GPM.h>
 
 namespace OgEngine
 {

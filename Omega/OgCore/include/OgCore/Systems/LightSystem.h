@@ -1,12 +1,14 @@
 #pragma once
-#define VK_NO_PROTOTYPES
 #include <OgCore/Export.h>
-#include <OgCore/Systems/System.h>
-#include <OgCore/Components/LightSource.h>
-#include <OgCore/Components/Transform.h>
-#include <OgCore/Managers/SceneManager.h>
-#include <OgRendering/Rendering/VulkanContext.h>
+
 #include <memory>
+
+#include <OgCore/Systems/System.h>
+#include <OgRendering/Rendering/VulkanContext.h>
+#include <OgCore/Components/Transform.h>
+#include <OgCore/Components/LightSource.h>
+#include <OgCore/Managers/SceneManager.h>
+
 
 namespace OgEngine
 {

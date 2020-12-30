@@ -1,12 +1,12 @@
 #pragma once
 #include <OgRendering/Export.h>
-#include <glm/glm.hpp>
-#include <OgRendering/Utils/volk.h>
-#include <glm/gtc/matrix_transform.hpp>
-#include <OgRendering/Utils/Initializers.h>
-#include <OgRendering/Utils/VulkanTools.h>
 
 #include <vector>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <OgRendering/Utils/Initializers.h>
+#include <OgRendering/Utils/VulkanTools.h>
 
 /*struct VertexInfo
 {

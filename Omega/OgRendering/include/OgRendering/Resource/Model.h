@@ -1,16 +1,14 @@
 #pragma once
 #include <OgRendering/Export.h>
-#include <OgRendering/Resource/Mesh.h>
-#include <OgRendering/Resource/RTMesh.h>
-#include <OgRendering/Utils/VulkanTools.h>
 
 #include <memory>
-
-#include <OgRendering/Utils/volk.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <OgRendering/Resource/Mesh.h>
+#include <OgRendering/Resource/RTMesh.h>
+#include <OgRendering/Utils/VulkanTools.h>
 
 namespace OgEngine
 {
