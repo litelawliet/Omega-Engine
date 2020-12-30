@@ -1,12 +1,12 @@
 #pragma once
 #include <OgRendering/Export.h>
-#include <OgRendering/Rendering/Device.h>
+#include <vector>
+#include <optional>
 
+#include <OgRendering/Rendering/Device.h>
 #include <OgRendering/Rendering/RaytracingPipeline.h>
 #include <OgRendering/Rendering/RasterizerPipeline.h>
 
-#include <vector>
-#include <optional>
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;

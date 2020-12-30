@@ -1,7 +1,9 @@
 #pragma once
 #include <OgCore/Export.h>
+
 #include <memory>
 #include <array>
+
 #include <OgCore/Entities/Types.h>
 #include <OgCore/Managers/ComponentManager.h>
 #include <OgCore/Managers/EntityManager.h>

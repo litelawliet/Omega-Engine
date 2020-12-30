@@ -1,10 +1,11 @@
 #pragma once
 #include <iostream>
-#include <OgRendering/Utils/Initializers.h>
 #include <glm/glm.hpp>
-#include <GPM/GPM.h>
 #include <fstream>
-#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
+
+#include <OgRendering/Utils/Initializers.h>
+#include <GPM/GPM.h>
 
 struct GeometryInstance
 {

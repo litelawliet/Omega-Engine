@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <OgRendering/Utils/volk.h>
+#include <vulkan/vulkan.h>
 
 #include <OgRendering/Rendering/stb_image.h>
 

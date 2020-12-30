@@ -1,5 +1,5 @@
 #pragma once
-#include <OgRendering/Utils/volk.h>
+#include <vulkan/vulkan.h>
 
 class ShaderLoader final
 {

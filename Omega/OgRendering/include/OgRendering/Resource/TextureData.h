@@ -1,5 +1,5 @@
 #pragma once
-#include <OgRendering/Utils/volk.h>
+#include <vulkan/vulkan.h>
 #include <cstdint>
 
 struct TextureData

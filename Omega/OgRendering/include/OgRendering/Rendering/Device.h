@@ -1,9 +1,10 @@
 #pragma once
-#include <OgRendering/Utils/volk.h>
 
 #include <vector>
 #include <string>
 #include <optional>
+#include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
 
 struct Device
 {

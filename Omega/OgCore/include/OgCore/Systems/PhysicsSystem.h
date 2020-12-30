@@ -1,11 +1,13 @@
 #pragma once
 #include <OgCore/Export.h>
+
+#include <memory>
+
 #include <OgCore/Systems/System.h>
+#include <OgCore/Managers/SceneManager.h>
 #include <OgCore/Components/RigidBody.h>
 #include <OgCore/Components/Transform.h>
-#include <OgCore/Managers/SceneManager.h>
 #include <OgPhysics/Physics.h>
-#include <memory>
 
 namespace OgEngine
 {
