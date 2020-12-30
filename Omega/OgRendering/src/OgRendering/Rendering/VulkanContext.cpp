@@ -197,7 +197,6 @@ void OgEngine::VulkanContext::InitInstance()
 	auto extensions = GetRequieredExtensions();
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
-
 	if (vkCreateInstance(&createInfo, nullptr, &m_instance) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create instance!");
@@ -212,8 +211,6 @@ void OgEngine::VulkanContext::InitInstance()
 
 void OgEngine::VulkanContext::InitGpuDevice()
 {
-	//m_vulkanDevice.physicalDevice = nullptr;
-
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
 
@@ -221,33 +218,15 @@ void OgEngine::VulkanContext::InitGpuDevice()
 		throw std::runtime_error("No GPU support found For the Renderer");
 
 	std::vector<VkPhysicalDevice> GPUs(deviceCount);
-
 	vkEnumeratePhysicalDevices(m_instance, &deviceCount, GPUs.data());
+	int id = 1;
+	if (!IsPhysicalDeviceSuitable(GPUs[id]))
+		throw std::runtime_error("Invalid GPU!");
+	m_vulkanDevice.gpu = GPUs[id];
 
-	std::cout << "GPUs available: \n";
-	for (size_t i = 0; i < GPUs.size(); ++i)
-	{
-		memset(&m_vulkanDevice.gpuProperties, 0, sizeof(m_vulkanDevice.gpuProperties));
-
-		vkGetPhysicalDeviceProperties(GPUs[i], &m_vulkanDevice.gpuProperties);
-
-		std::cout << i << ": " << m_vulkanDevice.gpuProperties.deviceName << '\n';
-	}
-	int id;
-	while (true)
-	{
-		std::cin >> id;
-		if (IsPhysicalDeviceSuitable(GPUs[id]))
-		{
-			m_vulkanDevice.gpu = GPUs[id];
-			m_vulkanDevice.gpuEnabledFeatures = m_vulkanDevice.gpuFeatures[id];
-			vkGetPhysicalDeviceMemoryProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuMemoryProperties);
-			break;
-		}
-		std::cout << "Device is not suitable for the Renderer! \n";
-	}
+	memset(&m_vulkanDevice.gpuProperties, 0, sizeof(m_vulkanDevice.gpuProperties));
 	vkGetPhysicalDeviceProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuProperties);
-
+	vkGetPhysicalDeviceMemoryProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuMemoryProperties);
 	std::cout << "Selected GPU: " << m_vulkanDevice.gpuProperties.deviceName << '\n';
 
 	if (m_vulkanDevice.gpu == nullptr)
@@ -288,7 +267,8 @@ void OgEngine::VulkanContext::InitLogicalDevice()
 	indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 	indexingFeatures.runtimeDescriptorArray = VK_TRUE;
 
-	createInfo.pEnabledFeatures = &m_vulkanDevice.gpuEnabledFeatures;
+	VkPhysicalDeviceFeatures deviceFeatures{};
+	createInfo.pEnabledFeatures = &deviceFeatures;
 	createInfo.pNext = &indexingFeatures;
 
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(m_gpuExtensions.size());
