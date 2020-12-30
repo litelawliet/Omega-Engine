@@ -219,12 +219,22 @@ void OgEngine::VulkanContext::InitGpuDevice()
 
 	std::vector<VkPhysicalDevice> GPUs(deviceCount);
 	vkEnumeratePhysicalDevices(m_instance, &deviceCount, GPUs.data());
-	int id = 1;
+
+	memset(&m_vulkanDevice.gpuProperties, 0, sizeof(m_vulkanDevice.gpuProperties));
+	for (VkPhysicalDevice gpu : GPUs)
+	{
+		vkGetPhysicalDeviceProperties(gpu, &m_vulkanDevice.gpuProperties);
+		std::cout << "GPU: " << m_vulkanDevice.gpuProperties.deviceName << '\n';
+	}
+
+	int id = 0;
+	std::cout << "Select chosen GPU: ";
+	std::cin >> id;
+
 	if (!IsPhysicalDeviceSuitable(GPUs[id]))
 		throw std::runtime_error("Invalid GPU!");
 	m_vulkanDevice.gpu = GPUs[id];
 
-	memset(&m_vulkanDevice.gpuProperties, 0, sizeof(m_vulkanDevice.gpuProperties));
 	vkGetPhysicalDeviceProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuProperties);
 	vkGetPhysicalDeviceMemoryProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuMemoryProperties);
 	std::cout << "Selected GPU: " << m_vulkanDevice.gpuProperties.deviceName << '\n';
