@@ -644,7 +644,6 @@ void OgEngine::VulkanContext::InitSelectedRenderer()
 {
 	if (isUsingRaytracing)
 	{
-
 		m_RTPipeline = new OgEngine::RaytracingPipeline(m_vulkanDevice, m_width, m_height, m_graphicsQueue, m_presentQueue, m_window, minImageCount);
 		m_RTPipeline->SetupRaytracingPipeline();
 	}
@@ -652,7 +651,6 @@ void OgEngine::VulkanContext::InitSelectedRenderer()
 	{
 		m_RSPipeline = new OgEngine::RasterizerPipeline(m_window, m_vulkanDevice, m_graphicsQueue, m_presentQueue,
 			m_width, m_height);
-
 		m_RSPipeline->SetupPipeline();
 	}
 }
