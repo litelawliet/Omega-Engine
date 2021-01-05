@@ -198,6 +198,7 @@ void OgEngine::VulkanContext::InitInstance()
 	VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
 	DBG_ASSERT_VULKAN_MSG(result, "Failed to create instance.");
 	
+
 	m_vulkanDevice.instance = m_instance;
 	
 	result = glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_vulkanDevice.surface);
@@ -206,8 +207,6 @@ void OgEngine::VulkanContext::InitInstance()
 
 void OgEngine::VulkanContext::InitGpuDevice()
 {
-	//m_vulkanDevice.physicalDevice = nullptr;
-
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
 
@@ -215,33 +214,27 @@ void OgEngine::VulkanContext::InitGpuDevice()
 		throw std::runtime_error("No GPU support found for the renderer.");
 
 	std::vector<VkPhysicalDevice> GPUs(deviceCount);
-
 	vkEnumeratePhysicalDevices(m_instance, &deviceCount, GPUs.data());
+	memset(&m_vulkanDevice.gpuProperties, 0, sizeof(m_vulkanDevice.gpuProperties));
 
-	std::cout << "GPUs available:\n";
-	for (size_t i = 0; i < GPUs.size(); ++i)
+	int id = 0;
+	for (VkPhysicalDevice gpu : GPUs)
 	{
-		memset(&m_vulkanDevice.gpuProperties, 0, sizeof(m_vulkanDevice.gpuProperties));
-
-		vkGetPhysicalDeviceProperties(GPUs[i], &m_vulkanDevice.gpuProperties);
-
-		std::cout << i << ": " << m_vulkanDevice.gpuProperties.deviceName << '\n';
+		vkGetPhysicalDeviceProperties(gpu, &m_vulkanDevice.gpuProperties);
+		std::cout << "GPU " << id << ": "<< m_vulkanDevice.gpuProperties.deviceName << '\n';
+		id++;
 	}
-	int id;
-	while (true)
-	{
-		std::cin >> id;
-		if (IsPhysicalDeviceSuitable(GPUs[id]))
-		{
-			m_vulkanDevice.gpu = GPUs[id];
-			m_vulkanDevice.gpuEnabledFeatures = m_vulkanDevice.gpuFeatures[id];
-			vkGetPhysicalDeviceMemoryProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuMemoryProperties);
-			m_vulkanDevice.msaaSamples = GetMaxUsableSampleCount();
-			break;
-		}
-		std::cout << "Device is not suitable for the renderer.\n";
-	}
+	memset(&m_vulkanDevice.gpuProperties, 0, sizeof(m_vulkanDevice.gpuProperties));
+
+	id = 0;
+	std::cout << "Select chosen GPU: ";
+	std::cin >> id;
+	if (!IsPhysicalDeviceSuitable(GPUs[id]))
+		throw std::runtime_error("Invalid GPU!");
+	m_vulkanDevice.gpu = GPUs[id];
+
 	vkGetPhysicalDeviceProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuProperties);
+	vkGetPhysicalDeviceMemoryProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuMemoryProperties);
 
 	std::cout << "Selected GPU: " << m_vulkanDevice.gpuProperties.deviceName << '\n';
 
@@ -284,7 +277,8 @@ void OgEngine::VulkanContext::InitLogicalDevice()
 	indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 	indexingFeatures.runtimeDescriptorArray = VK_TRUE;
 
-	createInfo.pEnabledFeatures = &m_vulkanDevice.gpuEnabledFeatures;
+	VkPhysicalDeviceFeatures deviceFeatures{};
+	createInfo.pEnabledFeatures = &deviceFeatures;
 	createInfo.pNext = &indexingFeatures;
 
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(m_gpuExtensions.size());
