@@ -242,6 +242,7 @@ call compileShaders.bat</Command>
     <ClCompile Include="src\OgRendering\Resource\Texture.cpp" />
     <ClCompile Include="src\OgRendering\Resource\Vertex.cpp" />
     <ClCompile Include="src\OgRendering\Utils\ThreadPool.cpp" />
+    <ClCompile Include="src\OgRendering\Utils\vk_mem_alloc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\OgRendering\Export.h" />
@@ -283,6 +284,7 @@ call compileShaders.bat</Command>
     <ClInclude Include="include\OgRendering\Utils\TemplateTypename.h" />
     <ClInclude Include="include\OgRendering\Utils\ThreadPool.h" />
     <ClInclude Include="include\OgRendering\Rendering\RaytracingPipeline.h" />
+    <ClInclude Include="include\OgRendering\Utils\vk_mem_alloc.h" />
     <ClInclude Include="include\OgRendering\Utils\VulkanTools.h" />
   </ItemGroup>
   <ItemGroup>

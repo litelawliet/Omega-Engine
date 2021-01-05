@@ -1,19 +1,20 @@
 #pragma once
 #include <OgRendering/Export.h>
 
+#include <vector>
+#include <unordered_map>
+
+#include <OgRendering/UI/imgui/imgui.h>
 #include <OgRendering/Utils/VulkanTools.h>
 #include <OgRendering/Rendering/SwapChainSupportDetails.h>
 #include <OgRendering/Resource/Vertex.h>
 #include <OgRendering/Rendering/Device.h>
 #include <OgRendering/Resource/Mesh.h>
-#include <vector>
-#include <unordered_map>
-#include <OgRendering/UI/imgui/imgui.h>
 #include <OgRendering/Resource/ObjectInstance.h>
 #include <OgRendering/Resource/Texture.h>
 #include <OgRendering/Resource/TextureData.h>
-
 #include <OgRendering/Resource/Camera.h>
+#include <OgRendering/Utils/vk_mem_alloc.h>
 
 
 #define MAX_TEXTURES_RS 64
@@ -150,6 +151,11 @@ namespace OgEngine
 		Camera& GetCurrentCamera();
 	private:
 #pragma region Helpers
+		/// <summary>
+		/// Initialize VMA allocator
+		/// </summary>
+		void InitializeVMA();
+
 		/**
 		 * @brief Return all the swap chain capabilities for a gpu
 		 * @param p_gpu The gpu device to check on
@@ -174,7 +180,7 @@ namespace OgEngine
 		void CreateImage(uint32_t p_width, uint32_t p_height, uint32_t p_mipLevels, VkSampleCountFlagBits p_numSamples, VkFormat p_format, VkImageTiling p_tiling, VkImageUsageFlags p_usage, VkMemoryPropertyFlags p_properties, VkImage& p_image, VkDeviceMemory& p_imageMemory) const;
 		void CopyBuffer(VkBuffer p_srcBuffer, VkBuffer p_dstBuffer, VkDeviceSize p_size) const;
 		void CopyBufferToImage(const VkBuffer p_buffer, const VkImage p_image, const uint32_t p_width, const uint32_t p_height) const;
-		void GenerateMipmaps(VkImage p_image, VkFormat p_imageFormat, int32_t p_texWidth, int32_t p_texHeight, uint32_t p_mipLevels) const;
+		void GenerateMipmaps(TextureData& p_textureData, VkFormat p_imageFormat, int32_t p_texWidth, int32_t p_texHeight, uint32_t p_mipLevels) const;
 		void CreateBuffer(const VkDeviceSize p_size, const VkBufferUsageFlags p_usage, VkMemoryPropertyFlags p_properties, VkBuffer& p_buffer, VkDeviceMemory& p_bufferMemory, const size_t p_dynamicOffset = 0) const;
 		VkResult CreateBuffer(VkBufferUsageFlags p_usageFlags, VkMemoryPropertyFlags p_memoryPropertyFlags, Buffer* p_buffer, VkDeviceSize p_size, void* p_data = nullptr) const;
 		void TransitionImageLayout(const VkImage p_image, VkFormat p_format, const VkImageLayout p_oldLayout, const VkImageLayout p_newLayout, const uint32_t p_mipLevels) const;
@@ -235,9 +241,10 @@ namespace OgEngine
 
 		//Referenced from Context
 		GLFWwindow* m_window;
-		Device m_vulkanDevice;
+		Device m_device;
 		VkQueue m_graphicsQueue{};
 		VkQueue m_presentQueue{};
+		VmaAllocator m_allocator;
 
 		//Swap Chain
 		VkFormat m_chainColorFormat;
