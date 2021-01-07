@@ -87,7 +87,7 @@ struct FrameBufferAttachment
     VkImageView view;
 };
 
-struct OffscreenPass
+struct ORenderPass
 {
     int32_t width, height;
     VkFramebuffer frameBuffer;
@@ -189,10 +189,6 @@ namespace OgEngine
         */
         void SetupDepthStencil();
 
-        /**
-        *   @brief Prepare and configure the main RenderPass
-        */
-        void SetupRenderPass();
 
         /**
         *   @brief Automatically prepare and configure the whole Pipeline
@@ -203,7 +199,7 @@ namespace OgEngine
         *   @brief Tell vulkan to start the Path Tracing extension and fill the image with the traced Data
         *   @note You only need to call it once as Vulkan executes de raytracing algorithm and fills the image asynchronously with the main thread
         */
-        void StartCastingRays();
+        void DispatchRays();
 
         /**
         *   @brief Initialize the SwapChain command pool
@@ -464,9 +460,10 @@ namespace OgEngine
         void SetupEditor();
 
         /**
-        *   @brief Prepare the offscreen texture, and its renderpass so that the scene can be displayed on the editor
+        *   @brief Initialize a renderpass so that the scene can be displayed on the editor
+        *   @param renderPass is the RenderPass to be initialized
         */
-        void SetupOffScreenPass();
+        void SetupRenderPass(ORenderPass& renderPass);
 
         /**
         *   @brief Loads the raytracing shaders
@@ -561,7 +558,7 @@ namespace OgEngine
         *   @param p_groupIndex is the shader category group index
         *   @returns the shader group handle size
         */
-        VkDeviceSize CopyShaderIdentifier(uint8_t* p_data, const uint8_t* p_shaderHandleStorage, uint32_t p_groupIndex) const;
+        VkDeviceSize CopyShaderIdentifier(uint8_t* p_data, const uint8_t* p_shaderHandleStorage, uint8_t p_groupIndex) const;
 
         /**
         *   @brief Gets a new, ready image from the swapchain and prepare it to be rendered
@@ -591,6 +588,8 @@ namespace OgEngine
         *   @returns function validation result
         */
         VkResult CreateBuffer(VkBufferUsageFlags p_usageFlags, VkMemoryPropertyFlags p_memoryPropertyFlags, Buffer* p_buffer, VkDeviceSize p_size, void* p_data = nullptr) const;
+        
+        uint32_t GetAlignedSize(uint32_t value, uint32_t alignment);
 
         int FindObjectID(uint64_t p_id);
 
@@ -603,7 +602,7 @@ namespace OgEngine
         Device m_vulkanDevice{};
 
         SwapChain m_swapChain;
-        OffscreenPass m_offScreenPass;
+        ORenderPass m_mainRenderPass;
         DepthStencil m_depthStencil{};
         StorageImage m_storageImage{};
         GameViewProperties m_gameViewProps{};
@@ -632,7 +631,6 @@ namespace OgEngine
         std::vector<VkCommandBuffer> m_commandBuffers;
         std::vector<VkCommandBuffer> m_ImGUIcommandBuffers;
         std::vector<VkFramebuffer> m_ImGUIframeBuffers;
-        std::vector<VkFramebuffer> m_swapchainFrameBuffers;
         std::vector<uint32_t> m_objectAccIDs;
         std::vector<AccelerationStructure> m_BLAS;
         std::vector<std::shared_ptr<Mesh>> m_BLASmeshes;
@@ -665,7 +663,6 @@ namespace OgEngine
         VkQueue m_presentQueue{};
         VkCommandPool m_commandPool{};
         VkCommandPool m_ImGUIcommandPool{};
-        VkRenderPass m_renderpass{};
         VkRenderPass m_ImGUIrenderPass{};
         VkPipeline m_pipeline{};
         VkPipelineLayout m_pipelineLayout{};

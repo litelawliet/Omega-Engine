@@ -57,9 +57,9 @@ vec3 calculateNormal(Vertex v0, Vertex v1, Vertex v2, sampler2D normalMap, vec3 
     bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
     bitangent1 = normalize(bitangent1);
 
-    vec3 T = normalize(vec3(gl_ObjectToWorldEXT * vec4(tangent1,   0.0)));
-    vec3 B = normalize(vec3(gl_ObjectToWorldEXT * vec4(bitangent1, 0.0)));
-    vec3 N = normalize(vec3(gl_ObjectToWorldEXT * vec4(aNormal,    0.0)));
+    vec3 T = normalize(vec3(gl_ObjectToWorldNV * vec4(tangent1,   0.0)));
+    vec3 B = normalize(vec3(gl_ObjectToWorldNV * vec4(bitangent1, 0.0)));
+    vec3 N = normalize(vec3(gl_ObjectToWorldNV * vec4(aNormal,    0.0)));
     TBN = mat3(T, B, N);
 
     vec3 finalNormal = texture(normalMap, pointUV).rgb;
