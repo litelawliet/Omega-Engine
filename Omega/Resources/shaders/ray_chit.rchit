@@ -27,7 +27,7 @@ layout(location = 4) rayPayloadNV Payload indirectData;
 
 layout(set = 0, binding = 0) uniform accelerationStructureNV Scene;
 
-layout(binding = 3, set = 0, scalar) buffer buf1 
+layout(binding = 3, set = 0) buffer buf1 
 { 
     Vertex vertex[]; 
 } sceneVerts[];
@@ -37,39 +37,35 @@ layout(binding = 4, set = 0) buffer buf2
     uint indices[];
 }sceneIndices[];
 
-layout(binding = 5, set = 0) uniform sampler2D textures[];
-layout(binding = 11, set = 0) uniform sampler2D normalMaps[];
-
-layout(binding = 6, set = 0) buffer buf3
+layout(binding = 5, set = 0) buffer buf3
 {
     uint id[];
 }sceneObjTexture;
 
-layout(binding = 7, set = 0) buffer buf4
+
+layout(binding = 6, set = 0) buffer buf4
 {
     MaterialData mat;
 
 }sceneMaterials[];
 
-layout(binding = 8, set = 0) buffer buf5
-{
-    uint id[];
-}sceneObjID;
-
-layout(binding = 9, set = 0) buffer buf6
+layout(binding = 7, set = 0) buffer buf6
 {
     uint id[];
 }sceneObjBLAS;
 
-layout(binding = 10, set = 0) buffer buf7
+layout(binding = 8, set = 0) buffer buf7
 {
     uint id[];
 }sceneObjNormalMaps;
 
-layout(binding = 12, set = 0) buffer buf8
+layout(binding = 9, set = 0) buffer buf8
 {
     LightData light;
 }sceneLights[];
+
+layout(binding = 10, set = 0) uniform sampler2D textures[];
+layout(binding = 11, set = 0) uniform sampler2D normalMaps[];
 
 hitAttributeNV vec2 HitAttribs;
 

@@ -64,6 +64,9 @@ void OgEngine::VulkanContext::DestroyContext() const
 	if (m_RSPipeline)
 		m_RSPipeline->CleanPipeline();
 
+	if (m_RTPipeline)
+		m_RTPipeline->CleanPipeline();
+
 	vkDestroyDevice(m_vulkanDevice.logicalDevice, nullptr);
 
 	if (enableValidationLayers)
@@ -306,6 +309,7 @@ void OgEngine::VulkanContext::InitLogicalDevice()
 	m_vulkanDevice.presentFamily = std::make_optional(indices.presentFamily.value());
 }
 
+
 bool OgEngine::VulkanContext::CheckValidationLayers() const
 {
 	uint32_t layerCount;
@@ -359,7 +363,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL OgEngine::VulkanContext::DebugCallback(VkDebugUti
 	const VkDebugUtilsMessengerCallbackDataEXT* p_pCallbackData,
 	void* p_pUserData)
 {
-	std::cerr << "validation layer: " << p_pCallbackData->pMessage << std::endl;
+	std::cout << p_pCallbackData->pMessage << "\n\n";
 	return VK_FALSE;
 }
 

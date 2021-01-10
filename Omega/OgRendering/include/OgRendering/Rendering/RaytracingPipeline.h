@@ -25,10 +25,11 @@
 
 #define MAX_TEXTURES 64
 #define MAX_OBJECTS 1000
+#define MAX_FRAMES_IN_FLIGHT 2
 
 struct Semaphore {
     // Swap chain image presentation
-    VkSemaphore presentComplete;
+    VkSemaphore imageAvailable;
     // Command buffer submission and execution
     VkSemaphore renderComplete;
 };
@@ -90,7 +91,7 @@ struct FrameBufferAttachment
 struct ORenderPass
 {
     int32_t width, height;
-    VkFramebuffer frameBuffer;
+    std::vector<VkFramebuffer> frameBuffers;
     FrameBufferAttachment color, depth;
     VkRenderPass renderPass;
     VkSampler sampler;
@@ -175,19 +176,14 @@ namespace OgEngine
         *   @param p_vsync activate the V-SYNC on the Window (false by default)
         *   @note p_width and p_height must be the same value as the window size, if not, the rendered image might give black borders
         */
-        void SetupSwapchain(uint32_t p_width, uint32_t p_height, bool p_vsync = false);
-
-        /**
-        *   @brief Prepare and configure the SwapChain framebuffer
-        */
-        void SetupFramebuffer();
+        void InitSwapChain(uint32_t p_width, uint32_t p_height, bool p_vsync = false);
 
         [[nodiscard]] VkFormat FindSupportedFormat(const std::vector<VkFormat>& p_candidates, VkImageTiling p_tiling, VkFormatFeatureFlags p_features) const;
 
         /**
         *   @brief Prepare and configure the SwapChain depth stencil
         */
-        void SetupDepthStencil();
+        //void SetupDepthStencil();
 
 
         /**
@@ -195,6 +191,7 @@ namespace OgEngine
         */
         void SetupRaytracingPipeline();
 
+        void InitSyncObjects();
         /**
         *   @brief Tell vulkan to start the Path Tracing extension and fill the image with the traced Data
         *   @note You only need to call it once as Vulkan executes de raytracing algorithm and fills the image asynchronously with the main thread
@@ -235,6 +232,8 @@ namespace OgEngine
         */
         void CreateTopLevelAccelerationStructure();
 
+        void ReloadPipeline();
+
         /**
         *   @brief Create bindings, layouts and pipeline configuration then Allocate and Bind it to vulkan
         */
@@ -269,12 +268,6 @@ namespace OgEngine
         *   @brief Update the top level acceleration structure with the new entities data
         */
         void UpdateTLAS();
-
-        /**
-        *   @brief Update the descriptor sets and bind it back to the active pipeline
-        *   @note Runtime only (or may cause issues)
-        */
-        void UpdateDescriptorSets();
 
         /**
         *   @brief Initialize the Imgui context with the vulkan context
@@ -407,16 +400,6 @@ namespace OgEngine
         *   @param p_free does the commandbuffer needs to be freed? (default = true)
         */
         void QueueCmdBufferAndFlush(VkCommandBuffer p_commandBuffer, VkQueue p_queue, bool p_free = true) const;
-
-        /**
-        *   @brief Acquire the next avialable swap chain image rendered, ready to be displayed
-        */
-        void InitFrame();
-
-        /**
-        *    @brief Display the selected frame to the screen
-        */
-        void DisplayFrame();
 
         /**
         *   @brief Render the frame to the screen
@@ -577,7 +560,6 @@ namespace OgEngine
         */
         VkResult QueuePresent(VkQueue p_queue, uint32_t p_imageIndex, VkSemaphore p_waitSemaphore);
 
-
         /**
         *   @brief Creates a buffer with a size and its data
         *   @param p_usageFlags is the flag defining how the buffer will be used as
@@ -609,7 +591,7 @@ namespace OgEngine
         UniformData m_cameraData{};
         ShaderData m_shaderData{};
         ImTextureID m_sceneID;
-        uint32_t m_currentBuffer{ 0 };
+        uint32_t m_currentFrame{ 0 };
         uint32_t m_width{ 0 };
         uint32_t m_height{ 0 };
         uint32_t m_minImageCount{ 0 };
@@ -631,7 +613,7 @@ namespace OgEngine
         std::vector<VkCommandBuffer> m_commandBuffers;
         std::vector<VkCommandBuffer> m_ImGUIcommandBuffers;
         std::vector<VkFramebuffer> m_ImGUIframeBuffers;
-        std::vector<uint32_t> m_objectAccIDs;
+        std::vector<uint32_t> m_objectBlasIDs;
         std::vector<AccelerationStructure> m_BLAS;
         std::vector<std::shared_ptr<Mesh>> m_BLASmeshes;
         std::vector<GeometryInstance> m_instances;
@@ -668,8 +650,8 @@ namespace OgEngine
         VkPipelineLayout m_pipelineLayout{};
         VkDescriptorSet m_descriptorSet{};
         VkDescriptorSetLayout m_descriptorSetLayout{};
-
-
+        std::vector<VkWriteDescriptorSet> m_writeDescriptorSets;
+        std::vector<VkDescriptorSetLayoutBinding> m_descriptorSetBindings;
         //ImGui
         VkDescriptorSet m_UIDescriptorSet{};
         VkDescriptorPool m_UIDescriptorPool{};
@@ -684,6 +666,10 @@ namespace OgEngine
         VkPhysicalDeviceRayTracingPropertiesNV m_raytracingProperties{};
         VkPipelineCache m_pipelineCache{};
         VkSubmitInfo m_submitInfo{};
+        std::vector<VkSemaphore> m_imageAvailableSemaphores;
+        std::vector<VkSemaphore> m_renderFinishedSemaphores;
+        std::vector<VkFence> m_inFlightFences;
+        std::vector<VkFence> m_imagesInFlight;
 
 #pragma endregion
 
