@@ -98,7 +98,7 @@ void main()
 
             if(!directPayload.hasHit)
             {
-                col = vec3(0.8, 0.99, 1) * 0.1;
+                col = vec3(0.8, 0.8, 0.8) * 0.1;
                 break;
             }
 
@@ -108,7 +108,7 @@ void main()
 
 
         //Global Illumination
-        vec3 indirectLighting = vec3(0);
+        /*vec3 indirectLighting = vec3(0);
 
         if(ubo.dofgirec.y == 1)
         {
@@ -142,9 +142,9 @@ void main()
             };
             indirectLighting /= div;
 
-        }
+        }*/
         col += directLighting;
-        col += indirectLighting;
+        //col += indirectLighting;
     }
     col /= cameraRays;
     //col = ACESFilm(col);

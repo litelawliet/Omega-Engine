@@ -62,11 +62,11 @@ struct ShaderData
 {
     std::vector<Buffer> vertexBuffer;
     std::vector<Buffer> indexBuffer;
-    std::vector<Buffer> materialBuffer;
-    std::vector<Buffer> lightBuffer;
     Buffer objectBLASbuffer;
-    Buffer textureIDBuffer;
-    Buffer normalMapIDBuffer;
+    //std::vector<Buffer> materialBuffer;
+    //std::vector<Buffer> lightBuffer;
+    //Buffer textureIDBuffer;
+    //Buffer normalMapIDBuffer;
 };
 
 struct DepthStencil
@@ -98,14 +98,14 @@ struct ORenderPass
     VkDescriptorImageInfo descriptor;
 };
 
-struct SwapChain {
+struct SwapChain 
+{
     VkFormat colorFormat{};
     VkSwapchainKHR swapChain{};
     VkExtent2D extent{};
     uint32_t imageCount{};
     std::vector<VkImage> images;
     std::vector<VkImageView> views;
-    //uint32_t queueNodeIndex = 5000000;
 };
 
 struct GameViewProperties
@@ -219,7 +219,7 @@ namespace OgEngine
         *   @param p_accelerationStruct acceleration structure selected to be filled
         *   @param p_instanceCount number of instances filled in the p_accelerationStruct
         */
-        void CreateTopLevelAccelerationStructure(AccelerationStructure& p_accelerationStruct, uint32_t p_instanceCount);
+        void CreateTopLevelAccelerationStructure(AccelerationStructure* p_accelerationStruct, uint32_t p_instanceCount);
 
         /**
         *   @brief Create and configure the image used by the NV_RAYTRACING extension
@@ -227,10 +227,6 @@ namespace OgEngine
         */
         void CreateStorageImage(StorageImage& p_image);
 
-        /**
-        *   @brief Create and Allocate the top level acceleration structure
-        */
-        void CreateTopLevelAccelerationStructure();
 
         void ReloadPipeline();
 
@@ -238,6 +234,8 @@ namespace OgEngine
         *   @brief Create bindings, layouts and pipeline configuration then Allocate and Bind it to vulkan
         */
         void CreatePipeline();
+
+        void InitBuffers();
 
         /**
         *   @brief Reloads the current shaders used by the pipeline (for runtime Hot Reload purpose)
@@ -423,11 +421,6 @@ namespace OgEngine
         void ResizeWindow();
 
         /**
-        *   @brief CleanUp specifically made for the ResizeWindow function, only destroying what is needed to be destroyed
-        */
-        void ResizeCleanup();
-
-        /**
         *   @brief Prepare ImGui to draw a new frame
         */
         void InitImGuiFrame();
@@ -488,7 +481,7 @@ namespace OgEngine
         *   @param p_srcStageMask is the mask used by the acutal image
         *   @param p_dstStageMask is the mask that will be used by the acutal image
         */
-        static void SetImageLayout(VkCommandBuffer p_cmdbuffer, VkImage p_image, VkImageLayout p_oldImageLayout, VkImageLayout p_newImageLayout, VkImageSubresourceRange p_subresourceRange, VkPipelineStageFlags p_srcStageMask, VkPipelineStageFlags p_dstStageMask);
+        static void SetImageLayout(VkCommandBuffer p_cmdbuffer, VkImage p_image, VkImageLayout p_oldImageLayout, VkImageLayout p_newImageLayout, VkImageSubresourceRange p_subresourceRange);
 
         /**
         *   @brief Set the new image layout with an aspect mask
@@ -616,11 +609,10 @@ namespace OgEngine
         std::vector<uint32_t> m_objectBlasIDs;
         std::vector<AccelerationStructure> m_BLAS;
         std::vector<std::shared_ptr<Mesh>> m_BLASmeshes;
-        std::vector<GeometryInstance> m_instances;
         std::vector<Model> m_objects;
         std::vector<uint64_t> m_objectIDs;
         std::vector<RTMaterial> m_materials;
-        AccelerationStructure m_TLAS;
+        AccelerationStructure* m_TLAS;
 
         std::vector<uint32_t> m_textureIDs;
         std::vector<TextureData> m_textures;
@@ -631,8 +623,6 @@ namespace OgEngine
         std::vector<std::string> m_normalMapsCtr;
 
         std::vector<std::pair<Mesh*, int>> m_instanceTracker;
-        std::vector<Buffer> m_meshVertexBuffers;
-        std::vector<Buffer> m_meshIndexBuffers;
 
         std::vector<RTLight> m_lights;
         std::vector<uint64_t> m_lightsIDs;

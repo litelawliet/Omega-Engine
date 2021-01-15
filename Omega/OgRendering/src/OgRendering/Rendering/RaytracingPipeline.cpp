@@ -27,6 +27,7 @@ void RaytracingPipeline::CHECK_ERROR(VkResult p_result)
     if (p_result != VK_SUCCESS)
     {
         std::cout << p_result << '\n';
+
         throw std::runtime_error(("Error with Vulkan function"));
     }
 }
@@ -128,11 +129,7 @@ VkImageView RaytracingPipeline::CreateImageView(VkImage            p_image, VkFo
     viewInfo.subresourceRange.layerCount = 1;
 
     VkImageView imageView;
-    if (vkCreateImageView(m_vulkanDevice.logicalDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create texture image view!");
-    }
-
+    CHECK_ERROR(vkCreateImageView(m_vulkanDevice.logicalDevice, &viewInfo, nullptr, &imageView));
     return imageView;
 }
 
@@ -283,7 +280,7 @@ void RaytracingPipeline::CleanPipeline()
     for (auto accel : m_BLAS)
         vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, accel.accelerationStructure, nullptr);
 
-    vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, m_TLAS.accelerationStructure, nullptr);
+    vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, m_TLAS->accelerationStructure, nullptr);
 
     vkDestroyPipelineCache(m_vulkanDevice.logicalDevice, m_pipelineCache, nullptr);
 
@@ -532,7 +529,7 @@ void OgEngine::RaytracingPipeline::DestroyShaderBuffers(bool p_resizedWindow)
             buf.Unmap();
             buf.Destroy();
         }
-        for (auto buf : m_shaderData.materialBuffer)
+        /*for (auto buf : m_shaderData.materialBuffer)
         {
             buf.Unmap();
             buf.Destroy();
@@ -541,10 +538,10 @@ void OgEngine::RaytracingPipeline::DestroyShaderBuffers(bool p_resizedWindow)
         {
             buf.Unmap();
             buf.Destroy();
-        }
-        m_shaderData.normalMapIDBuffer.Destroy();
+        }*/
         m_shaderData.objectBLASbuffer.Destroy();
-        m_shaderData.textureIDBuffer.Destroy();
+        /*m_shaderData.normalMapIDBuffer.Destroy();
+        m_shaderData.textureIDBuffer.Destroy();*/
     }
 }
 
@@ -686,11 +683,9 @@ void RaytracingPipeline::InitSyncObjects()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
     {
-        if (vkCreateSemaphore(m_vulkanDevice.logicalDevice, &semaphoreInfo, nullptr, &m_imageAvailableSemaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(m_vulkanDevice.logicalDevice, &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(m_vulkanDevice.logicalDevice, &fenceInfo, nullptr, &m_inFlightFences[i]) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create synchronization objects for a frame!");
-        }
+        CHECK_ERROR(vkCreateSemaphore(m_vulkanDevice.logicalDevice, &semaphoreInfo, nullptr, &m_imageAvailableSemaphores[i]));
+        CHECK_ERROR(vkCreateSemaphore(m_vulkanDevice.logicalDevice, &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]));
+        CHECK_ERROR(vkCreateFence(m_vulkanDevice.logicalDevice, &fenceInfo, nullptr, &m_inFlightFences[i]));
     }
 }
 void RaytracingPipeline::DestroyObject(uint64_t p_id)
@@ -706,8 +701,7 @@ void RaytracingPipeline::DestroyObject(uint64_t p_id)
         m_objectBlasIDs.erase(m_objectBlasIDs.begin() + id);
         m_textureIDs.erase(m_textureIDs.begin() + id);
         m_normalMapIDs.erase(m_normalMapIDs.begin() + id);
-        m_instances.erase(m_instances.begin() + id);
-        m_shaderData.materialBuffer.erase(m_shaderData.materialBuffer.begin() + id);
+        //m_shaderData.materialBuffer.erase(m_shaderData.materialBuffer.begin() + id);
         m_objects[id].m_geometryBuffer.Destroy();
 
         //vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, m_BLAS[id].accelerationStructure, nullptr);
@@ -746,7 +740,7 @@ void OgEngine::RaytracingPipeline::DestroyLight(uint64_t p_id)
         int lightID = std::distance(m_lightsIDs.begin(), lightiterator);
         m_lights.erase(m_lights.begin() + lightID);
         m_lightsIDs.erase(m_lightsIDs.begin() + lightID);
-        m_shaderData.lightBuffer.erase(m_shaderData.lightBuffer.begin() + lightID);
+        //m_shaderData.lightBuffer.erase(m_shaderData.lightBuffer.begin() + lightID);
     }
     ReloadPipeline();
 }
@@ -758,14 +752,13 @@ void OgEngine::RaytracingPipeline::DestroyAllObjects()
     m_objectBlasIDs.erase(m_objectBlasIDs.begin() + 1, m_objectBlasIDs.end());
     m_textureIDs.erase(m_textureIDs.begin() + 1, m_textureIDs.end());
     m_normalMapIDs.erase(m_normalMapIDs.begin() + 1, m_normalMapIDs.end());
-    m_instances.erase(m_instances.begin() + 1, m_instances.end());
     m_objects.erase(m_objects.begin() + 1, m_objects.end());
 
-    m_shaderData.materialBuffer.erase(m_shaderData.materialBuffer.begin() + 1, m_shaderData.materialBuffer.end());
+    //m_shaderData.materialBuffer.erase(m_shaderData.materialBuffer.begin() + 1, m_shaderData.materialBuffer.end());
 
     m_lights.erase(m_lights.begin() + 1, m_lights.end());
     m_lightsIDs.erase(m_lightsIDs.begin() + 1, m_lightsIDs.end());
-    m_shaderData.lightBuffer.erase(m_shaderData.lightBuffer.begin() + 1, m_shaderData.lightBuffer.end());
+    //m_shaderData.lightBuffer.erase(m_shaderData.lightBuffer.begin() + 1, m_shaderData.lightBuffer.end());
 
     vkQueueWaitIdle(m_graphicsQueue);
 
@@ -785,32 +778,41 @@ void OgEngine::RaytracingPipeline::DestroyAllObjects()
 
 void OgEngine::RaytracingPipeline::UpdateTLAS()
 {
-    if (m_objects.size() == 0)
-        return;
-
     const VkCommandBuffer cmdBuffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-    m_instances.clear();
+    AccelerationStructure* tlas = nullptr;
+    tlas = new AccelerationStructure();
 
-    for (auto object : m_objects)
+    bool isUpdatingExistingTLAS = false;
+    if (m_TLAS == nullptr)
     {
-        m_instances.push_back(object.m_geometry);
+        m_TLAS = tlas;
     }
+    else
+        isUpdatingExistingTLAS = true;
+
+    std::vector<GeometryInstance> instances;
+    for (auto object : m_objects)
+        instances.push_back(object.m_geometry);
 
     Buffer instanceBuffer;
-    CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &instanceBuffer,
-        sizeof(GeometryInstance) * m_instances.size(),
-        m_instances.data());
+    if(instances.size() > 0)
+        CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &instanceBuffer,
+            sizeof(GeometryInstance) * instances.size(),
+            instances.data());
+    else
+        CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &instanceBuffer,
+            sizeof(GeometryInstance));
 
-    AccelerationStructure newDataAS;
-    CreateTopLevelAccelerationStructure(newDataAS, m_instances.size());
+    CreateTopLevelAccelerationStructure(tlas, instances.size());
 
     VkMemoryRequirements2 memReqTopLevelAS;
     VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo2{};
     memoryRequirementsInfo2.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
     memoryRequirementsInfo2.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
-    memoryRequirementsInfo2.accelerationStructure = newDataAS.accelerationStructure;
+    memoryRequirementsInfo2.accelerationStructure = tlas->accelerationStructure;
     vkGetAccelerationStructureMemoryRequirementsNV(m_vulkanDevice.logicalDevice, &memoryRequirementsInfo2, &memReqTopLevelAS);
 
     const VkDeviceSize scratchBufferSize = memReqTopLevelAS.memoryRequirements.size;
@@ -828,7 +830,7 @@ void OgEngine::RaytracingPipeline::UpdateTLAS()
     buildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV;
     buildInfo.pGeometries = nullptr;
     buildInfo.geometryCount = 0;
-    buildInfo.instanceCount = m_instances.size();
+    buildInfo.instanceCount = instances.size();
 
     vkCmdBuildAccelerationStructureNV(
         cmdBuffer,
@@ -836,7 +838,7 @@ void OgEngine::RaytracingPipeline::UpdateTLAS()
         instanceBuffer.buffer,
         0,
         VK_FALSE,
-        newDataAS.accelerationStructure,
+        tlas->accelerationStructure,
         nullptr,
         scratchBuffer.buffer,
         0);
@@ -846,17 +848,17 @@ void OgEngine::RaytracingPipeline::UpdateTLAS()
     memoryBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
     vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 
-    if (m_TLAS.accelerationStructure != VK_NULL_HANDLE)
+    if (isUpdatingExistingTLAS)
     {
-        vkCmdCopyAccelerationStructureNV(cmdBuffer, m_TLAS.accelerationStructure, newDataAS.accelerationStructure, VK_COPY_ACCELERATION_STRUCTURE_MODE_CLONE_NV);
+        vkCmdCopyAccelerationStructureNV(cmdBuffer, m_TLAS->accelerationStructure, tlas->accelerationStructure, VK_COPY_ACCELERATION_STRUCTURE_MODE_CLONE_NV);
         QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue, true);
-        vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, newDataAS.accelerationStructure, nullptr);
-        vkFreeMemory(m_vulkanDevice.logicalDevice, newDataAS.memory, nullptr);
+        vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, tlas->accelerationStructure, nullptr);
+        vkFreeMemory(m_vulkanDevice.logicalDevice, tlas->memory, nullptr);
+        delete tlas;
     }
     else
-        m_TLAS = newDataAS;
+        QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue, true);
 
-    QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue, true);
 
     scratchBuffer.Destroy();
     instanceBuffer.Destroy();
@@ -1097,9 +1099,7 @@ void OgEngine::RaytracingPipeline::RenderUI(uint32_t p_id)
         SetImageLayout(cmdBuffer, m_swapChain.images[i],
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            subresource_range,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            subresource_range);
 
     }
     vkCmdBeginRenderPass(cmdBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
@@ -1111,12 +1111,9 @@ void OgEngine::RaytracingPipeline::RenderUI(uint32_t p_id)
         SetImageLayout(cmdBuffer, m_swapChain.images[i],
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            subresource_range,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            subresource_range);
 
     }
-
     QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
 
 }
@@ -1159,9 +1156,9 @@ void OgEngine::RaytracingPipeline::UpdateLight(uint64_t p_id, glm::vec4 p_positi
         m_lights[id].pos = glm::vec4({ p_position.x, p_position.y, p_position.z, 1 });
         m_lights[id].dir = glm::vec4({ p_direction.x, p_direction.y, p_direction.z, (float)p_type });
 
-        m_shaderData.lightBuffer[id].Map();
+        /*m_shaderData.lightBuffer[id].Map();
         memcpy(m_shaderData.lightBuffer[id].mapped, &m_lights[id], sizeof(m_lights[id]));
-        m_shaderData.lightBuffer[id].Unmap();
+        m_shaderData.lightBuffer[id].Unmap();*/
     }
     else
     {
@@ -1176,7 +1173,7 @@ void OgEngine::RaytracingPipeline::UpdateLight(uint64_t p_id, glm::vec4 p_positi
         CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             &lightBuffer, sizeof(RTLight),
             &newLight));
-        m_shaderData.lightBuffer.push_back(lightBuffer);
+        //m_shaderData.lightBuffer.push_back(lightBuffer);
 
     }
 }
@@ -1190,7 +1187,6 @@ int OgEngine::RaytracingPipeline::GetTexture(const char* p_tex)
     }
     else
     {
-        std::cout << "Texture not found! \n";
         return 0;
     }
 }
@@ -1221,11 +1217,9 @@ void OgEngine::RaytracingPipeline::UpdateMaterial(uint64_t p_id, glm::vec4 p_alb
     m_textureIDs[p_id] = p_texID;
     m_normalMapIDs[p_id] = p_normID;
 
-    m_shaderData.materialBuffer[p_id].Map();
+    /*m_shaderData.materialBuffer[p_id].Map();
     memcpy(m_shaderData.materialBuffer[p_id].mapped, &mat, sizeof(mat));
-    m_shaderData.materialBuffer[p_id].Unmap();
-
-    ReloadPipeline();
+    m_shaderData.materialBuffer[p_id].Unmap();*/
 }
 
 
@@ -1373,7 +1367,7 @@ void RaytracingPipeline::CreateBottomLevelAccelerationStructure(const VkGeometry
     m_BLAS.push_back(accel);
 }
 
-void RaytracingPipeline::CreateTopLevelAccelerationStructure(AccelerationStructure& p_accelerationStruct, uint32_t p_instanceCount)
+void RaytracingPipeline::CreateTopLevelAccelerationStructure(AccelerationStructure* p_accelerationStruct, uint32_t p_instanceCount)
 {
     VkAccelerationStructureInfoNV accelerationStructureInfo{};
     accelerationStructureInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
@@ -1385,12 +1379,12 @@ void RaytracingPipeline::CreateTopLevelAccelerationStructure(AccelerationStructu
     VkAccelerationStructureCreateInfoNV accelerationStructureCI{};
     accelerationStructureCI.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
     accelerationStructureCI.info = accelerationStructureInfo;
-    CHECK_ERROR(vkCreateAccelerationStructureNV(m_vulkanDevice.logicalDevice, &accelerationStructureCI, nullptr, &p_accelerationStruct.accelerationStructure));
+    CHECK_ERROR(vkCreateAccelerationStructureNV(m_vulkanDevice.logicalDevice, &accelerationStructureCI, nullptr, &p_accelerationStruct->accelerationStructure));
 
     VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo{};
     memoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
     memoryRequirementsInfo.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
-    memoryRequirementsInfo.accelerationStructure = p_accelerationStruct.accelerationStructure;
+    memoryRequirementsInfo.accelerationStructure = p_accelerationStruct->accelerationStructure;
 
     VkMemoryRequirements2 memoryRequirements2{};
     vkGetAccelerationStructureMemoryRequirementsNV(m_vulkanDevice.logicalDevice, &memoryRequirementsInfo, &memoryRequirements2);
@@ -1398,14 +1392,14 @@ void RaytracingPipeline::CreateTopLevelAccelerationStructure(AccelerationStructu
     VkMemoryAllocateInfo memoryAllocateInfo = Initializers::memoryAllocateInfo();
     memoryAllocateInfo.allocationSize = memoryRequirements2.memoryRequirements.size;
     memoryAllocateInfo.memoryTypeIndex = GetMemoryType(memoryRequirements2.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    CHECK_ERROR(vkAllocateMemory(m_vulkanDevice.logicalDevice, &memoryAllocateInfo, nullptr, &p_accelerationStruct.memory));
+    CHECK_ERROR(vkAllocateMemory(m_vulkanDevice.logicalDevice, &memoryAllocateInfo, nullptr, &p_accelerationStruct->memory));
     VkBindAccelerationStructureMemoryInfoNV accelerationStructureMemoryInfo{};
     accelerationStructureMemoryInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
-    accelerationStructureMemoryInfo.accelerationStructure = p_accelerationStruct.accelerationStructure;
-    accelerationStructureMemoryInfo.memory = p_accelerationStruct.memory;
+    accelerationStructureMemoryInfo.accelerationStructure = p_accelerationStruct->accelerationStructure;
+    accelerationStructureMemoryInfo.memory = p_accelerationStruct->memory;
     CHECK_ERROR(vkBindAccelerationStructureMemoryNV(m_vulkanDevice.logicalDevice, 1, &accelerationStructureMemoryInfo));
 
-    CHECK_ERROR(vkGetAccelerationStructureHandleNV(m_vulkanDevice.logicalDevice, p_accelerationStruct.accelerationStructure, sizeof(uint64_t), &p_accelerationStruct.handle));
+    CHECK_ERROR(vkGetAccelerationStructureHandleNV(m_vulkanDevice.logicalDevice, p_accelerationStruct->accelerationStructure, sizeof(uint64_t), &p_accelerationStruct->handle));
 }
 
 void RaytracingPipeline::CreateStorageImage(StorageImage& p_image)
@@ -1451,7 +1445,7 @@ void RaytracingPipeline::CreateStorageImage(StorageImage& p_image)
     CHECK_ERROR(vkCreateSampler(m_vulkanDevice.logicalDevice, &samplerInfo, nullptr, &p_image.imgSampler));
 
     const VkCommandBuffer cmd_buffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-    SetImageLayout(cmd_buffer, p_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+    SetImageLayout(cmd_buffer, p_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
     QueueCmdBufferAndFlush(cmd_buffer, m_graphicsQueue);
 }
 
@@ -1490,12 +1484,12 @@ void RaytracingPipeline::AddEntity(uint64_t p_id, Mesh* p_mesh, uint32_t p_textu
         sizeof(GeometryInstance),
         &object.m_geometry));
 
-    Buffer materialBuffer;
+    /*Buffer materialBuffer;
     CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         &materialBuffer, sizeof(RTMaterial),
         &p_material));
 
-    m_shaderData.materialBuffer.push_back(materialBuffer);
+    m_shaderData.materialBuffer.push_back(materialBuffer);*/
 
     int meshBuffersID = CheckForExistingMesh(p_mesh);
 
@@ -1507,10 +1501,10 @@ void RaytracingPipeline::AddEntity(uint64_t p_id, Mesh* p_mesh, uint32_t p_textu
     m_objectBlasIDs.push_back(meshBuffersID);
     m_textureIDs.push_back(p_textureID);
     m_normalMapIDs.push_back(p_normID);
-    m_instances.push_back(object.m_geometry);
     m_objects.push_back(object);
-    ReloadPipeline();
+    ReloadShaders();
 }
+
 ImTextureID OgEngine::RaytracingPipeline::AddUITexture(const char* p_texture)
 {
     int width = 0;
@@ -1593,9 +1587,7 @@ ImTextureID OgEngine::RaytracingPipeline::AddUITexture(const char* p_texture)
     SetImageLayout(cmdBuffer, data.img,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        range,
-        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+        range);
 
     VkBufferImageCopy copyRegion{};
     copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -1716,9 +1708,7 @@ void OgEngine::RaytracingPipeline::AddTexture(const std::string& p_texture, cons
     SetImageLayout(cmdBuffer, data.img,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        range,
-        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+        range);
 
     VkBufferImageCopy copyRegion{};
     copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -1756,63 +1746,6 @@ void OgEngine::RaytracingPipeline::AddTexture(const std::string& p_texture, cons
         m_normalMaps.push_back(data);
         m_normalMapsCtr.emplace_back(p_texture);
     }
-    ReloadPipeline();
-}
-
-void OgEngine::RaytracingPipeline::CreateTopLevelAccelerationStructure()
-{
-    VkCommandBuffer cmdBuffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-    CreateTopLevelAccelerationStructure(m_TLAS, m_instances.size());
-
-    VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo2{};
-    memoryRequirementsInfo2.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
-    memoryRequirementsInfo2.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
-
-    VkMemoryRequirements2 tlasMemsReqs;
-    memoryRequirementsInfo2.accelerationStructure = m_TLAS.accelerationStructure;
-    vkGetAccelerationStructureMemoryRequirementsNV(m_vulkanDevice.logicalDevice, &memoryRequirementsInfo2, &tlasMemsReqs);
-
-    const VkDeviceSize scratchBufferSize2 = tlasMemsReqs.memoryRequirements.size;
-
-    Buffer scratchBuffer2;
-    CreateBuffer(
-        VK_BUFFER_USAGE_RAY_TRACING_BIT_NV,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        &scratchBuffer2,
-        scratchBufferSize2);
-
-
-    VkAccelerationStructureInfoNV buildInfo2{};
-    buildInfo2.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
-    buildInfo2.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
-    buildInfo2.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV;
-    buildInfo2.pGeometries = nullptr;
-    buildInfo2.geometryCount = 0;
-    buildInfo2.instanceCount = m_instances.size();
-
-    CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &m_instancesBuffer,
-        sizeof(GeometryInstance) * m_instances.size(),
-        m_instances.data());
-
-    vkCmdBuildAccelerationStructureNV(
-        cmdBuffer,
-        &buildInfo2,
-        m_instancesBuffer.buffer,
-        0,
-        VK_FALSE,
-        m_TLAS.accelerationStructure,
-        nullptr,
-        scratchBuffer2.buffer,
-        0);
-
-    VkMemoryBarrier memoryBarrier = Initializers::memoryBarrier();
-    memoryBarrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
-    memoryBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
-    vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
-
-    QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue);
-    scratchBuffer2.Destroy();
 }
 
 
@@ -1857,16 +1790,22 @@ void RaytracingPipeline::CreatePipeline()
     VkDescriptorSetLayoutBinding vertexBufferBinding{};
     vertexBufferBinding.binding = 3;
     vertexBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    vertexBufferBinding.descriptorCount = m_shaderData.vertexBuffer.size();
+    vertexBufferBinding.descriptorCount = m_shaderData.vertexBuffer.size() == 0 ? 1 : m_shaderData.vertexBuffer.size();
     vertexBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 
     VkDescriptorSetLayoutBinding indexBufferBinding{};
     indexBufferBinding.binding = 4;
     indexBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    indexBufferBinding.descriptorCount = m_shaderData.indexBuffer.size();
+    indexBufferBinding.descriptorCount = m_shaderData.indexBuffer.size() == 0 ? 1 : m_shaderData.indexBuffer.size();
     indexBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 
-    VkDescriptorSetLayoutBinding textureIDBinding{};
+    VkDescriptorSetLayoutBinding objectBLASBinding{};
+    objectBLASBinding.binding = 5;
+    objectBLASBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    objectBLASBinding.descriptorCount = m_objectBlasIDs.size() == 0 ? 1 : m_objectBlasIDs.size();
+    objectBLASBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+
+    /*VkDescriptorSetLayoutBinding textureIDBinding{};
     textureIDBinding.binding = 5;
     textureIDBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     textureIDBinding.descriptorCount = m_textureIDs.size() == 0 ? 1 : m_textureIDs.size();
@@ -1875,16 +1814,11 @@ void RaytracingPipeline::CreatePipeline()
     VkDescriptorSetLayoutBinding materialBufferBinding{};
     materialBufferBinding.binding = 6;
     materialBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    materialBufferBinding.descriptorCount = m_shaderData.materialBuffer.size();
-    materialBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+    materialBufferBinding.descriptorCount = m_shaderData.materialBuffer.size() == 0 ? 1 : m_shaderData.materialBuffer.size();
+    materialBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;*/
 
-    VkDescriptorSetLayoutBinding objectBLASBinding{};
-    objectBLASBinding.binding = 7;
-    objectBLASBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    objectBLASBinding.descriptorCount = m_objectBlasIDs.size() == 0 ? 1 : m_objectBlasIDs.size();
-    objectBLASBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 
-    VkDescriptorSetLayoutBinding normalMapIDBinding{};
+    /*VkDescriptorSetLayoutBinding normalMapIDBinding{};
     normalMapIDBinding.binding = 8;
     normalMapIDBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     normalMapIDBinding.descriptorCount = m_normalMapIDs.size() == 0 ? 1 : m_normalMapIDs.size();
@@ -1893,20 +1827,20 @@ void RaytracingPipeline::CreatePipeline()
     VkDescriptorSetLayoutBinding lightBufferBinding{};
     lightBufferBinding.binding = 9;
     lightBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    lightBufferBinding.descriptorCount = m_shaderData.lightBuffer.size();
+    lightBufferBinding.descriptorCount = m_shaderData.lightBuffer.size() == 0 ? 1 : m_shaderData.lightBuffer.size();
     lightBufferBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 
     VkDescriptorSetLayoutBinding textureBinding{};
     textureBinding.binding = 10;
     textureBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    textureBinding.descriptorCount = m_textures.size();
+    textureBinding.descriptorCount = m_textures.size() == 0 ? 1 : m_textures.size();
     textureBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
 
     VkDescriptorSetLayoutBinding normalMapBinding{};
     normalMapBinding.binding = 11;
     normalMapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    normalMapBinding.descriptorCount = m_normalMaps.size();
-    normalMapBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+    normalMapBinding.descriptorCount = m_normalMaps.size() == 0 ? 1 : m_normalMaps.size();
+    normalMapBinding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;*/
 
     std::vector<VkDescriptorSetLayoutBinding> bindings({
         accelerationStructureLayoutBinding,
@@ -1914,13 +1848,13 @@ void RaytracingPipeline::CreatePipeline()
         uniformBufferBinding,
         vertexBufferBinding,
         indexBufferBinding,
-        textureBinding,
+        objectBLASBinding
+        /*textureBinding,
         textureIDBinding,
+        materialBufferBinding,
         normalMapBinding,
         normalMapIDBinding,
-        materialBufferBinding,
-        objectBLASBinding,
-        lightBufferBinding
+        lightBufferBinding*/
         });
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
@@ -1949,12 +1883,12 @@ void RaytracingPipeline::ReloadShaders()
 }
 void RaytracingPipeline::LoadShaders()
 {
-    const uint32_t shaderIndexRaygen = 0;
-    const uint32_t shaderIndexMiss = 1;
-    const uint32_t shaderIndexShadowMiss = 2;
-    const uint32_t shaderIndexClosestHit = 3;
+    const uint32_t shaderIndexRaygen = INDEX_RAYGEN;
+    const uint32_t shaderIndexMiss = INDEX_MISS;
+    const uint32_t shaderIndexShadowMiss = INDEX_SHADOW_MISS;
+    const uint32_t shaderIndexClosestHit = INDEX_CLOSEST_HIT;
 
-    std::array<VkPipelineShaderStageCreateInfo, 4> shaderStages{};
+    std::array<VkPipelineShaderStageCreateInfo, SHADER_COUNT> shaderStages{};
     shaderStages[shaderIndexRaygen] = LoadShader("Resources/shaders/bin/ray_gen.spv", VK_SHADER_STAGE_RAYGEN_BIT_NV);
     shaderStages[shaderIndexMiss] = LoadShader("Resources/shaders/bin/ray_miss.spv", VK_SHADER_STAGE_MISS_BIT_NV);
     shaderStages[shaderIndexClosestHit] = LoadShader("Resources/shaders/bin/ray_chit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV);
@@ -1994,7 +1928,7 @@ void RaytracingPipeline::LoadShaders()
     rayPipelineInfo.pGroups = groups.data();
     rayPipelineInfo.maxRecursionDepth = 8;
     rayPipelineInfo.layout = m_pipelineLayout;
-    vkCreateRayTracingPipelinesNV(m_vulkanDevice.logicalDevice, nullptr, 1, &rayPipelineInfo, nullptr, &m_pipeline);
+    CHECK_ERROR(vkCreateRayTracingPipelinesNV(m_vulkanDevice.logicalDevice, nullptr, 1, &rayPipelineInfo, nullptr, &m_pipeline));
 }
 
 inline ImGuiContext* OgEngine::RaytracingPipeline::GetUIContext()
@@ -2022,7 +1956,7 @@ void RaytracingPipeline::CreatePipelineCache()
 {
     VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
     pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-    vkCreatePipelineCache(m_vulkanDevice.logicalDevice, &pipelineCacheCreateInfo, nullptr, &m_pipelineCache);
+    CHECK_ERROR(vkCreatePipelineCache(m_vulkanDevice.logicalDevice, &pipelineCacheCreateInfo, nullptr, &m_pipelineCache));
 }
 
 VkFormat RaytracingPipeline::FindSupportedFormat(const std::vector<VkFormat>& p_candidates,
@@ -2175,9 +2109,6 @@ int OgEngine::RaytracingPipeline::CheckForExistingMesh(Mesh* p_mesh)
             &indexBuffer, p_mesh->Indices().size() * sizeof(uint32_t),
             (void*)p_mesh->Indices().data()));
 
-        m_meshVertexBuffers.push_back(vertexBuffer);
-        m_meshIndexBuffers.push_back(indexBuffer);
-
         m_shaderData.vertexBuffer.push_back(vertexBuffer);
         m_shaderData.indexBuffer.push_back(indexBuffer);
 
@@ -2186,12 +2117,12 @@ int OgEngine::RaytracingPipeline::CheckForExistingMesh(Mesh* p_mesh)
         geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
         geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
         geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
-        geometry.geometry.triangles.vertexData = m_meshVertexBuffers[meshID].buffer;
+        geometry.geometry.triangles.vertexData = vertexBuffer.buffer;
         geometry.geometry.triangles.vertexOffset = 0;
         geometry.geometry.triangles.vertexCount = static_cast<uint32_t>(p_mesh->Vertices().size());
         geometry.geometry.triangles.vertexStride = sizeof(Vertex);
         geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-        geometry.geometry.triangles.indexData = m_meshIndexBuffers[meshID].buffer;
+        geometry.geometry.triangles.indexData = indexBuffer.buffer;
         geometry.geometry.triangles.indexOffset = 0;
         geometry.geometry.triangles.indexCount = static_cast<uint32_t>(p_mesh->Indices().size());;
         geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
@@ -2248,8 +2179,7 @@ int OgEngine::RaytracingPipeline::CheckForExistingMesh(Mesh* p_mesh)
     return meshID;
 }
 
-void RaytracingPipeline::SetImageLayout(const VkCommandBuffer p_cmd_buffer, VkImage p_image, VkImageLayout p_oldImageLayout, VkImageLayout p_newImageLayout, const VkImageSubresourceRange p_subresourceRange, VkPipelineStageFlags p_srcStageMask,
-    VkPipelineStageFlags p_dstStageMask)
+void RaytracingPipeline::SetImageLayout(const VkCommandBuffer p_cmd_buffer, VkImage p_image, VkImageLayout p_oldImageLayout, VkImageLayout p_newImageLayout, const VkImageSubresourceRange p_subresourceRange)
 {
 
     VkImageMemoryBarrier imageMemoryBarrier = Initializers::imageMemoryBarrier();
@@ -2336,8 +2266,8 @@ void RaytracingPipeline::SetImageLayout(const VkCommandBuffer p_cmd_buffer, VkIm
 
     vkCmdPipelineBarrier(
         p_cmd_buffer,
-        p_srcStageMask,
-        p_dstStageMask,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
         0,
         0, nullptr,
         0, nullptr,
@@ -2351,11 +2281,12 @@ void RaytracingPipeline::SetImageLayout(VkCommandBuffer p_cmdbuffer, VkImage p_i
     subresource_range.baseMipLevel = 0;
     subresource_range.levelCount = 1;
     subresource_range.layerCount = 1;
-    SetImageLayout(p_cmdbuffer, p_image, p_oldImageLayout, p_newImageLayout, subresource_range, p_srcStageMask, p_dstStageMask);
+    SetImageLayout(p_cmdbuffer, p_image, p_oldImageLayout, p_newImageLayout, subresource_range);
 }
 
 void RaytracingPipeline::QueueCmdBufferAndFlush(VkCommandBuffer p_commandBuffer, VkQueue p_queue, bool p_free) const
 {
+    vkQueueWaitIdle(m_graphicsQueue);
     if (p_commandBuffer == nullptr)
     {
         return;
@@ -2373,7 +2304,7 @@ void RaytracingPipeline::QueueCmdBufferAndFlush(VkCommandBuffer p_commandBuffer,
 
     CHECK_ERROR(vkQueueSubmit(p_queue, 1, &submitInfo, fence));
 
-    CHECK_ERROR(vkWaitForFences(m_vulkanDevice.logicalDevice, 1, &fence, VK_TRUE, 100000000000));
+    CHECK_ERROR(vkWaitForFences(m_vulkanDevice.logicalDevice, 1, &fence, VK_TRUE, 1000000000));
     vkQueueWaitIdle(m_graphicsQueue);
     vkDestroyFence(m_vulkanDevice.logicalDevice, fence, nullptr);
 
@@ -2385,31 +2316,36 @@ void RaytracingPipeline::QueueCmdBufferAndFlush(VkCommandBuffer p_commandBuffer,
 
 void RaytracingPipeline::CreateShaderBindingTable()
 {
-    const uint32_t handleSize = m_raytracingProperties.shaderGroupHandleSize;
-    const uint32_t handleSizeAligned = GetAlignedSize(m_raytracingProperties.shaderGroupHandleSize, m_raytracingProperties.shaderGroupBaseAlignment);
-    const uint32_t groupCount = static_cast<uint32_t>(SHADER_COUNT);
-    const uint32_t sbtSize = groupCount * handleSizeAligned;
+    auto groupCount = static_cast<uint32_t>(SHADER_COUNT);               
+    uint32_t groupHandleSize = m_raytracingProperties.shaderGroupHandleSize; 
+    uint32_t baseAlignment = m_raytracingProperties.shaderGroupBaseAlignment;
 
-    CreateBuffer(
-        VK_BUFFER_USAGE_RAY_TRACING_BIT_NV,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-        &m_shaderBindingTable,
-        sbtSize);
-    m_shaderBindingTable.Map();
-
-    //const auto shaderHandleStorage = new uint8_t[sbtSize];
+    uint32_t sbtSize = groupCount * baseAlignment;
 
     std::vector<uint8_t> shaderHandleStorage(sbtSize);
-    // Get shader identifiers
     CHECK_ERROR(vkGetRayTracingShaderGroupHandlesNV(m_vulkanDevice.logicalDevice, m_pipeline, 0, SHADER_COUNT, sbtSize, shaderHandleStorage.data()));
-    auto* data = static_cast<uint8_t*>(m_shaderBindingTable.mapped);
+
+    CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+        &m_shaderBindingTable,
+        sbtSize);
+
+    m_shaderBindingTable.Map();
+    auto* data = reinterpret_cast<uint8_t*>(m_shaderBindingTable.mapped);
+    for (uint32_t g = 0; g < groupCount; g++)
+    {
+        memcpy(data, shaderHandleStorage.data() + g * groupHandleSize, groupHandleSize);
+        data += baseAlignment;
+    }
+    m_shaderBindingTable.Unmap();
+    
+    
     // Copy the shader identifiers to the shader binding table
-    data += CopyShaderIdentifier(data, shaderHandleStorage.data(), INDEX_RAYGEN);
+    /*data += CopyShaderIdentifier(data, shaderHandleStorage.data(), INDEX_RAYGEN);
     data += CopyShaderIdentifier(data, shaderHandleStorage.data(), INDEX_MISS);
     data += CopyShaderIdentifier(data, shaderHandleStorage.data(), INDEX_SHADOW_MISS);
-    data += CopyShaderIdentifier(data, shaderHandleStorage.data(), INDEX_CLOSEST_HIT);
-    
+    data += CopyShaderIdentifier(data, shaderHandleStorage.data(), INDEX_CLOSEST_HIT);*/
     m_shaderBindingTable.Unmap();
+    
 }
 
 VkDeviceSize RaytracingPipeline::CopyShaderIdentifier(uint8_t* p_data, const uint8_t* p_shaderHandleStorage, uint8_t p_groupIndex) const
@@ -2456,7 +2392,7 @@ void RaytracingPipeline::CreateDescriptorSets()
     VkWriteDescriptorSetAccelerationStructureNV descriptorAccelerationStructureInfo{};
     descriptorAccelerationStructureInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
     descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
-    descriptorAccelerationStructureInfo.pAccelerationStructures = &m_TLAS.accelerationStructure;
+    descriptorAccelerationStructureInfo.pAccelerationStructures = &m_TLAS->accelerationStructure;
 
     VkWriteDescriptorSet accelerationStructureWrite{};
     accelerationStructureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2471,13 +2407,13 @@ void RaytracingPipeline::CreateDescriptorSets()
     storageImageDescriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 
-    std::vector<VkDescriptorImageInfo> textureInfos;
+    /*std::vector<VkDescriptorImageInfo> textureInfos;
     for (const auto& tex : m_textures)
         textureInfos.push_back(tex.info);
 
     std::vector<VkDescriptorImageInfo> normalMapInfos;
     for (const auto& norm : m_normalMaps)
-        normalMapInfos.push_back(norm.info);
+        normalMapInfos.push_back(norm.info);*/
 
 
     std::vector<VkDescriptorBufferInfo> vertexDescriptor;
@@ -2494,7 +2430,7 @@ void RaytracingPipeline::CreateDescriptorSets()
         indexDescriptor.push_back(buf.descriptor);
     }
 
-    std::vector<VkDescriptorBufferInfo> materialDescriptor;
+    /*std::vector<VkDescriptorBufferInfo> materialDescriptor;
     for (auto buf : m_shaderData.materialBuffer)
     {
         buf.alignment = VK_WHOLE_SIZE;
@@ -2508,7 +2444,19 @@ void RaytracingPipeline::CreateDescriptorSets()
         lightDescriptor.push_back(buf.descriptor);
     }
 
-    VkWriteDescriptorSet textureDescriptor{};
+    m_shaderData.textureIDBuffer.Map();
+    memcpy(m_shaderData.textureIDBuffer.mapped, m_textureIDs.data(), m_textureIDs.size() * sizeof(uint32_t));
+    m_shaderData.textureIDBuffer.Unmap();
+
+    m_shaderData.normalMapIDBuffer.Map();
+    memcpy(m_shaderData.normalMapIDBuffer.mapped, m_normalMapIDs.data(), m_normalMapIDs.size() * sizeof(uint32_t));
+    m_shaderData.normalMapIDBuffer.Unmap();*/
+
+    m_shaderData.objectBLASbuffer.Map();
+    memcpy(m_shaderData.objectBLASbuffer.mapped, m_objectBlasIDs.data(), m_objectBlasIDs.size() * sizeof(uint32_t));
+    m_shaderData.objectBLASbuffer.Unmap();
+
+    /*VkWriteDescriptorSet textureDescriptor{};
     textureDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     textureDescriptor.dstSet = m_descriptorSet;
     textureDescriptor.dstBinding = 10;
@@ -2524,57 +2472,36 @@ void RaytracingPipeline::CreateDescriptorSets()
     normalMapDescriptor.dstArrayElement = 0;
     normalMapDescriptor.descriptorCount = m_normalMaps.size();
     normalMapDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    normalMapDescriptor.pImageInfo = normalMapInfos.data();
+    normalMapDescriptor.pImageInfo = normalMapInfos.data();*/
 
     const VkWriteDescriptorSet resultImageWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &storageImageDescriptor);
     const VkWriteDescriptorSet uniformBufferWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &m_cameraBuffer.descriptor);
     const VkWriteDescriptorSet vertexWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, vertexDescriptor.data(), vertexDescriptor.size());
     const VkWriteDescriptorSet indexWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, indexDescriptor.data(), indexDescriptor.size());
-    const VkWriteDescriptorSet textureIDWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5, &m_shaderData.textureIDBuffer.descriptor);
+    const VkWriteDescriptorSet objectBLASWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5, &m_shaderData.objectBLASbuffer.descriptor);
+    /*const VkWriteDescriptorSet textureIDWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5, &m_shaderData.textureIDBuffer.descriptor);
     const VkWriteDescriptorSet materialWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6, materialDescriptor.data(), materialDescriptor.size());
-    const VkWriteDescriptorSet objectBLASWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 7, &m_shaderData.objectBLASbuffer.descriptor);
     const VkWriteDescriptorSet normalMapWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 8, &m_shaderData.normalMapIDBuffer.descriptor);
-    const VkWriteDescriptorSet lightWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 9, lightDescriptor.data(), lightDescriptor.size());
+    const VkWriteDescriptorSet lightWrite = Initializers::writeDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 9, lightDescriptor.data(), lightDescriptor.size());*/
     
     m_writeDescriptorSets.clear();
     
-    if(m_TLAS.accelerationStructure != VK_NULL_HANDLE)
-        m_writeDescriptorSets.push_back(accelerationStructureWrite);
+    m_writeDescriptorSets.push_back(accelerationStructureWrite);
+    m_writeDescriptorSets.push_back(resultImageWrite);
+    m_writeDescriptorSets.push_back(uniformBufferWrite);
+    m_writeDescriptorSets.push_back(vertexWrite);
+    m_writeDescriptorSets.push_back(indexWrite);
+    m_writeDescriptorSets.push_back(objectBLASWrite);
+    /*m_writeDescriptorSets.push_back(textureIDWrite);
+    m_writeDescriptorSets.push_back(normalMapDescriptor);
+    m_writeDescriptorSets.push_back(textureDescriptor);
+    m_writeDescriptorSets.push_back(normalMapWrite);
+    m_writeDescriptorSets.push_back(materialWrite);
+    m_writeDescriptorSets.push_back(lightWrite);*/
 
-    if(resultImageWrite.descriptorCount > 0)
-        m_writeDescriptorSets.push_back(resultImageWrite);
-
-    if (uniformBufferWrite.descriptorCount > 0)
-        m_writeDescriptorSets.push_back(uniformBufferWrite);
-
-    if (vertexWrite.descriptorCount > 0)
-        m_writeDescriptorSets.push_back(vertexWrite);
-
-    if (indexWrite.descriptorCount > 0)
-        m_writeDescriptorSets.push_back(indexWrite);
-
-    if (m_textures.size() > 0)
-        m_writeDescriptorSets.push_back(textureDescriptor);
-
-    if (m_textureIDs.size() > 0)
-        m_writeDescriptorSets.push_back(textureIDWrite);
-
-    if (materialWrite.descriptorCount > 0)
-        m_writeDescriptorSets.push_back(materialWrite);
-
-    if (m_objectBlasIDs.size() > 0)
-        m_writeDescriptorSets.push_back(objectBLASWrite);
-
-    if (m_normalMaps.size() > 0)
-        m_writeDescriptorSets.push_back(normalMapDescriptor);
-
-    if (m_normalMapIDs.size() > 0)
-        m_writeDescriptorSets.push_back(normalMapWrite);
-
-    if (lightWrite.descriptorCount > 0)
-        m_writeDescriptorSets.push_back(lightWrite);
-
+    CHECK_ERROR(vkQueueWaitIdle(m_graphicsQueue));
     vkUpdateDescriptorSets(m_vulkanDevice.logicalDevice, m_writeDescriptorSets.size(), m_writeDescriptorSets.data(), 0, nullptr);
+    CHECK_ERROR(vkQueueWaitIdle(m_graphicsQueue));
 }
 
 void RaytracingPipeline::CreateCamera()
@@ -2638,33 +2565,22 @@ void RaytracingPipeline::DispatchRays()
     for (size_t i = 0; i < m_commandBuffers.size(); ++i)
     {
         CHECK_ERROR(vkBeginCommandBuffer(m_commandBuffers[i], &cmdBufInfo));
-             
-        VkDeviceSize bindingOffsetRayGenShader = m_raytracingProperties.shaderGroupHandleSize * INDEX_RAYGEN;
-        VkDeviceSize bindingOffsetMissShader = m_raytracingProperties.shaderGroupHandleSize * INDEX_MISS;
-        VkDeviceSize bindingOffsetHitShader = m_raytracingProperties.shaderGroupHandleSize * INDEX_CLOSEST_HIT;
-        VkDeviceSize bindingStride = m_raytracingProperties.shaderGroupHandleSize;
-
-      /*VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = m_mainRenderPass.renderPass;
-        renderPassInfo.framebuffer = m_mainRenderPass.frameBuffers[i];
-        renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = m_swapChain.extent;
-
-        VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = &clearColor;
-
-        vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);*/
+        
+        VkDeviceSize size = m_raytracingProperties.shaderGroupBaseAlignment;
+        VkDeviceSize rayGenOffset = INDEX_RAYGEN * size;
+        VkDeviceSize missOffset = INDEX_MISS * size;
+        VkDeviceSize missStride = size;
+        VkDeviceSize hitOffset = INDEX_CLOSEST_HIT * size;
+        VkDeviceSize hitStride = size;
 
         vkCmdBindPipeline(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, m_pipeline);
         vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
         
         vkCmdTraceRaysNV(m_commandBuffers[i],
-            m_shaderBindingTable.buffer, bindingOffsetRayGenShader,
-            m_shaderBindingTable.buffer, bindingOffsetMissShader, bindingStride,
-            m_shaderBindingTable.buffer, bindingOffsetHitShader, bindingStride,
-            VK_NULL_HANDLE, 0, 0,
+            m_shaderBindingTable.buffer, rayGenOffset,
+            m_shaderBindingTable.buffer, missOffset, missStride,
+            m_shaderBindingTable.buffer, hitOffset, hitStride,
+            m_shaderBindingTable.buffer, 0, 0,
             m_sceneReswidth, m_sceneResheight, 1);
 
         //vkCmdEndRenderPass(m_commandBuffers[i]);
@@ -2674,18 +2590,14 @@ void RaytracingPipeline::DispatchRays()
             m_mainRenderPass.color.image,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            subresource_range,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            subresource_range);
 
         SetImageLayout(
             m_commandBuffers[i],
             m_storageImage.image,
             VK_IMAGE_LAYOUT_GENERAL,
             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            subresource_range,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            subresource_range);
 
         VkImageCopy copyRegion{};
         copyRegion.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
@@ -2700,18 +2612,14 @@ void RaytracingPipeline::DispatchRays()
             m_mainRenderPass.color.image,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            subresource_range,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            subresource_range);
 
         SetImageLayout(
             m_commandBuffers[i],
             m_storageImage.image,
             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             VK_IMAGE_LAYOUT_GENERAL,
-            subresource_range,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            subresource_range);
 
         CHECK_ERROR(vkEndCommandBuffer(m_commandBuffers[i]));
     }
@@ -2736,6 +2644,59 @@ void OgEngine::RaytracingPipeline::ResizeWindow()
     SetupRaytracingPipeline();
 }
 
+void RaytracingPipeline::InitBuffers()
+{
+    /*CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &m_shaderData.textureIDBuffer,
+        MAX_OBJECTS * sizeof(uint32_t),
+        nullptr));
+
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &m_shaderData.normalMapIDBuffer,
+        MAX_OBJECTS * sizeof(uint32_t),
+        nullptr));*/
+
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &m_shaderData.objectBLASbuffer,
+        MAX_OBJECTS * sizeof(uint32_t),
+        nullptr));
+
+    /*Buffer dummyMaterial;
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &dummyMaterial, sizeof(RTMaterial),
+        nullptr));
+    m_shaderData.materialBuffer.push_back(dummyMaterial);
+
+    Buffer dummyLight;
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &dummyLight, sizeof(RTLight),
+        nullptr));
+    m_shaderData.lightBuffer.push_back(dummyLight);*/
+
+    Buffer dummyIndices;
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &dummyIndices, sizeof(uint32_t),
+        nullptr));
+    m_shaderData.indexBuffer.push_back(dummyIndices);
+
+    Buffer dummyVertices;
+    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &dummyVertices, sizeof(Vertex),
+        nullptr));
+    m_shaderData.vertexBuffer.push_back(dummyVertices);
+
+    //AddTexture("default.png");
+    //AddTexture("default.png", TEXTURE_TYPE::NORMAL);
+
+}
+
 void RaytracingPipeline::SetupPipelineAndBind()
 {
     m_raytracingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
@@ -2756,51 +2717,32 @@ void RaytracingPipeline::SetupPipelineAndBind()
     m_submitInfo.signalSemaphoreCount = 0;
     m_submitInfo.pSignalSemaphores = nullptr;
 
-    //AddTexture("default.png");
-    //AddTexture("default.png", TEXTURE_TYPE::NORMAL);
-    /*RTMaterial mat;
-    mat.albedo = glm::vec4(1, 1, 1, 0);
-    mat.data.z = 987654;
-    mat.data.x = 0.0;*/
-    //AddEntity(99999, ResourceManager::Get<OgEngine::Mesh>("cube.obj"), 0, mat, 12345);
-    //UpdateLight(123456789, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 0);
-    //CreateTopLevelAccelerationStructure();
-
-    vkQueueWaitIdle(m_graphicsQueue);
+    InitBuffers();
     CreateCamera();
+    CHECK_ERROR(vkQueueWaitIdle(m_graphicsQueue));
 
     CreateStorageImage(m_storageImage);
     CreatePipeline();
     CreateShaderBindingTable();
 
-    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &m_shaderData.textureIDBuffer,
-        MAX_OBJECTS * sizeof(uint32_t),
-        m_textureIDs.data()));
-
-    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &m_shaderData.normalMapIDBuffer,
-        MAX_OBJECTS * sizeof(uint32_t),
-        m_normalMapIDs.data()));
-
-    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &m_shaderData.objectBLASbuffer,
-        MAX_OBJECTS * sizeof(uint32_t),
-        m_objectBlasIDs.data()));
-
+    UpdateTLAS();
     CreateDescriptorSets();
-    DispatchRays();
 
     InitImGUI();
     SetupImGUIFrameBuffers();
     SetupImGUI();
+
+    DispatchRays();
 }
 
 void RaytracingPipeline::RenderFrame()
 {
+    if (m_swapChain.swapChain == VK_NULL_HANDLE)
+        return;
+
+    vkQueueWaitIdle(m_graphicsQueue);
+    vkDeviceWaitIdle(m_vulkanDevice.logicalDevice);
+
     UpdateCamera();
     CHECK_ERROR(vkWaitForFences(m_vulkanDevice.logicalDevice, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX));
 
@@ -2829,6 +2771,11 @@ void RaytracingPipeline::RenderFrame()
     submitInfo.pSignalSemaphores = signalSemaphores;
 
     CHECK_ERROR(vkResetFences(m_vulkanDevice.logicalDevice, 1, &m_inFlightFences[m_currentFrame]));
+    
+    VkCommandBuffer cmd = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    const VkImageSubresourceRange subresource_range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+    SetImageLayout(cmd, m_mainRenderPass.color.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+    QueueCmdBufferAndFlush(cmd, m_graphicsQueue);
 
     CHECK_ERROR(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_inFlightFences[m_currentFrame]));
 
@@ -2838,27 +2785,14 @@ void RaytracingPipeline::RenderFrame()
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR swapChains[] = { m_swapChain.swapChain };
     presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = swapChains;
+    presentInfo.pSwapchains = &m_swapChain.swapChain;
 
     presentInfo.pImageIndices = &imageIndex;
 
     RenderUI(imageIndex);
-    vkQueuePresentKHR(m_presentQueue, &presentInfo);
+    CHECK_ERROR(vkQueuePresentKHR(m_presentQueue, &presentInfo));
 
     m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-    /*m_submitInfo.commandBufferCount = 1;
-    m_submitInfo.pCommandBuffers = &m_commandBuffers[m_imageIndex];
-
-    VkFenceCreateInfo fenceInfo = Initializers::fenceCreateInfo(0);
-    VkFence fence;
-    CHECK_ERROR(vkCreateFence(m_vulkanDevice.logicalDevice, &fenceInfo, nullptr, &fence));
-
-    CHECK_ERROR(vkQueueSubmit(m_graphicsQueue, 1, &m_submitInfo, fence));
-    CHECK_ERROR(vkWaitForFences(m_vulkanDevice.logicalDevice, 1, &fence, VK_TRUE, 100000000000));
-    vkDestroyFence(m_vulkanDevice.logicalDevice, fence, nullptr);
-
-    RenderUI(m_imageIndex);*/
 }

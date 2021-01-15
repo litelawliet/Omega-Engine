@@ -8,7 +8,7 @@
 #include "helpers.glsl"
 
 #define PI 3.141592653589793
-#define GGX_SAMPLING
+
 // Materials
 #define MAT_LAMBERT     0
 #define MAT_BLINNPHONG  1
@@ -37,22 +37,21 @@ layout(binding = 4, set = 0) buffer buf2
     uint indices[];
 }sceneIndices[];
 
-layout(binding = 5, set = 0) buffer buf3
+layout(binding = 5, set = 0) buffer buf6
 {
     uint id[];
-}sceneObjTexture;
+}sceneObjBLAS;
 
-
-layout(binding = 6, set = 0) buffer buf4
+/*layout(binding = 6, set = 0) buffer buf4
 {
     MaterialData mat;
 
 }sceneMaterials[];
 
-layout(binding = 7, set = 0) buffer buf6
+layout(binding = 5, set = 0) buffer buf3
 {
     uint id[];
-}sceneObjBLAS;
+}sceneObjTexture;
 
 layout(binding = 8, set = 0) buffer buf7
 {
@@ -65,7 +64,7 @@ layout(binding = 9, set = 0) buffer buf8
 }sceneLights[];
 
 layout(binding = 10, set = 0) uniform sampler2D textures[];
-layout(binding = 11, set = 0) uniform sampler2D normalMaps[];
+layout(binding = 11, set = 0) uniform sampler2D normalMaps[];*/
 
 hitAttributeNV vec2 HitAttribs;
 
@@ -81,7 +80,13 @@ Vertex getVertex(uint index)
 
 void main() 
 {
-    const vec3 barycentricCoords = vec3(1.0 - HitAttribs.x - HitAttribs.y, HitAttribs.x, HitAttribs.y);
+    tracedData.color = vec3(1, 1, 1);
+    tracedData.albedo = vec3(1, 1, 1);
+    tracedData.hasHit = true;
+
+    return;
+
+    /*const vec3 barycentricCoords = vec3(1.0 - HitAttribs.x - HitAttribs.y, HitAttribs.x, HitAttribs.y);
     vec3 hitPos = gl_WorldRayOriginNV + (gl_WorldRayDirectionNV * gl_HitTNV);
     
     uint IDx = sceneIndices[sceneObjBLAS.id[gl_InstanceID]].indices[3 * gl_PrimitiveID];
@@ -187,6 +192,6 @@ void main()
 
     tracedData.color = att * texture(textures[texID], pointUV).rgb * lightReceived;
     tracedData.albedo = material.albedo.rgb;
-    tracedData.hasHit = true;
+    tracedData.hasHit = true;*/
 
 }

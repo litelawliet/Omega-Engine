@@ -1162,9 +1162,7 @@ void OgEngine::RasterizerPipeline::CopyImage(VkImage p_source)
 		m_offScreenPass.color.image,
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		subresource_range,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+		subresource_range);
 
 	// Prepare ray tracing output image as transfer source
 	RaytracingPipeline::SetImageLayout(
@@ -1172,9 +1170,7 @@ void OgEngine::RasterizerPipeline::CopyImage(VkImage p_source)
 		p_source,
 		VK_IMAGE_LAYOUT_GENERAL,
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		subresource_range,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+		subresource_range);
 
 	VkImageCopy copyRegion{};
 	copyRegion.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
@@ -1190,9 +1186,7 @@ void OgEngine::RasterizerPipeline::CopyImage(VkImage p_source)
 		m_offScreenPass.color.image,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		subresource_range,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+		subresource_range);
 
 	// Transition ray tracing output image back to general layout
 	RaytracingPipeline::SetImageLayout(
@@ -1200,9 +1194,7 @@ void OgEngine::RasterizerPipeline::CopyImage(VkImage p_source)
 		p_source,
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		VK_IMAGE_LAYOUT_GENERAL,
-		subresource_range,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+		subresource_range);
 
 	EndSingleTimeCommands(commandBuffer);
 }
