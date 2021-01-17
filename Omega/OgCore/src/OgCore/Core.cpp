@@ -71,7 +71,7 @@ void OgEngine::Core::Display() const
 {
 	if (m_vulkanContext->IsRaytracing())
 	{
-		m_vulkanContext->GetRTPipeline()->UpdateTLAS();
+		m_vulkanContext->GetRTPipeline()->UpdateTransforms();
 		m_vulkanContext->GetRTPipeline()->RenderFrame();
 	}
 	else

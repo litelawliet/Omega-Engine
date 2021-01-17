@@ -280,7 +280,7 @@ void RaytracingPipeline::CleanPipeline()
     for (auto accel : m_BLAS)
         vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, accel.accelerationStructure, nullptr);
 
-    vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, m_TLAS->accelerationStructure, nullptr);
+    vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, m_topLevelAcceleration.accelerationStructure, nullptr);
 
     vkDestroyPipelineCache(m_vulkanDevice.logicalDevice, m_pipelineCache, nullptr);
 
@@ -702,7 +702,6 @@ void RaytracingPipeline::DestroyObject(uint64_t p_id)
         m_textureIDs.erase(m_textureIDs.begin() + id);
         m_normalMapIDs.erase(m_normalMapIDs.begin() + id);
         //m_shaderData.materialBuffer.erase(m_shaderData.materialBuffer.begin() + id);
-        m_objects[id].m_geometryBuffer.Destroy();
 
         //vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, m_BLAS[id].accelerationStructure, nullptr);
         std::vector<std::pair<Mesh*, int>>::iterator it;
@@ -776,43 +775,39 @@ void OgEngine::RaytracingPipeline::DestroyAllObjects()
     ReloadPipeline();
 }
 
-void OgEngine::RaytracingPipeline::UpdateTLAS()
+void RaytracingPipeline::AddNewTopAccelAndBuild()
 {
-    const VkCommandBuffer cmdBuffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-    AccelerationStructure* tlas = nullptr;
-    tlas = new AccelerationStructure();
-
-    bool isUpdatingExistingTLAS = false;
-    if (m_TLAS == nullptr)
-    {
-        m_TLAS = tlas;
-    }
-    else
-        isUpdatingExistingTLAS = true;
-
     std::vector<GeometryInstance> instances;
-    for (auto object : m_objects)
+    for (auto& object : m_objects)
+    {
         instances.push_back(object.m_geometry);
+    }
 
-    Buffer instanceBuffer;
-    if(instances.size() > 0)
+    if (m_instancesBuffer.buffer != nullptr)
+    {
+        m_instancesBuffer.Destroy();
+    }
+
+    if (instances.size() > 0)
         CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &instanceBuffer,
-            sizeof(GeometryInstance) * instances.size(),
-            instances.data());
+            &m_instancesBuffer,
+            sizeof(GeometryInstance) * instances.size(), instances.data());
     else
         CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &instanceBuffer,
+            &m_instancesBuffer,
             sizeof(GeometryInstance));
 
-    CreateTopLevelAccelerationStructure(tlas, instances.size());
+    const VkCommandBuffer cmdBuffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+    CreateTopLevelAccelerationStructure(m_topLevelAcceleration, instances.size());
+    AllocateTopLevelAcceleration(m_topLevelAcceleration);
+    BindTopLevelAcceleration(m_topLevelAcceleration);
 
     VkMemoryRequirements2 memReqTopLevelAS;
     VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo2{};
     memoryRequirementsInfo2.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
     memoryRequirementsInfo2.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
-    memoryRequirementsInfo2.accelerationStructure = tlas->accelerationStructure;
+    memoryRequirementsInfo2.accelerationStructure = m_topLevelAcceleration.accelerationStructure;
     vkGetAccelerationStructureMemoryRequirementsNV(m_vulkanDevice.logicalDevice, &memoryRequirementsInfo2, &memReqTopLevelAS);
 
     const VkDeviceSize scratchBufferSize = memReqTopLevelAS.memoryRequirements.size;
@@ -827,7 +822,7 @@ void OgEngine::RaytracingPipeline::UpdateTLAS()
     VkAccelerationStructureInfoNV buildInfo{};
     buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
     buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
-    buildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV;
+    buildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV;
     buildInfo.pGeometries = nullptr;
     buildInfo.geometryCount = 0;
     buildInfo.instanceCount = instances.size();
@@ -835,10 +830,10 @@ void OgEngine::RaytracingPipeline::UpdateTLAS()
     vkCmdBuildAccelerationStructureNV(
         cmdBuffer,
         &buildInfo,
-        instanceBuffer.buffer,
+        m_instancesBuffer.buffer,
         0,
         VK_FALSE,
-        tlas->accelerationStructure,
+        m_topLevelAcceleration.accelerationStructure,
         nullptr,
         scratchBuffer.buffer,
         0);
@@ -848,20 +843,99 @@ void OgEngine::RaytracingPipeline::UpdateTLAS()
     memoryBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
     vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 
-    if (isUpdatingExistingTLAS)
-    {
-        vkCmdCopyAccelerationStructureNV(cmdBuffer, m_TLAS->accelerationStructure, tlas->accelerationStructure, VK_COPY_ACCELERATION_STRUCTURE_MODE_CLONE_NV);
-        QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue, true);
-        vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, tlas->accelerationStructure, nullptr);
-        vkFreeMemory(m_vulkanDevice.logicalDevice, tlas->memory, nullptr);
-        delete tlas;
-    }
+    /*if (m_topLevelAcceleration.accelerationStructure != VK_NULL_HANDLE)
+        vkCmdCopyAccelerationStructureNV(cmdBuffer, m_topLevelAcceleration.accelerationStructure, tlas.accelerationStructure, VK_COPY_ACCELERATION_STRUCTURE_MODE_CLONE_NV);
     else
-        QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue, true);
+        m_topLevelAcceleration = tlas;*/
+        //memcpy(&m_topLevelAcceleration, &tlas, sizeof(AccelerationStructure));
 
+    QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue, true);
 
     scratchBuffer.Destroy();
-    instanceBuffer.Destroy();
+}
+
+void OgEngine::RaytracingPipeline::UpdateTopAccelAndBuild()
+{
+    std::vector<GeometryInstance> instances;
+    for (auto& object : m_objects)
+    {
+        instances.push_back(object.m_geometry);
+    }
+
+    if (m_instancesBuffer.buffer != nullptr)
+    {
+        m_instancesBuffer.Destroy();
+    }
+
+    if (instances.size() > 0)
+        CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &m_instancesBuffer,
+            sizeof(GeometryInstance) * instances.size(), instances.data());
+    else
+        CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &m_instancesBuffer,
+            sizeof(GeometryInstance));
+
+    if (instances.size() > maxInstances)
+    {
+        vkDestroyAccelerationStructureNV(m_vulkanDevice.logicalDevice, m_topLevelAcceleration.accelerationStructure, nullptr);
+        vkFreeMemory(m_vulkanDevice.logicalDevice, m_topLevelAcceleration.memory, nullptr);
+        AddNewTopAccelAndBuild();
+        return;
+    }
+
+    const VkCommandBuffer cmdBuffer = CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+
+    VkMemoryRequirements2 memReqTopLevelAS;
+    VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo2{};
+    memoryRequirementsInfo2.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+    memoryRequirementsInfo2.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_UPDATE_SCRATCH_NV;
+    memoryRequirementsInfo2.accelerationStructure = m_topLevelAcceleration.accelerationStructure;
+    vkGetAccelerationStructureMemoryRequirementsNV(m_vulkanDevice.logicalDevice, &memoryRequirementsInfo2, &memReqTopLevelAS);
+
+    const VkDeviceSize scratchBufferSize = memReqTopLevelAS.memoryRequirements.size;
+
+    Buffer scratchBuffer;
+    CreateBuffer(
+        VK_BUFFER_USAGE_RAY_TRACING_BIT_NV,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        &scratchBuffer,
+        scratchBufferSize);
+
+    VkAccelerationStructureInfoNV buildInfo{};
+    buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
+    buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
+    buildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV;
+    buildInfo.pGeometries = nullptr;
+    buildInfo.geometryCount = 0;
+    buildInfo.instanceCount = instances.size();
+
+    vkCmdBuildAccelerationStructureNV(
+        cmdBuffer,
+        &buildInfo,
+        m_instancesBuffer.buffer,
+        0,
+        VK_TRUE,
+        m_topLevelAcceleration.accelerationStructure,
+        m_topLevelAcceleration.accelerationStructure,
+        scratchBuffer.buffer,
+        0);
+
+    VkMemoryBarrier memoryBarrier = Initializers::memoryBarrier();
+    memoryBarrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
+    memoryBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
+    vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
+
+    //vkCmdCopyAccelerationStructureNV(cmdBuffer, m_topLevelAcceleration.accelerationStructure, newTLAS.accelerationStructure, VK_COPY_ACCELERATION_STRUCTURE_MODE_CLONE_NV);
+    QueueCmdBufferAndFlush(cmdBuffer, m_graphicsQueue, true);
+
+    scratchBuffer.Destroy();
+}
+
+void RaytracingPipeline::UpdateTransforms()
+{
+    UpdateTopAccelAndBuild();
 }
 
 void OgEngine::RaytracingPipeline::InitImGUI()
@@ -1367,24 +1441,22 @@ void RaytracingPipeline::CreateBottomLevelAccelerationStructure(const VkGeometry
     m_BLAS.push_back(accel);
 }
 
-void RaytracingPipeline::CreateTopLevelAccelerationStructure(AccelerationStructure* p_accelerationStruct, uint32_t p_instanceCount)
+void RaytracingPipeline::BindTopLevelAcceleration(AccelerationStructure& p_accelerationStruct)
 {
-    VkAccelerationStructureInfoNV accelerationStructureInfo{};
-    accelerationStructureInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
-    accelerationStructureInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
-    accelerationStructureInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV;
-    accelerationStructureInfo.instanceCount = p_instanceCount;
-    accelerationStructureInfo.geometryCount = 0;
+    VkBindAccelerationStructureMemoryInfoNV accelerationStructureMemoryInfo{};
+    accelerationStructureMemoryInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
+    accelerationStructureMemoryInfo.accelerationStructure = p_accelerationStruct.accelerationStructure;
+    accelerationStructureMemoryInfo.memory = p_accelerationStruct.memory;
+    CHECK_ERROR(vkBindAccelerationStructureMemoryNV(m_vulkanDevice.logicalDevice, 1, &accelerationStructureMemoryInfo));
 
-    VkAccelerationStructureCreateInfoNV accelerationStructureCI{};
-    accelerationStructureCI.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
-    accelerationStructureCI.info = accelerationStructureInfo;
-    CHECK_ERROR(vkCreateAccelerationStructureNV(m_vulkanDevice.logicalDevice, &accelerationStructureCI, nullptr, &p_accelerationStruct->accelerationStructure));
-
+    CHECK_ERROR(vkGetAccelerationStructureHandleNV(m_vulkanDevice.logicalDevice, p_accelerationStruct.accelerationStructure, sizeof(uint64_t), &p_accelerationStruct.handle));
+}
+void RaytracingPipeline::AllocateTopLevelAcceleration(AccelerationStructure& p_accelerationStruct)
+{
     VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo{};
     memoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
     memoryRequirementsInfo.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
-    memoryRequirementsInfo.accelerationStructure = p_accelerationStruct->accelerationStructure;
+    memoryRequirementsInfo.accelerationStructure = p_accelerationStruct.accelerationStructure;
 
     VkMemoryRequirements2 memoryRequirements2{};
     vkGetAccelerationStructureMemoryRequirementsNV(m_vulkanDevice.logicalDevice, &memoryRequirementsInfo, &memoryRequirements2);
@@ -1392,14 +1464,27 @@ void RaytracingPipeline::CreateTopLevelAccelerationStructure(AccelerationStructu
     VkMemoryAllocateInfo memoryAllocateInfo = Initializers::memoryAllocateInfo();
     memoryAllocateInfo.allocationSize = memoryRequirements2.memoryRequirements.size;
     memoryAllocateInfo.memoryTypeIndex = GetMemoryType(memoryRequirements2.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    CHECK_ERROR(vkAllocateMemory(m_vulkanDevice.logicalDevice, &memoryAllocateInfo, nullptr, &p_accelerationStruct->memory));
-    VkBindAccelerationStructureMemoryInfoNV accelerationStructureMemoryInfo{};
-    accelerationStructureMemoryInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
-    accelerationStructureMemoryInfo.accelerationStructure = p_accelerationStruct->accelerationStructure;
-    accelerationStructureMemoryInfo.memory = p_accelerationStruct->memory;
-    CHECK_ERROR(vkBindAccelerationStructureMemoryNV(m_vulkanDevice.logicalDevice, 1, &accelerationStructureMemoryInfo));
+    CHECK_ERROR(vkAllocateMemory(m_vulkanDevice.logicalDevice, &memoryAllocateInfo, nullptr, &p_accelerationStruct.memory));
+}
+void RaytracingPipeline::CreateTopLevelAccelerationStructure(AccelerationStructure& p_accelerationStruct, uint32_t p_instanceCount)
+{
+    maxInstances = 1;
+    while(maxInstances <= p_instanceCount)
+    {
+        maxInstances *= 2;
+    }
 
-    CHECK_ERROR(vkGetAccelerationStructureHandleNV(m_vulkanDevice.logicalDevice, p_accelerationStruct->accelerationStructure, sizeof(uint64_t), &p_accelerationStruct->handle));
+    VkAccelerationStructureInfoNV accelerationStructureInfo{};
+    accelerationStructureInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
+    accelerationStructureInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
+    accelerationStructureInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV;
+    accelerationStructureInfo.instanceCount = maxInstances;
+    accelerationStructureInfo.geometryCount = 0;
+
+    VkAccelerationStructureCreateInfoNV accelerationStructureCI{};
+    accelerationStructureCI.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
+    accelerationStructureCI.info = accelerationStructureInfo;
+    CHECK_ERROR(vkCreateAccelerationStructureNV(m_vulkanDevice.logicalDevice, &accelerationStructureCI, nullptr, &p_accelerationStruct.accelerationStructure));
 }
 
 void RaytracingPipeline::CreateStorageImage(StorageImage& p_image)
@@ -1477,12 +1562,6 @@ void RaytracingPipeline::AddEntity(uint64_t p_id, Mesh* p_mesh, uint32_t p_textu
 {
     vkQueueWaitIdle(m_graphicsQueue);
     Model object = Model(p_mesh, true);
-
-    //Geometry Instance
-    CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &object.m_geometryBuffer,
-        sizeof(GeometryInstance),
-        &object.m_geometry));
 
     /*Buffer materialBuffer;
     CHECK_ERROR(CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -2388,11 +2467,12 @@ void RaytracingPipeline::CreateDescriptorSets()
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = Initializers::descriptorSetAllocateInfo(m_descriptorPool, &m_descriptorSetLayout, 1);
 
     CHECK_ERROR(vkAllocateDescriptorSets(m_vulkanDevice.logicalDevice, &descriptorSetAllocateInfo, &m_descriptorSet));
-    
+   
+
     VkWriteDescriptorSetAccelerationStructureNV descriptorAccelerationStructureInfo{};
     descriptorAccelerationStructureInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
     descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
-    descriptorAccelerationStructureInfo.pAccelerationStructures = &m_TLAS->accelerationStructure;
+    descriptorAccelerationStructureInfo.pAccelerationStructures = &m_topLevelAcceleration.accelerationStructure;
 
     VkWriteDescriptorSet accelerationStructureWrite{};
     accelerationStructureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2725,7 +2805,7 @@ void RaytracingPipeline::SetupPipelineAndBind()
     CreatePipeline();
     CreateShaderBindingTable();
 
-    UpdateTLAS();
+    AddNewTopAccelAndBuild();
     CreateDescriptorSets();
 
     InitImGUI();

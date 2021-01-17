@@ -57,10 +57,35 @@ inline glm::mat4 ConvertToGLM(GPM::Matrix4F p_matrix)
 
 struct AccelerationStructure
 {
+	AccelerationStructure()
+	{
+		memory = VK_NULL_HANDLE;
+		accelerationStructure = VK_NULL_HANDLE;
+	}
+
 	VkDeviceMemory memory{};
 	VkAccelerationStructureNV accelerationStructure{};
 	uint64_t handle{ 0u };
 };
+
+inline VkWriteDescriptorSet accelerationWriteInfo(VkDescriptorSet& descriptorSet, AccelerationStructure& accel)
+{
+	VkWriteDescriptorSetAccelerationStructureNV descriptorAccelerationStructureInfo{};
+	descriptorAccelerationStructureInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
+	descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
+	descriptorAccelerationStructureInfo.pAccelerationStructures = &accel.accelerationStructure;
+
+	VkWriteDescriptorSet accelerationStructureWrite{};
+	accelerationStructureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	accelerationStructureWrite.pNext = &descriptorAccelerationStructureInfo;
+	accelerationStructureWrite.dstSet = descriptorSet;
+	accelerationStructureWrite.dstBinding = 0;
+	accelerationStructureWrite.descriptorCount = 1;
+	accelerationStructureWrite.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
+	accelerationStructureWrite.pNext = nullptr;
+
+	return accelerationStructureWrite;
+}
 
 /**
  * @brief Change the layout of a VkImage to a new layout

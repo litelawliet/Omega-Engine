@@ -28,8 +28,6 @@ namespace OgEngine
 
 		~Model()
 		{
-			if(m_geometryBuffer.mapped != nullptr)
-				m_geometryBuffer.Destroy();
 		}
 
 		void Translate(glm::vec3 tr)
@@ -75,11 +73,10 @@ namespace OgEngine
 		glm::vec3 m_rot;
 
 		OgEngine::Mesh* m_mesh;
-		//std::shared_ptr<OgEngine::RTMesh> m_rtMesh;
 
 		GeometryInstance m_geometry;
 		uint64_t m_id;
-		Buffer m_geometryBuffer;
+
 		Buffer m_vertBuffer;
 		Buffer m_indexBuffer;
 	};

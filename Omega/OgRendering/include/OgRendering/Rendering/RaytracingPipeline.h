@@ -24,7 +24,7 @@
 #include <imgui_impl_vulkan.h>*/
 
 #define MAX_TEXTURES 64
-#define MAX_OBJECTS 1000
+#define MAX_OBJECTS 10000
 #define MAX_FRAMES_IN_FLIGHT 2
 
 struct Semaphore {
@@ -219,8 +219,12 @@ namespace OgEngine
         *   @param p_accelerationStruct acceleration structure selected to be filled
         *   @param p_instanceCount number of instances filled in the p_accelerationStruct
         */
-        void CreateTopLevelAccelerationStructure(AccelerationStructure* p_accelerationStruct, uint32_t p_instanceCount);
+        void CreateTopLevelAccelerationStructure(AccelerationStructure& p_accelerationStruct, uint32_t p_instanceCount);
 
+        void AddNewTopAccelAndBuild();
+        void UpdateTopAccelAndBuild();
+        void AllocateTopLevelAcceleration(AccelerationStructure& p_accelerationStruct);
+        void BindTopLevelAcceleration(AccelerationStructure& p_accelerationStruct);
         /**
         *   @brief Create and configure the image used by the NV_RAYTRACING extension
         *   @param p_image is the image that we will fill de data with
@@ -265,7 +269,7 @@ namespace OgEngine
         /**
         *   @brief Update the top level acceleration structure with the new entities data
         */
-        void UpdateTLAS();
+        void UpdateTransforms();
 
         /**
         *   @brief Initialize the Imgui context with the vulkan context
@@ -612,7 +616,9 @@ namespace OgEngine
         std::vector<Model> m_objects;
         std::vector<uint64_t> m_objectIDs;
         std::vector<RTMaterial> m_materials;
-        AccelerationStructure* m_TLAS;
+
+        uint32_t maxInstances;
+        AccelerationStructure m_topLevelAcceleration;
 
         std::vector<uint32_t> m_textureIDs;
         std::vector<TextureData> m_textures;

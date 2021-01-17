@@ -117,7 +117,7 @@ void OgEngine::VulkanContext::MainLoop() const
 		// Rendering using the selected pipeline
 		if (isUsingRaytracing)
 		{
-			m_RTPipeline->UpdateTLAS();
+			m_RTPipeline->UpdateTransforms();
 			m_RTPipeline->RenderFrame();
 		}
 		else
