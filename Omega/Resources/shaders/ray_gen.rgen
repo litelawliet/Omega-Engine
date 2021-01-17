@@ -1,5 +1,5 @@
 #version 460
-#extension GL_EXT_ray_tracing : enable
+#extension GL_NV_ray_tracing : enable
 #extension GL_GOOGLE_include_directive : enable
 
 #include "random.glsl"
@@ -8,7 +8,7 @@
 #define PI 3.141592653589793
 #define MIN_DELTA 0.004
 
-layout(set = 0, binding = 0) uniform accelerationStructureEXT Scene;
+layout(set = 0, binding = 0) uniform accelerationStructureNV Scene;
 layout(set = 0, binding = 1, rgba8) uniform image2D ResultImage;
 layout(set = 0, binding = 2) uniform UniformData 
 {
@@ -21,7 +21,7 @@ layout(set = 0, binding = 2) uniform UniformData
 
 //layout(set = 0, binding = 8, rgba32f) uniform image2D AccumulationImage;
 
-layout(location = 0) rayPayloadEXT Payload tracedData;
+layout(location = 0) rayPayloadNV Payload tracedData;
 
 vec3 ACESFilm(vec3 x)
 {
@@ -37,7 +37,7 @@ void main()
 {
 
     uint pixelRandomSeed = uint(ubo.data.w);
-    tracedData.seed = InitRandomSeed(InitRandomSeed(gl_LaunchIDEXT.x, gl_LaunchIDEXT.y), pixelRandomSeed);
+    tracedData.seed = InitRandomSeed(InitRandomSeed(gl_LaunchIDNV.x, gl_LaunchIDNV.y), pixelRandomSeed);
     float aperture = ubo.data.y;
     int cameraRays = int(ubo.samples.x);
 
@@ -48,33 +48,27 @@ void main()
     }
 
     vec3 col = vec3(0);
-    if(ubo.samples.y > 100)
-    {
-        vec3 col = imageLoad(ResultImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
-        imageStore(ResultImage, ivec2(gl_LaunchIDEXT.xy), vec4(col, 1.0));
-        return;
-    }
 
     const uint rayFlags = gl_RayFlagsOpaqueEXT;
     const uint cullMask = 0xFF;
     const uint sbtRecordOffset = 0;
     const uint sbtRecordStride = 0;
     const uint missIndex = 0;
-    const float tmin = 0.01f;
-    const float tmax = 500.0f;
+    const float tmin = 0.01;
+    const float tmax = 500.0;
     const int payloadLocation = 0;
 
     Payload directPayload;
     Payload indirectPayload;
-    cameraRays = 2;
+    cameraRays = 1;
     for(int s = 0; s < cameraRays; ++s)
     {
         vec4 origin;
         vec4 direction;
         if(ubo.dofgirec.x == 1)
         {
-            const vec2 pixel = vec2(gl_LaunchIDEXT.x + RandomFloat(pixelRandomSeed), gl_LaunchIDEXT.y + RandomFloat(pixelRandomSeed));
-            const vec2 uv = (pixel / gl_LaunchSizeEXT.xy) * 2.0 - 1.0;
+            const vec2 pixel = vec2(gl_LaunchIDNV.x + RandomFloat(pixelRandomSeed), gl_LaunchIDNV.y + RandomFloat(pixelRandomSeed));
+            const vec2 uv = (pixel / gl_LaunchSizeNV.xy) * 2.0 - 1.0;
             vec2 offset = aperture / 2 * RandomInUnitDisk(tracedData.seed);
             origin = ubo.viewInverse * vec4(offset,0,1);
             vec4 target = ubo.projInverse * vec4(uv.x, uv.y, 1, 1);
@@ -82,8 +76,8 @@ void main()
         }
         else
         {
-            const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
-            const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
+            const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
+            const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
             vec2 d = inUV * 2.0 - 1.0;
 
             origin = ubo.viewInverse * vec4(0,0,0,1);
@@ -94,50 +88,44 @@ void main()
         tracedData.newOrigin = vec3(origin.xyz);
         tracedData.newDir = vec3(direction.xyz);
 
-        tracedData.isDirect = true;
-        vec3 lightReceived = vec3(0);
-        vec3 objectAlbedo;
-        vec3 objecteEmissive;
+
+        vec3 directLighting;
         //Direct Lighting
         {
-            traceRayEXT(Scene, rayFlags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, 
+            traceNV(Scene, rayFlags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, 
                     tracedData.newOrigin, tmin, tracedData.newDir, tmax, payloadLocation);
             directPayload = tracedData;
 
             if(!directPayload.hasHit)
             {
-                col = vec3(0.8, 0.99, 1) * cameraRays;
+                col = vec3(0.8, 0.8, 0.8) * 0.1;
                 break;
             }
 
-            objectAlbedo = directPayload.color;
-            objecteEmissive = directPayload.emissive;
-            lightReceived = directPayload.lightReceived;
+            directLighting = directPayload.color;
         }
 
 
 
         //Global Illumination
-        vec3 indirectLight = vec3(0);
+        /*vec3 indirectLighting = vec3(0);
 
         if(ubo.dofgirec.y == 1)
         {
             vec3 attenuation = vec3(1);
             tracedData.color = vec3(0);
-            tracedData.emissive = vec3(0);
-            tracedData.isDirect = false;
             int div = 0;
             for(int i = 0; i < ubo.dofgirec.z; ++i)
             {
                 div++;
-                traceRayEXT(Scene, rayFlags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, 
+                traceNV(Scene, rayFlags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, 
                         tracedData.newOrigin, tmin, tracedData.newDir, tmax, payloadLocation);
 
                 indirectPayload = tracedData;
 
                 if(!indirectPayload.hasHit)
                 {
-                    indirectLight += vec3(0.8, 0.99, 1) * 0.4;
+                    //indirectLighting += vec3(0.8, 0.99, 1) * 0.1;
                     break;
                 }
 
@@ -149,33 +137,16 @@ void main()
                     break;
 
                 attenuation *= 1 / p;
-                indirectLight += (attenuation * indirectPayload.lightReceived);
-                indirectLight += indirectPayload.emissive * 1000;
+                indirectLighting += attenuation * directPayload.albedo;
                 
             };
-            indirectLight /= div;
+            indirectLighting /= div;
 
-        }
-        col += (lightReceived + ( 2 * indirectLight)) * objectAlbedo + objecteEmissive;
+        }*/
+        col += directLighting;
+        //col += indirectLighting;
     }
     col /= cameraRays;
-    col = ACESFilm(col);
-
-    vec3 oldacc;
-    vec3 finalacc;
-    /*if(ubo.samples.y > 0)
-    {
-        oldacc = imageLoad(ResultImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
-        finalacc = mix(oldacc, col, 1 / (ubo.samples.y));
-    }
-    else
-    {
-        vec3 old = imageLoad(ResultImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
-        finalacc = mix(old, col, 0.1);
-        //finalacc = col;
-    }*/
-    vec3 old = imageLoad(ResultImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
-    finalacc = mix(old, col, 0.3);
-
-    imageStore(ResultImage, ivec2(gl_LaunchIDEXT.xy), vec4(finalacc, 1.0));
+    //col = ACESFilm(col);
+    imageStore(ResultImage, ivec2(gl_LaunchIDNV.xy), vec4(col, 1.0));
 }

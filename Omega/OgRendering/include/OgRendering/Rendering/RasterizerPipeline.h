@@ -19,10 +19,10 @@
 
 #define MAX_TEXTURES_RS 64
 #define MAX_OBJECTS_RS 500
+#define MAX_FRAMES_IN_FLIGHT 2
 
 namespace OgEngine
 {
-	const uint32_t MAX_FRAMES_IN_FLIGHT = 2u;
 	
 	struct FrameBufferAttachment
 	{

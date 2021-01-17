@@ -31,8 +31,8 @@ OgEngine::Editor::Editor(const uint64_t p_width, const uint64_t p_height, const 
 	OgEngine::ResourceManager::Add<OgEngine::Mesh>("Resources/models/plane.obj");
 	m_modelNames.emplace_back("plane.obj");
 
-	OgEngine::ResourceManager::Add<OgEngine::Texture>("Resources/textures/default.png");
-	OgEngine::ResourceManager::Add<OgEngine::Texture>("Resources/textures/error.png");
+	//OgEngine::ResourceManager::Add<OgEngine::Texture>("Resources/textures/default.png");
+	//OgEngine::ResourceManager::Add<OgEngine::Texture>("Resources/textures/error.png");
 	OgEngine::ResourceManager::WaitForAll();
 
 	m_engine = std::make_unique<OgEngine::Core>(p_width, p_height, p_title);
