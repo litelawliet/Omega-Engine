@@ -215,6 +215,9 @@
     <ClCompile Include="src\OgRendering\Resource\ModelRasterization.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\OgRendering\Utils\vk_mem_alloc.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="include\OgRendering\Managers\ResourceManager.inl">

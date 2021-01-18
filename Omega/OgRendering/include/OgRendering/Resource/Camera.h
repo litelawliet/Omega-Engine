@@ -30,13 +30,14 @@ namespace OgEngine
 			const glm::vec4 u = rotMat * glm::vec4(0, 1, 0, 0);
 			up = glm::vec3(u.x, u.y, u.z);
 
-			right = glm::cross(forward, up);
+			right = -glm::cross(glm::normalize(forward), glm::normalize(up));
 			matrices.view = glm::lookAt(position, position + glm::vec3(fd.x, fd.y, fd.z), glm::vec3(u.x, u.y, u.z));
 		}
 
 		void SetPerspective(const float p_fov, const float p_aspect, const float p_znear, const float p_zfar)
 		{
-			matrices.perspective = glm::perspective(p_fov, p_aspect, p_znear, p_zfar);
+			matrices.perspective = glm::perspective(glm::radians(p_fov), p_aspect, p_znear, p_zfar);
+			matrices.perspective[1][1] *= -1.0f;
 			this->fov = p_fov;
 			this->znear = p_znear;
 			this->zfar = p_zfar;

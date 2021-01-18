@@ -1,4 +1,5 @@
 #include <OgRendering/Managers/Loaders/LoaderManager.h>
+#include <iostream>
 
 inline bool OgEngine::LoaderManager::CheckValidMesh(std::string_view p_file)
 {

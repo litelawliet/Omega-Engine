@@ -16,7 +16,7 @@ namespace OgEngine
 	{
 	public:
 		Model() = default;
-		Model(OgEngine::Mesh* p_mesh, bool useRT)
+		Model(OgEngine::Mesh* p_mesh, const bool useRT)
 		{
 			m_mesh = p_mesh;
 
@@ -30,19 +30,19 @@ namespace OgEngine
 		{
 		}
 
-		void Translate(glm::vec3 tr)
+		void Translate(const glm::vec3& tr)
 		{
 			m_pos += tr;
 			UpdateTransform();
 		}
 
-		void Rotate(glm::vec3 rotation)
+		void Rotate(const glm::vec3& rotation)
 		{
 			m_rot += rotation;
 			UpdateTransform();
 		}
 
-		void Scale(glm::vec3 scale)
+		void Scale(const glm::vec3& scale)
 		{
 			m_geometry.transform[0].x = scale.x;
 			m_geometry.transform[1].y = scale.y;
@@ -53,8 +53,6 @@ namespace OgEngine
 			glm::vec3 position = m_pos;
 			glm::vec3 rotation = m_rot;
 
-
-
 			glm::mat4 transMat = glm::translate(glm::mat4(1.0f), position);
 			glm::mat4 rotationMat = glm::rotate(glm::mat4(1.0f), rotation.x, glm::vec3(1, 0, 0));
 			rotationMat *= glm::rotate(glm::mat4(1.0f), rotation.y, glm::vec3(0, 1, 0));
@@ -64,7 +62,7 @@ namespace OgEngine
 
 		}
 
-		inline void SetTransform(glm::mat4 ta)
+		inline void SetTransform(const glm::mat4& ta)
 		{
 			m_geometry.transform = glm::transpose(ta);
 		}

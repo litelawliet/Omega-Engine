@@ -235,6 +235,7 @@ void OgEngine::VulkanContext::InitGpuDevice()
 	if (!IsPhysicalDeviceSuitable(GPUs[id]))
 		throw std::runtime_error("Invalid GPU!");
 	m_vulkanDevice.gpu = GPUs[id];
+	m_vulkanDevice.msaaSamples = GetMaxUsableSampleCount();
 
 	vkGetPhysicalDeviceProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuProperties);
 	vkGetPhysicalDeviceMemoryProperties(m_vulkanDevice.gpu, &m_vulkanDevice.gpuMemoryProperties);

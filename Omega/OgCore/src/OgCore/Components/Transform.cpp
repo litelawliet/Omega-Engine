@@ -193,46 +193,9 @@ void OgEngine::Transform::GenerateMatrices(const glm::vec3& p_position, const gl
 
 void OgEngine::Transform::DecomposeWorldMatrix()
 {
-	glm::vec3 skew;
-	glm::vec4 perspective;
+	glm::vec3 skew = glm::vec3(0.0f);
+	glm::vec4 perspective = glm::vec4(0.0f);
 	glm::decompose(_worldMatrix, _scale, _rotation, _position, skew, perspective);
-
-	/*_position.x = _worldMatrix[0][3];
-	_position.y = _worldMatrix[1][3];
-	_position.z = _worldMatrix[2][3];
-
-	glm::vec3 columns[3] =
-	{
-		{ _worldMatrix[0][0], _worldMatrix[1][0], _worldMatrix[2][0]},
-		{ _worldMatrix[0][1], _worldMatrix[1][1], _worldMatrix[2][1]},
-		{ _worldMatrix[0][2], _worldMatrix[1][2], _worldMatrix[2][2]},
-	};
-
-	_scale.x = glm::length(columns[0]);
-	_scale.y = glm::length(columns[1]);
-	_scale.z = glm::length(columns[2]);
-
-	if (_scale.x)
-	{
-		columns[0] /= _scale.x;
-	}
-	if (_scale.y)
-	{
-		columns[1] /= _scale.y;
-	}
-	if (_scale.z)
-	{
-		columns[2] /= _scale.z;
-	}
-
-	const glm::mat3 rotationMatrix
-	(
-		columns[0].x, columns[1].x, columns[2].x,
-		columns[0].y, columns[1].y, columns[2].y,
-		columns[0].z, columns[1].z, columns[2].z
-	);
-
-	_rotation = glm::quat(rotationMatrix);*/
 }
 
 std::string OgEngine::Transform::DepthIndent(const int p_depth)

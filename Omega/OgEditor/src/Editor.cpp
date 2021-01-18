@@ -169,11 +169,11 @@ void OgEngine::Editor::UpdateEditor(float p_dt)
 		{
 			const glm::vec3 position = m_engine->m_vulkanContext->GetRSPipeline()->GetCurrentCamera().position;
 			float pos[3] = { position.x, position.y, position.z };
-			ImGui::DragFloat3("CameraPos", pos, 0.5f);
+			ImGui::DragFloat3("CameraPos", pos);
 
 			const glm::vec3 rotation = m_engine->m_vulkanContext->GetRSPipeline()->GetCurrentCamera().rotation;
 			float rot[3] = { rotation.x, rotation.y, rotation.z };
-			ImGui::DragFloat3("CameraRot", rot, 0.5f, -360.0f, 360.0f);
+			ImGui::DragFloat3("CameraRot", rot);
 
 			m_engine->m_vulkanContext->GetRSPipeline()->UpdateCamera(glm::vec3(pos[0], pos[1], pos[2]), glm::vec3(rot[0], rot[1], rot[2]));
 		}
@@ -402,9 +402,9 @@ void OgEngine::Editor::ShowInfo(OgEngine::SceneNode* p_node)
 				y = rot[1] - trans.editorRotation.y;
 				z = rot[2] - trans.editorRotation.z;
 
-				glm::quat q1 = glm::angleAxis(glm::radians(x), glm::vec3(1.0, 0.0, 0.0));
-				glm::quat q2 = glm::angleAxis(glm::radians(y), glm::vec3(0.0, 1.0, 0.0));
-				glm::quat q3 = glm::angleAxis(glm::radians(z), glm::vec3(0.0, 0.0, 1.0));
+				const glm::quat q1 = glm::angleAxis(glm::radians(x), glm::vec3(1.0, 0.0, 0.0));
+				const glm::quat q2 = glm::angleAxis(glm::radians(y), glm::vec3(0.0, 1.0, 0.0));
+				const glm::quat q3 = glm::angleAxis(glm::radians(z), glm::vec3(0.0, 0.0, 1.0));
 				glm::quat newDirection = q1 * q2 * q3;
 				trans.SetEditorRotation(glm::vec3(rot[0], rot[1], rot[2]));
 				newDirection = glm::normalize(newDirection);

@@ -1,7 +1,7 @@
 #include <OgRendering/Resource/Vertex.h>
 
 OgEngine::Vertex::Vertex()
-	: position(Vector3F::zero), normal(Vector3F::zero), tangent(Vector3F::zero), texCoord(Vector2F::zero)
+	: position(glm::vec3(0.0f)), normal(glm::vec3(0.0f)), tangent(glm::vec3(0.0f)), texCoord(glm::vec2(0.0f))
 {
 }
 
