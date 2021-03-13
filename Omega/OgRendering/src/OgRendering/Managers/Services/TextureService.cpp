@@ -1,13 +1,5 @@
 #include <OgRendering/Managers/Services/TextureService.h>
 
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <fstream>
-OgEngine::Services::TextureService::TextureService()
-{
-}
-
 OgEngine::Services::TextureService::~TextureService()
 {
 	WaitForAll();
@@ -41,7 +33,7 @@ std::shared_ptr<OgEngine::Texture> OgEngine::Services::TextureService::Get(std::
 	return nullptr;
 }
 
-inline void OgEngine::Services::TextureService::WaitForResource(std::string_view p_textureName)
+void OgEngine::Services::TextureService::WaitForResource(std::string_view p_textureName)
 {
 	const auto& pairFound = std::
 			find_if(m_workerToTexture.begin(), m_workerToTexture.end(),

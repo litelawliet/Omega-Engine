@@ -27,10 +27,7 @@ namespace OgEngine
 
 		static inline std::vector<Texture*>& GetAllTextures();
 		
-		static inline void WaitForAll() {
-			m_textureService.WaitForAll();
-			m_meshService.WaitForAll();
-		}
+		static inline void WaitForAll();
 
 		ResourceManager(ResourceManager const&) = delete;
 		void operator=(ResourceManager const&) = delete;
