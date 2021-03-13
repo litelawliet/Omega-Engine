@@ -39,24 +39,22 @@ layout(binding = 4) uniform MaterialInfo
 
 layout(location = 0) out vec4 FragColor;
 
-vec3 lightPosition = vec3(1,1,4);
+vec3 lightPosition = vec3(1.0, 1.0, 1.0);
 
 void main()
 {
-    vec3 N = normalize(inNormal);
-    vec3 L = normalize(lightPosition - inPosition);
-    vec3 E = normalize(inCameraPosition.xyz - inPosition);
-    vec3 R = normalize(-reflect(L, N));
-
-    float Iamb = 0.2;
-    float Idiff = max(dot(N, L), 0.0);
-    Idiff = clamp(Idiff, 0.0, 1.0);
-
-    float shininess = 128.0;
-    float Ispec = pow(max(dot(R,E), 0.0), shininess);
-    Ispec = clamp(Ispec, 0.0, 1.0);
-
     vec4 texColor = texture(texSampler, inTexCoord);
 
-    FragColor = vec4((Iamb + Idiff + Ispec) * texColor * Material.Color * (0.5, 0.5, 0.5, 1.0));
+    vec3 N = normalize(inNormal);
+    vec3 L = normalize(lightPosition - inPosition);
+    vec3 V = normalize(inCameraPosition.xyz);
+    vec3 R = reflect(-L, N);
+
+    float ambiant = 0.2;
+    vec3 diffuse = max(dot(N, L), 0.0) * vec3(1.0);
+
+    float shininess = 16.0;
+    float specular = pow(max(dot(R,V), 0.0), shininess) * texColor.a;
+
+    FragColor = vec4(diffuse * texColor.rgb + specular, 1.0);
 }       

@@ -1,17 +1,21 @@
 #pragma once
 #include <OgRendering/Export.h>
 
+#include <utility>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
+
 #include <OgRendering/Resource/Mesh.h>
 #include <OgRendering/Resource/Texture.h>
-#include <glm/glm.hpp>
 
 namespace OgEngine
 {
 	struct MaterialRS
 	{
-		alignas(16) glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
-		alignas(16) glm::vec4 specular = { 1.0f, 1.0f, 1.0f, 1.0f };
-		alignas(16) glm::vec4 emissive = { 1.0f, 1.0f, 1.0f, 1.0f };
+		alignas(glm::vec4) glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+		alignas(glm::vec4) glm::vec4 specular = { 1.0f, 1.0f, 1.0f, 1.0f };
+		alignas(glm::vec4) glm::vec4 emissive = { 1.0f, 1.0f, 1.0f, 1.0f };
 		
 		bool operator==(const MaterialRS& p_other) const
 		{
@@ -26,12 +30,12 @@ namespace OgEngine
 	class RENDERING_API ModelRasterization
 	{
 	public:
-		ModelRasterization(Mesh* p_mesh = nullptr, OgEngine::Texture* p_texture = nullptr, glm::mat4 p_modelMatrix = glm::mat4(1.0f));
+		ModelRasterization(Mesh* p_mesh = nullptr, OgEngine::Texture* p_texture = nullptr, const glm::mat4 p_modelMatrix = glm::mat4(1.0f));
 		~ModelRasterization();
 
 		void SetMesh(Mesh* p_newMesh);
 		void SetTexture(Texture* p_newTexture);
-		void UpdateModelMatrix(const glm::mat4& p_newModelMatrix);
+		void UpdateModelMatrix(const glm::mat4& p_worldMatrix);
 		void UpdateMaterial(const MaterialRS& p_newMaterial);
 		void ChangeColor(const glm::vec4& p_newBaseColor);
 		void ChangeSpecularColor(const glm::vec4& p_newSpecularColor);

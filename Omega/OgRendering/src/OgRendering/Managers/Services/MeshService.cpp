@@ -1,8 +1,5 @@
 #include <OgRendering/Managers/Services/MeshService.h>
 #include <OgRendering/Managers/Loaders/LoaderManager.h>
-#include <sstream>
-
-OgEngine::Services::MeshService::MeshService() = default;
 
 OgEngine::Services::MeshService::~MeshService()
 {
@@ -62,7 +59,7 @@ void OgEngine::Services::MeshService::MultithreadedLoading(std::string_view p_fi
 	}
 }
 
-inline std::shared_ptr<OgEngine::Mesh> OgEngine::Services::MeshService::Get(std::string_view p_meshName) const
+std::shared_ptr<OgEngine::Mesh> OgEngine::Services::MeshService::Get(std::string_view p_meshName) const
 {
 	if (m_meshes.find(p_meshName.data()) != m_meshes.end())
 		return m_meshes.at(p_meshName.data());
@@ -70,7 +67,7 @@ inline std::shared_ptr<OgEngine::Mesh> OgEngine::Services::MeshService::Get(std:
 	return nullptr;
 }
 
-inline void OgEngine::Services::MeshService::WaitForResource(std::string_view p_meshName)
+void OgEngine::Services::MeshService::WaitForResource(std::string_view p_meshName)
 {
 	const auto& pairFound = std::find_if(m_workerToMesh.begin(), m_workerToMesh.end(),
 		[p_meshName](const std::pair<uint64_t, std::string>& element)

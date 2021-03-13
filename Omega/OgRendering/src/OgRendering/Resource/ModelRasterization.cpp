@@ -1,9 +1,7 @@
 #include <OgRendering/Resource/ModelRasterization.h>
 
-#include <utility>
-
-OgEngine::ModelRasterization::ModelRasterization(OgEngine::Mesh* p_mesh, OgEngine::Texture* p_texture, glm::mat4 p_modelMatrix)
-	: m_modelMatrix(std::move(p_modelMatrix)), m_mesh(p_mesh)
+OgEngine::ModelRasterization::ModelRasterization(OgEngine::Mesh* p_mesh, OgEngine::Texture* p_texture, const glm::mat4 p_modelMatrix)
+	: m_modelMatrix(p_modelMatrix), m_mesh(p_mesh)
 {
 }
 
@@ -22,9 +20,9 @@ void OgEngine::ModelRasterization::SetTexture(OgEngine::Texture* p_newTexture)
 	m_texture = p_newTexture;
 }
 
-void OgEngine::ModelRasterization::UpdateModelMatrix(const glm::mat4& p_newModelMatrix)
+void OgEngine::ModelRasterization::UpdateModelMatrix(const glm::mat4& p_worldMatrix)
 {
-	m_modelMatrix = p_newModelMatrix;
+	m_modelMatrix = p_worldMatrix;
 }
 
 void OgEngine::ModelRasterization::UpdateMaterial(const MaterialRS& p_newMaterial)

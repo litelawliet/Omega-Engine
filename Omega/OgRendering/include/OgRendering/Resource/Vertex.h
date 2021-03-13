@@ -6,15 +6,16 @@
 #include <functional>
 #include <vulkan/vulkan.h>
 
-#include <GPM/GPM.h>
+#include <glm/glm.hpp>
 
 namespace OgEngine
 {
-	struct RENDERING_API Vertex {
-		alignas(alignof(GPM::Vector3F)) GPM::Vector3F position{};
-		alignas(alignof(GPM::Vector3F)) GPM::Vector3F normal{};
-		alignas(alignof(GPM::Vector3F)) GPM::Vector3F tangent{};
-		alignas(alignof(GPM::Vector2F)) GPM::Vector2F texCoord{};
+	struct RENDERING_API Vertex
+	{
+		alignas(glm::vec3) glm::vec3 position{};
+		alignas(glm::vec3) glm::vec3 normal{};
+		alignas(glm::vec3) glm::vec3 tangent{};
+		alignas(glm::vec2) glm::vec2 texCoord{};
 		alignas(alignof(int)) int dummy{ 0 };
 
 		Vertex();
@@ -32,9 +33,9 @@ namespace OgEngine
 		Vertex& operator=(Vertex&& p_other) noexcept;
 	};
 
-	class VertexHashFunction {
+	class VertexHashFunction
+	{
 	public:
-
 		static void hash_combine(size_t& seed, const size_t& hash)
 		{
 			seed ^= hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -71,12 +72,12 @@ namespace OgEngine
 		}
 	};
 
-	inline bool operator<(const Vector3F& p_left, const Vector3F& p_right)
+	inline bool operator<(const glm::vec3& p_left, const glm::vec3& p_right)
 	{
 		return p_left.x < p_right.x || p_left.y < p_right.y || p_left.z < p_right.z;
 	}
 
-	inline bool operator<(const Vector2F& p_left, const Vector2F& p_right)
+	inline bool operator<(const glm::vec2& p_left, const glm::vec2& p_right)
 	{
 		return p_left.x < p_right.x || p_left.y < p_right.y;
 	}

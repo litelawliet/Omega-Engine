@@ -2,6 +2,7 @@
 #include <OgRendering/Export.h>
 #include <cstdint>
 #include <vector>
+#include <iostream>
 #include <OgRendering/Resource/Vertex.h>
 
 namespace OgEngine

@@ -177,7 +177,7 @@ void OgEngine::RasterizerPipeline::RenderFrame()
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		//beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		VkResult buffersResult = vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
-		DBG_ASSERT_VULKAN_MSG(buffersResult, "Failed to create command buffer begin info (drawing).");
+		CHECK_ERROR(buffersResult);
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -250,7 +250,7 @@ void OgEngine::RasterizerPipeline::RenderFrame()
 			vkCmdEndRenderPass(m_commandBuffers[i]);
 
 			buffersResult = vkEndCommandBuffer(m_commandBuffers[i]);
-			DBG_ASSERT_VULKAN_MSG(buffersResult, "failed to record command buffer!");
+			CHECK_ERROR(buffersResult);
 		}
 	}
 
@@ -279,7 +279,7 @@ void OgEngine::RasterizerPipeline::RenderFrame()
 	vkResetFences(m_device.logicalDevice, 1, &m_inFlightFences[m_currentFrame]);
 	CopyImage(m_colorImage);
 	VkResult result = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_inFlightFences[m_currentFrame]);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to submit draw command buffer.");
+	CHECK_ERROR(result);
 
 	RenderUI(m_imageIndex);
 
@@ -302,7 +302,7 @@ void OgEngine::RasterizerPipeline::RenderFrame()
 		RecreateSwapChain();
 	}
 	else if (result != VK_SUCCESS) {
-		DBG_ASSERT_VULKAN_MSG(result, "Failed to present swap chain image.");
+		CHECK_ERROR(result);
 	}
 }
 
@@ -542,20 +542,20 @@ VkCommandBuffer OgEngine::RasterizerPipeline::BeginSingleTimeCommands() const
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
-	DBG_ASSERT_VULKAN_MSG(vkAllocateCommandBuffers(m_device.logicalDevice, &allocInfo, &commandBuffer), "Couldn't allocate command buffers.");
+	CHECK_ERROR(vkAllocateCommandBuffers(m_device.logicalDevice, &allocInfo, &commandBuffer));
 
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	DBG_ASSERT_VULKAN_MSG(vkBeginCommandBuffer(commandBuffer, &beginInfo), "Couldn't begin command buffer.");
+	CHECK_ERROR(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
 	return commandBuffer;
 }
 
 void OgEngine::RasterizerPipeline::EndSingleTimeCommands(VkCommandBuffer p_commandBuffer) const
 {
-	DBG_ASSERT_VULKAN_MSG(vkEndCommandBuffer(p_commandBuffer), "Couldn't end command bufffer");
+	CHECK_ERROR(vkEndCommandBuffer(p_commandBuffer));
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -565,9 +565,9 @@ void OgEngine::RasterizerPipeline::EndSingleTimeCommands(VkCommandBuffer p_comma
 	//VkFenceCreateInfo fenceInfo = Initializers::fenceCreateInfo(0);
 	//VkFence fence;
 	//CHECK_ERROR(vkCreateFence(m_vulkanDevice.logicalDevice, &fenceInfo, nullptr, &fence));
-	DBG_ASSERT_VULKAN_MSG(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE), "Couldn't submit single time command.");
+	CHECK_ERROR(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
 	//CHECK_ERROR(vkWaitForFences(m_vulkanDevice.logicalDevice, 1, &fence, VK_TRUE, 100000000000));
-	DBG_ASSERT_VULKAN_MSG(vkQueueWaitIdle(m_graphicsQueue), "Couldn't wait for QueueIdle.");
+	CHECK_ERROR(vkQueueWaitIdle(m_graphicsQueue));
 	//vkDestroyFence(m_vulkanDevice.logicalDevice, fence, nullptr);
 
 	vkFreeCommandBuffers(m_device.logicalDevice, m_commandPool, 1, &p_commandBuffer);
@@ -621,7 +621,7 @@ void OgEngine::RasterizerPipeline::CreateBuffer(const VkDeviceSize    p_size, co
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	VkResult result = vkCreateBuffer(m_device.logicalDevice, &bufferInfo, nullptr, &p_buffer);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to create buffer in CreateBuffer.");
+	CHECK_ERROR(result);
 
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(m_device.logicalDevice, p_buffer, &memRequirements);
@@ -632,10 +632,10 @@ void OgEngine::RasterizerPipeline::CreateBuffer(const VkDeviceSize    p_size, co
 	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, p_properties);
 
 	result = vkAllocateMemory(m_device.logicalDevice, &allocInfo, nullptr, &p_bufferMemory);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to allocate buffer memory in CreateBuffer.");
+	CHECK_ERROR(result);
 
 	result = vkBindBufferMemory(m_device.logicalDevice, p_buffer, p_bufferMemory, p_dynamicOffset);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to bind buffer memory in CreateBuffer.");
+	CHECK_ERROR(result);
 }
 
 VkResult OgEngine::RasterizerPipeline::CreateBuffer(VkBufferUsageFlags    p_usageFlags,
@@ -668,7 +668,7 @@ VkResult OgEngine::RasterizerPipeline::CreateBuffer(VkBufferUsageFlags    p_usag
 		p_buffer->Map();
 		memcpy_s(p_buffer->mapped, p_size, p_data, p_size);
 		if ((p_memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-			DBG_ASSERT_VULKAN_MSG(p_buffer->Flush(), "Cannot create vertex buffer");
+			CHECK_ERROR(p_buffer->Flush());
 
 		p_buffer->Unmap();
 	}
@@ -745,14 +745,9 @@ void OgEngine::RasterizerPipeline::UpdateUniformBuffer(ObjectInstance& p_objectI
 	}
 
 	UniformBufferObject ubo = {};
-
+	ubo.proj = m_camera.matrices.perspective;
 	ubo.model = p_objectInstance.model.ModelMatrix();
 	ubo.view = m_camera.matrices.view;
-		//glm::mat4::LookAt(glm::vec3(0.0f, 1.0f, -4.0), glm::vec3(0.0f, 0.0f, 0.0f),
-		//glm::vec3(0.0f, 1.0f, 0.0f));
-	ubo.proj = m_camera.matrices.perspective;
-		//glm::mat4::Perspective((45.0f), m_chainExtent.width / static_cast<float>(m_chainExtent.height), 0.1f,
-		//2000.0f);
 
 	// Mapping a default mvp
 	void* mvpMapped = nullptr;
@@ -845,7 +840,7 @@ void OgEngine::RasterizerPipeline::UpdateCamera(const glm::vec3& p_position,
 {
 	m_camera.SetPosition(p_position);
 	m_camera.SetRotation(p_rotation);
-	m_camera.UpdateViewMatrix();
+	//m_camera.UpdateViewMatrix();
 }
 
 OgEngine::Camera& OgEngine::RasterizerPipeline::GetCurrentCamera()
@@ -861,7 +856,7 @@ void OgEngine::RasterizerPipeline::InitializeVMA()
 	allocatorInfo.device = m_device.logicalDevice;
 	allocatorInfo.instance = m_device.instance;
 
-	DBG_ASSERT_VULKAN_MSG(vmaCreateAllocator(&allocatorInfo, &m_allocator), "Couldn't start VMA.");
+	CHECK_ERROR(vmaCreateAllocator(&allocatorInfo, &m_allocator));
 }
 
 void OgEngine::RasterizerPipeline::CleanAllObjectInstance()
@@ -1464,6 +1459,7 @@ void OgEngine::RasterizerPipeline::CreateGraphicsPipeline()
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewportState.flags = 0;
 	viewportState.viewportCount = 1u;
 	viewportState.pViewports = &viewport;
 	viewportState.scissorCount = 1u;
@@ -1515,7 +1511,7 @@ void OgEngine::RasterizerPipeline::CreateGraphicsPipeline()
 	pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
 
 	VkResult result = vkCreatePipelineLayout(m_device.logicalDevice, &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to create pipeline layout.");
+	CHECK_ERROR(result);
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -1593,7 +1589,7 @@ void OgEngine::RasterizerPipeline::CreateDescriptorSetLayout()
 		&layoutInfo,
 		nullptr,
 		&m_descriptorSetLayout);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to create descriptor set layout.");
+	CHECK_ERROR(result);
 }
 
 void OgEngine::RasterizerPipeline::CreateFramebuffers()
@@ -1620,7 +1616,7 @@ void OgEngine::RasterizerPipeline::CreateFramebuffers()
 		framebufferInfo.layers = 1u;
 
 		VkResult result = vkCreateFramebuffer(m_device.logicalDevice, &framebufferInfo, nullptr, &m_chainFrameBuffers[i]);
-		DBG_ASSERT_VULKAN_MSG(result, "Failed to create framebuffer.");
+		CHECK_ERROR(result);
 	}
 }
 
@@ -1658,13 +1654,13 @@ ImTextureID OgEngine::RasterizerPipeline::AddUITexture(const char* p_texturePath
 	}
 
 
-	VkDeviceSize bufferSize = static_cast<VkDeviceSize>(width) * static_cast<VkDeviceSize>(height) * sizeof(glm::u8vec4); // TODO : replace u8vec4 by gpm vec4
+	VkDeviceSize bufferSize = static_cast<VkDeviceSize>(width) * static_cast<VkDeviceSize>(height) * sizeof(glm::u8vec4);
 	VkExtent2D extent;
 	extent.width = width;
 	extent.height = height;
 	auto imgSize = extent;
 	VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
-	auto mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(extent.width, extent.height)))) + 1;
+	auto mipLevels = uiTexture->MipmapLevels();
 
 	Buffer stagingBuffer;
 	CreateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -1711,10 +1707,10 @@ ImTextureID OgEngine::RasterizerPipeline::AddUITexture(const char* p_texturePath
 	}
 
 	result = vkBindImageMemory(m_device.logicalDevice, data.img, data.memory, 0);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to bind image memory in AddUITexture");
+	CHECK_ERROR(result);
 
 	TransitionImageLayout(data.img, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_mipLevels);
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
 
 	VkBufferImageCopy copyRegion{};
 	copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -1745,12 +1741,12 @@ ImTextureID OgEngine::RasterizerPipeline::AddUITexture(const char* p_texturePath
 
 	VkImageView view;
 	result = vkCreateImageView(m_device.logicalDevice, &viewInfo, nullptr, &view);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to create image view in AddUITexture");
+	CHECK_ERROR(result);
 	data.view = view;
 
 	VkSampler sampler;
 	result = vkCreateSampler(m_device.logicalDevice, &samplerInfo, nullptr, &sampler);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to create sampler in AddUITexture");
+	CHECK_ERROR(result);
 	data.sampler = sampler;
 
 	data.info = Initializers::descriptorImageInfo(sampler, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -1815,11 +1811,11 @@ VkDescriptorImageInfo OgEngine::RasterizerPipeline::Create2DDescriptor(const VkI
 
 	VkImageView view;
 	VkResult result = vkCreateImageView(m_device.logicalDevice, &viewInfo, nullptr, &view);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to create VkImageView on Create2DDescriptor");
+	CHECK_ERROR(result);
 
 	VkSampler sampler;
 	result = vkCreateSampler(m_device.logicalDevice, &p_samplerCreateInfo, nullptr, &sampler);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to create VkSampler on Create2DDescriptor");
+	CHECK_ERROR(result);
 
 	const VkDescriptorImageInfo info = Initializers::descriptorImageInfo(sampler, view, p_layout);
 	return info;
@@ -1855,7 +1851,7 @@ void OgEngine::RasterizerPipeline::CreateTextureSampler(TextureData& p_textureDa
 	samplerInfo.mipLodBias = 0.0f;
 
 	VkResult result = vkCreateSampler(m_device.logicalDevice, &samplerInfo, nullptr, &p_textureData.sampler);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to create texture sampler.");
+	CHECK_ERROR(result);
 }
 
 void OgEngine::RasterizerPipeline::CreateVertexBuffer(Mesh* p_mesh, Buffer* p_bufferArray) const
@@ -1915,7 +1911,7 @@ void OgEngine::RasterizerPipeline::CreateDescriptorPool()
 	poolInfo.maxSets = MAX_OBJECTS;
 
 	const VkResult result = vkCreateDescriptorPool(m_device.logicalDevice, &poolInfo, nullptr, &m_descriptorPool);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to create descriptor pool.");
+	CHECK_ERROR(result);
 }
 
 void OgEngine::RasterizerPipeline::AllocateDescriptorSet(ObjectInstance& p_objectBuffer) const
@@ -1933,7 +1929,7 @@ void OgEngine::RasterizerPipeline::AllocateDescriptorSet(ObjectInstance& p_objec
 	allocInfo.pSetLayouts = &layout;
 
 	const VkResult result = vkAllocateDescriptorSets(m_device.logicalDevice, &allocInfo, &p_objectBuffer.descriptorSet);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to allocate descriptor set.");
+	CHECK_ERROR(result);
 }
 
 void OgEngine::RasterizerPipeline::BindDescriptorSet(ObjectInstance& p_objectBuffer) const
@@ -2086,7 +2082,7 @@ void OgEngine::RasterizerPipeline::CreateCommandBuffers()
 	allocInfo.commandBufferCount = static_cast<uint32_t>(m_commandBuffers.size());
 
 	const VkResult result = vkAllocateCommandBuffers(m_device.logicalDevice, &allocInfo, m_commandBuffers.data());
-	DBG_ASSERT_VULKAN_MSG(result, "failed to allocate command buffers!");
+	CHECK_ERROR(result);
 }
 
 void OgEngine::RasterizerPipeline::CreateSynchronizedObjects()
@@ -2146,7 +2142,7 @@ void OgEngine::RasterizerPipeline::CleanupSwapChain()
 	vkDestroySwapchainKHR(m_device.logicalDevice, m_chain, nullptr);
 
 	const VkResult result = vkResetDescriptorPool(m_device.logicalDevice, m_descriptorPool, 0);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to reset descriptor pool.");
+	CHECK_ERROR(result);
 
 	vkDestroyDescriptorPool(m_device.logicalDevice, m_descriptorPool, nullptr);
 }
@@ -2460,7 +2456,7 @@ void OgEngine::RasterizerPipeline::FreeImGUIContext()
 	vkDestroyRenderPass(m_device.logicalDevice, m_ImGUIrenderPass, nullptr);
 
 	const VkResult result = vkResetDescriptorPool(m_device.logicalDevice, m_ImGUIdescriptorPool, 0);
-	DBG_ASSERT_VULKAN_MSG(result, "Failed to reset imgui descriptor pool.");
+	CHECK_ERROR(result);
 
 	vkDestroyDescriptorPool(m_device.logicalDevice, m_ImGUIdescriptorPool, nullptr);
 	vkDestroyCommandPool(m_device.logicalDevice, m_ImGUIcommandPool, nullptr);
@@ -2540,7 +2536,7 @@ void OgEngine::RasterizerPipeline::CHECK_ERROR(VkResult p_result)
 {
 	if (p_result != VK_SUCCESS)
 	{
-		std::cout << p_result << '\n';
+		std::cerr << p_result << '\n';
 		throw std::runtime_error(("Error with Vulkan function"));
 	}
 }
