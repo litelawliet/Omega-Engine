@@ -1,4 +1,3 @@
-//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -11,7 +10,7 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 // PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -23,16 +22,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Copyright (c) 2008-2019 NVIDIA Corporation. All rights reserved.
+// Copyright (c) 2008-2024 NVIDIA Corporation. All rights reserved.
 // Copyright (c) 2004-2008 AGEIA Technologies, Inc. All rights reserved.
 // Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
-
-#ifndef PX_PHYSICS_NX_SPHERE_GEOMETRY
-#define PX_PHYSICS_NX_SPHERE_GEOMETRY
-/** \addtogroup geomutils
-@{
-*/
+#ifndef PX_SPHERE_GEOMETRY_H
+#define PX_SPHERE_GEOMETRY_H
 #include "geometry/PxGeometry.h"
 
 #if !PX_DOXYGEN
@@ -49,8 +44,26 @@ Spheres are defined by their radius.
 class PxSphereGeometry : public PxGeometry 
 {
 public:
-	PX_INLINE PxSphereGeometry() :							PxGeometry(PxGeometryType::eSPHERE), radius(0) {}
-	PX_INLINE PxSphereGeometry(PxReal ir) :					PxGeometry(PxGeometryType::eSPHERE), radius(ir) {}
+	/**
+	\brief Constructor.
+	*/
+	PX_INLINE PxSphereGeometry(PxReal ir=0.0f) : PxGeometry(PxGeometryType::eSPHERE), radius(ir)		{}
+
+	/**
+	\brief Copy constructor.
+
+	\param[in] that		Other object
+	*/
+	PX_INLINE PxSphereGeometry(const PxSphereGeometry& that) : PxGeometry(that), radius(that.radius)	{}
+
+	/**
+	\brief Assignment operator
+	*/
+	PX_INLINE void operator=(const PxSphereGeometry& that)
+	{
+		mType = that.mType;
+		radius = that.radius;
+	}
 
 	/**
 	\brief Returns true if the geometry is valid.
@@ -60,7 +73,7 @@ public:
 	\note A valid sphere has radius > 0.  
 	It is illegal to call PxRigidActor::createShape and PxPhysics::createShape with a sphere that has zero radius.
 
-	@see PxRigidActor::createShape, PxPhysics::createShape
+	\see PxRigidActor::createShape, PxPhysics::createShape
 	*/
 	PX_INLINE bool isValid() const;
 
@@ -72,14 +85,13 @@ public:
 	PxReal radius;	
 };
 
-
 PX_INLINE bool PxSphereGeometry::isValid() const
 {
-	if (mType != PxGeometryType::eSPHERE)
+	if(mType != PxGeometryType::eSPHERE)
 		return false;
-	if (!PxIsFinite(radius))
+	if(!PxIsFinite(radius))
 		return false;
-	if (radius <= 0.0f)
+	if(radius <= 0.0f)
 		return false;
 
 	return true;
@@ -89,5 +101,4 @@ PX_INLINE bool PxSphereGeometry::isValid() const
 } // namespace physx
 #endif
 
-/** @} */
 #endif

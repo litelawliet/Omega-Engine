@@ -1,4 +1,3 @@
-//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -11,7 +10,7 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 // PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -23,15 +22,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Copyright (c) 2008-2019 NVIDIA Corporation. All rights reserved.
+// Copyright (c) 2008-2024 NVIDIA Corporation. All rights reserved.
 // Copyright (c) 2004-2008 AGEIA Technologies, Inc. All rights reserved.
 // Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
-
-#ifndef PX_PHYSICS_NXHEIGHTFIELDSAMPLE
-#define PX_PHYSICS_NXHEIGHTFIELDSAMPLE
-/** \addtogroup geomutils 
-@{ */
+#ifndef PX_HEIGHT_FIELD_SAMPLE_H
+#define PX_HEIGHT_FIELD_SAMPLE_H
 
 #include "common/PxPhysXCommonConfig.h"
 #include "foundation/PxBitAndData.h"
@@ -44,7 +40,7 @@ namespace physx
 /**
 \brief Special material index values for height field samples.
 
-@see PxHeightFieldSample.materialIndex0 PxHeightFieldSample.materialIndex1
+\see PxHeightFieldSample.materialIndex0 PxHeightFieldSample.materialIndex1
 */
 struct PxHeightFieldMaterial
 {
@@ -63,23 +59,16 @@ An array of heightfield samples are used when creating a PxHeightField to specif
 the elevation of the heightfield points. In addition the material and tessellation of the adjacent 
 triangles are specified.
 
-@see PxHeightField PxHeightFieldDesc PxHeightFieldDesc.samples
+\see PxHeightField PxHeightFieldDesc PxHeightFieldDesc.samples
 */
 struct PxHeightFieldSample
 {
-//= ATTENTION! =====================================================================================
-// Changing the data layout of this class breaks the binary serialization format.  See comments for 
-// PX_BINARY_SERIAL_VERSION.  If a modification is required, please adjust the getBinaryMetaData 
-// function.  If the modification is made on a custom branch, please change PX_BINARY_SERIAL_VERSION
-// accordingly.
-//==================================================================================================
-
 	/**
 	\brief The height of the heightfield sample
 
 	This value is scaled by PxHeightFieldGeometry::heightScale.
 
-	@see PxHeightFieldGeometry
+	\see PxHeightFieldGeometry
 	*/
 	PxI16			height;
 
@@ -96,7 +85,7 @@ struct PxHeightFieldSample
 	If the flag is set, the diagonal of the quad will run from this sample to the opposite vertex; if not,
 	it will run between the other two vertices (see the Guide for illustrations).
 
-	@see PxHeightFieldGeometry materialIndex1 PxShape.setmaterials() PxShape.getMaterials()
+	\see PxHeightFieldGeometry materialIndex1 PxShape.setmaterials() PxShape.getMaterials()
 	*/
 	PxBitAndByte	materialIndex0;
 
@@ -111,7 +100,7 @@ struct PxHeightFieldSample
 	This index determines the material of the upper of the quad's two triangles (i.e. the quad whose 
 	upper-left corner is this sample, see the Guide for illustrations).
 
-	@see PxHeightFieldGeometry materialIndex0 PxShape.setmaterials() PxShape.getMaterials()
+	\see PxHeightFieldGeometry materialIndex0 PxShape.setmaterials() PxShape.getMaterials()
 	*/
 	PxBitAndByte	materialIndex1;
 };
@@ -120,5 +109,4 @@ struct PxHeightFieldSample
 } // namespace physx
 #endif
 
-/** @} */
 #endif

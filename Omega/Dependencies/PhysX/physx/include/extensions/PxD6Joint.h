@@ -1,4 +1,3 @@
-//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -11,7 +10,7 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 // PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -23,15 +22,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Copyright (c) 2008-2019 NVIDIA Corporation. All rights reserved.
+// Copyright (c) 2008-2024 NVIDIA Corporation. All rights reserved.
 // Copyright (c) 2004-2008 AGEIA Technologies, Inc. All rights reserved.
 // Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
-#ifndef PX_D6JOINT_H
-#define PX_D6JOINT_H
-/** \addtogroup extensions
-  @{
-*/
+#ifndef PX_D6_JOINT_H
+#define PX_D6_JOINT_H
 
 #include "extensions/PxJoint.h"
 #include "extensions/PxJointLimit.h"
@@ -53,14 +49,14 @@ class PxD6Joint;
  \param[in] actor1		An actor to which the joint is attached. NULL may be used to attach the joint to a specific point in the world frame
  \param[in] localFrame1	The position and orientation of the joint relative to actor1 
 
-@see PxD6Joint
+\see PxD6Joint
 */
 PxD6Joint*	PxD6JointCreate(PxPhysics& physics, PxRigidActor* actor0, const PxTransform& localFrame0, PxRigidActor* actor1, const PxTransform& localFrame1);
 
 /**
 \brief Used to specify one of the degrees of freedom of  a D6 joint.
 
-@see PxD6Joint
+\see PxD6Joint
 */
 struct PxD6Axis
 {
@@ -80,7 +76,7 @@ struct PxD6Axis
 /**
 \brief Used to specify the range of motions allowed for a degree of freedom in a D6 joint.
 
-@see PxD6Joint
+\see PxD6Joint
 */
 struct PxD6Motion
 {
@@ -106,7 +102,7 @@ A linear axis is affected by drive only if the corresponding drive flag is set. 
 for angular drive: swing/twist, which may be used to drive one or more angular degrees of freedom, or slerp,
 which may only be used to drive all three angular degrees simultaneously.
 
-@see PxD6Joint
+\see PxD6Joint
 */
 struct PxD6Drive
 {
@@ -125,7 +121,7 @@ struct PxD6Drive
 /** 
 \brief flags for configuring the drive model of a PxD6Joint
 
-@see PxD6JointDrive PxD6Joint
+\see PxD6JointDrive PxD6Joint
 */
 struct PxD6JointDriveFlag
 {
@@ -140,17 +136,10 @@ PX_FLAGS_OPERATORS(PxD6JointDriveFlag::Enum, PxU32)
 /** 
 \brief parameters for configuring the drive model of a PxD6Joint
 
-@see PxD6Joint
+\see PxD6Joint
 */
 class PxD6JointDrive : public PxSpring
 {
-//= ATTENTION! =====================================================================================
-// Changing the data layout of this class breaks the binary serialization format.  See comments for 
-// PX_BINARY_SERIAL_VERSION.  If a modification is required, please adjust the getBinaryMetaData 
-// function.  If the modification is made on a custom branch, please change PX_BINARY_SERIAL_VERSION
-// accordingly.
-//==================================================================================================
-
 public:
 	PxReal					forceLimit;			//!< the force limit of the drive - may be an impulse or a force depending on PxConstraintFlag::eDRIVE_LIMITS_ARE_FORCES
 	PxD6JointDriveFlags		flags;				//!< the joint drive flags 
@@ -219,7 +208,7 @@ public:
 
  If the twist degree of freedom is limited, is supports upper and lower limits. The two swing degrees
  of freedom are limited with a cone limit.
-@see PxD6JointCreate() PxJoint 
+\see PxD6JointCreate() PxJoint 
 */
 class PxD6Joint : public PxJoint
 {
@@ -236,14 +225,14 @@ public:
 
 	<b>Default:</b> all degrees of freedom are locked
 
-	@see getMotion() PxD6Axis PxD6Motion
+	\see getMotion() PxD6Axis PxD6Motion
 	*/
 	virtual void				setMotion(PxD6Axis::Enum axis, PxD6Motion::Enum type)	= 0;
 
 	/**
 	\brief Get the motion type around the specified axis.
 
-	@see setMotion() PxD6Axis PxD6Motion
+	\see setMotion() PxD6Axis PxD6Motion
 
 	\param[in] axis the degree of freedom around which the motion type is specified
 	\return the motion type around the specified axis
@@ -281,7 +270,7 @@ public:
 
 	\param[in] limit the distance limit structure
 
-	@see getDistanceLimit() PxJointLinearLimit
+	\see getDistanceLimit() PxJointLinearLimit
 	*/
 	virtual	void				setDistanceLimit(const PxJointLinearLimit& limit)	= 0;
 
@@ -290,7 +279,7 @@ public:
 
 	\return the distance limit structure
 
-	@see setDistanceLimit() PxJointLinearLimit
+	\see setDistanceLimit() PxJointLinearLimit
 	*/
 	virtual	PxJointLinearLimit	getDistanceLimit()	const	= 0;
 
@@ -317,7 +306,7 @@ public:
 	\param[in] axis		The limited linear axis (must be PxD6Axis::eX, PxD6Axis::eY or PxD6Axis::eZ)
 	\param[in] limit	The linear limit pair structure
 
-	@see getLinearLimit() 
+	\see getLinearLimit() 
 	*/
 	virtual void					setLinearLimit(PxD6Axis::Enum axis, const PxJointLinearLimitPair& limit)	= 0;
 
@@ -328,7 +317,7 @@ public:
 
 	\return the linear limit pair structure from desired axis
 
-	@see setLinearLimit() PxJointLinearLimit
+	\see setLinearLimit() PxJointLinearLimit
 	*/
 	virtual PxJointLinearLimitPair	getLinearLimit(PxD6Axis::Enum axis)	const	= 0;
 
@@ -341,7 +330,7 @@ public:
 
 	\param[in] limit the twist limit structure
 
-	@see getTwistLimit() PxJointAngularLimitPair
+	\see getTwistLimit() PxJointAngularLimitPair
 	*/
 	virtual	void				setTwistLimit(const PxJointAngularLimitPair& limit)	= 0;
 
@@ -350,7 +339,7 @@ public:
 
 	\return the twist limit structure
 
-	@see setTwistLimit() PxJointAngularLimitPair
+	\see setTwistLimit() PxJointAngularLimitPair
 	*/
 	virtual	PxJointAngularLimitPair	getTwistLimit()	const	= 0;
 
@@ -363,7 +352,7 @@ public:
 
 	\param[in] limit the cone limit structure
 
-	@see getLimitCone() PxJointLimitCone 
+	\see getLimitCone() PxJointLimitCone 
 	*/
 	virtual	void				setSwingLimit(const PxJointLimitCone& limit)	= 0;
 
@@ -372,7 +361,7 @@ public:
 
 	\return the swing limit structure
 
-	@see setLimitCone() PxJointLimitCone
+	\see setLimitCone() PxJointLimitCone
 	*/
 	virtual	PxJointLimitCone	getSwingLimit()	const	= 0;
 
@@ -387,7 +376,7 @@ public:
 
 	\param[in] limit the cone limit structure
 
-	@see getLimitCone() PxJointLimitPyramid 
+	\see getLimitCone() PxJointLimitPyramid 
 	*/
 	virtual	void				setPyramidSwingLimit(const PxJointLimitPyramid& limit)	= 0;
 
@@ -396,7 +385,7 @@ public:
 
 	\return the swing limit structure
 
-	@see setLimitCone() PxJointLimitPyramid
+	\see setLimitCone() PxJointLimitPyramid
 	*/
 	virtual	PxJointLimitPyramid	getPyramidSwingLimit()	const	= 0;
 
@@ -406,7 +395,7 @@ public:
 	\param[in] index the type of drive being specified
 	\param[in] drive the drive parameters
 
-	@see getDrive() PxD6JointDrive
+	\see getDrive() PxD6JointDrive
 
 	<b>Default</b> The default drive spring and damping values are zero, the force limit is zero, and no flags are set.
 	*/
@@ -417,7 +406,7 @@ public:
 
 	\param[in] index the specified drive type
 
-	@see setDrive() PxD6JointDrive
+	\see setDrive() PxD6JointDrive
 	*/
 	virtual PxD6JointDrive		getDrive(PxD6Drive::Enum index)	const	= 0;
 
@@ -429,16 +418,17 @@ public:
 	<b>Default</b> the identity transform
 
 	\param[in] pose The goal drive pose if positional drive is in use. 
-	\param[in] autowake Whether to wake the joint rigids up if it is asleep.
+	\param[in] autowake If true and the attached actors are in a scene, this call wakes them up and increases their
+	wake counters to #PxSceneDesc::wakeCounterResetValue if the counter value is below the reset value.
 
-	@see setDrivePosition()
+	\see setDrivePosition()
 	*/
 	virtual void				setDrivePosition(const PxTransform& pose, bool autowake = true)	= 0;
 
 	/**
 	\brief Get the drive goal pose.
 
-	@see getDrivePosition()
+	\see getDrivePosition()
 	*/
 	virtual PxTransform			getDrivePosition()	const	= 0;
 
@@ -449,9 +439,10 @@ public:
 
 	\param[in] linear The goal velocity for linear drive
 	\param[in] angular The goal velocity for angular drive
-	\param[in] autowake Whether to wake the joint rigids up if it is asleep.
+	\param[in] autowake If true and the attached actors are in a scene, this call wakes them up and increases their
+	wake counters to #PxSceneDesc::wakeCounterResetValue if the counter value is below the reset value.
 
-	@see getDriveVelocity()
+	\see getDriveVelocity()
 	*/
 	virtual	void				setDriveVelocity(const PxVec3& linear, const PxVec3& angular, bool autowake = true)	= 0;
 
@@ -461,70 +452,9 @@ public:
 	\param[in] linear The goal velocity for linear drive
 	\param[in] angular The goal velocity for angular drive
 
-	@see setDriveVelocity()
+	\see setDriveVelocity()
 	*/
 	virtual void				getDriveVelocity(PxVec3& linear, PxVec3& angular)	const	= 0;
-	
-	/**
-	\brief Set the linear tolerance threshold for projection. Projection is enabled if PxConstraintFlag::ePROJECTION
-	is set for the joint.
-
-	If the joint separates by more than this distance along its locked degrees of freedom, the solver 
-	will move the bodies to close the distance.
-
-	Setting a very small tolerance may result in simulation jitter or other artifacts.
-
-	Sometimes it is not possible to project (for example when the joints form a cycle).
-
-	<b>Range:</b> [0, PX_MAX_F32)<br>
-	<b>Default:</b> 1e10f
-
-	\param[in] tolerance the linear tolerance threshold
-
-	@see getProjectionLinearTolerance() PxJoint::setConstraintFlags() PxConstraintFlag::ePROJECTION
-	*/
-	virtual void				setProjectionLinearTolerance(PxReal tolerance)	= 0;
-
-	/**
-	\brief Get the linear tolerance threshold for projection.
-
-	\return the linear tolerance threshold
-
-	@see setProjectionLinearTolerance()
-	*/
-	virtual PxReal				getProjectionLinearTolerance()	const	= 0;
-
-	/**
-	\brief Set the angular tolerance threshold for projection. Projection is enabled if 
-	PxConstraintFlag::ePROJECTION is set for the joint.
-
-	If the joint deviates by more than this angle around its locked angular degrees of freedom, 
-	the solver will move the bodies to close the angle.
-	
-	Setting a very small tolerance may result in simulation jitter or other artifacts.
-
-	Sometimes it is not possible to project (for example when the joints form a cycle).
-
-	<b>Range:</b> [0,Pi] <br>
-	<b>Default:</b> Pi
-
-	\param[in] tolerance the angular tolerance threshold in radians
-
-	\note 
-	Angular projection is implemented only for the case of two or three locked angular degrees of freedom.
-
-	@see getProjectionAngularTolerance() PxJoint::setConstraintFlag() PxConstraintFlag::ePROJECTION
-	*/
-	virtual void				setProjectionAngularTolerance(PxReal tolerance)	= 0;
-
-	/**
-	\brief Get the angular tolerance threshold for projection.
-
-	\return tolerance the angular tolerance threshold in radians
-
-	@see setProjectionAngularTolerance()
-	*/
-	virtual PxReal				getProjectionAngularTolerance()	const	= 0;
 
 	/**
 	\brief Returns string name of PxD6Joint, used for serialization
@@ -548,7 +478,7 @@ protected:
 	/**
 	\brief Returns whether a given type name matches with the type of this instance
 	*/
-	virtual	bool				isKindOf(const char* name) const { return !::strcmp("PxD6Joint", name) || PxJoint::isKindOf(name); }
+	virtual	bool				isKindOf(const char* name) const { PX_IS_KIND_OF(name, "PxD6Joint", PxJoint); }
 
 	//~serialization
 };
@@ -557,5 +487,4 @@ protected:
 } // namespace physx
 #endif
 
-/** @} */
 #endif

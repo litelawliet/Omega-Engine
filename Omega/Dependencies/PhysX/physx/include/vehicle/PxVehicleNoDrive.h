@@ -1,4 +1,3 @@
-//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -11,7 +10,7 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 // PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -23,15 +22,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Copyright (c) 2008-2019 NVIDIA Corporation. All rights reserved.
+// Copyright (c) 2008-2024 NVIDIA Corporation. All rights reserved.
 // Copyright (c) 2004-2008 AGEIA Technologies, Inc. All rights reserved.
 // Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
 #ifndef PX_VEHICLE_NO_DRIVE_H
 #define PX_VEHICLE_NO_DRIVE_H
-/** \addtogroup vehicle
-  @{
-*/
 
 #include "vehicle/PxVehicleWheels.h"
 #include "vehicle/PxVehicleComponents.h"
@@ -51,16 +47,11 @@ class PxMaterial;
 class PxRigidDynamic;
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Data structure with instanced dynamics data and configuration data of a vehicle with no drive model.
 */
-class PxVehicleNoDrive : public PxVehicleWheels
+class PX_DEPRECATED PxVehicleNoDrive : public PxVehicleWheels
 {
-//= ATTENTION! =====================================================================================
-// Changing the data layout of this class breaks the binary serialization format.  See comments for 
-// PX_BINARY_SERIAL_VERSION.  If a modification is required, please adjust the getBinaryMetaData 
-// function.  If the modification is made on a custom branch, please change PX_BINARY_SERIAL_VERSION
-// accordingly.
-//==================================================================================================
 public:
 
 	friend class PxVehicleUpdate;
@@ -72,13 +63,13 @@ public:
 
 	\return The instantiated vehicle.
 
-	@see free, setup
+	\see free, setup
 	*/
 	static PxVehicleNoDrive* allocate(const PxU32 nbWheels);
 
 	/**
 	\brief Deallocate a PxVehicleNoDrive instance.
-	@see allocate
+	\see allocate
 	*/
 	void free();
 
@@ -88,7 +79,7 @@ public:
 	\param[in] vehActor is a PxRigidDynamic instance that is used to represent the vehicle in the PhysX SDK.
 	\param[in] wheelsData describes the configuration of all suspension/tires/wheels of the vehicle. The vehicle instance takes a copy of this data.
 	\note It is assumed that the first shapes of the actor are the wheel shapes, followed by the chassis shapes.  To break this assumption use PxVehicleWheels::setWheelShapeMapping.
-	@see allocate, free, setToRestState, PxVehicleWheels::setWheelShapeMapping
+	\see allocate, free, setToRestState, PxVehicleWheels::setWheelShapeMapping
 	*/
 	void setup
 		(PxPhysics* physics, PxRigidDynamic* vehActor, const PxVehicleWheelsSimData& wheelsData);
@@ -100,7 +91,7 @@ public:
 	\param[in] wheelsData describes the configuration of all suspension/tires/wheels of the vehicle. The vehicle instance takes a copy of this data.
 	\note It is assumed that the first shapes of the actor are the wheel shapes, followed by the chassis shapes.  To break this assumption use PxVehicleWheels::setWheelShapeMapping.
 	\return The instantiated vehicle.
-	@see allocate, free, setToRestState, PxVehicleWheels::setWheelShapeMapping
+	\see allocate, free, setToRestState, PxVehicleWheels::setWheelShapeMapping
 	*/
 	static PxVehicleNoDrive* create
 		(PxPhysics* physics, PxRigidDynamic* vehActor, const PxVehicleWheelsSimData& wheelsData);
@@ -110,7 +101,7 @@ public:
 	to the state they were in immediately after setup or create.
 	\note Calling setToRestState invalidates the cached raycast hit planes under each wheel meaning that suspension line
 	raycasts need to be performed at least once with PxVehicleSuspensionRaycasts before calling PxVehicleUpdates. 
-	@see setup, create, PxVehicleSuspensionRaycasts, PxVehicleUpdates
+	\see setup, create, PxVehicleSuspensionRaycasts, PxVehicleUpdates
 	*/
 	void setToRestState();
 
@@ -197,7 +188,7 @@ public:
 	static		PxVehicleNoDrive*	createObject(PxU8*& address, PxDeserializationContext& context);
 	static		void				getBinaryMetaData(PxOutputStream& stream);
 	virtual		const char*			getConcreteTypeName() const			{ return "PxVehicleNoDrive";	}
-	virtual		bool				isKindOf(const char* name)	const	{ return !::strcmp("PxVehicleNoDrive", name) || PxBase::isKindOf(name); }
+	virtual		bool				isKindOf(const char* name)	const	{ PX_IS_KIND_OF(name, "PxVehicleNoDrive", PxVehicleWheels); }
 				PxU32				getNbSteerAngle() const { return mWheelsSimData.getNbWheels();	}
 				PxU32				getNbDriveTorque() const	{ return mWheelsSimData.getNbWheels();	}
 				PxU32				getNbBrakeTorque() const	{ return mWheelsSimData.getNbWheels();	}
@@ -212,5 +203,4 @@ PX_COMPILE_TIME_ASSERT(0==(sizeof(PxVehicleNoDrive) & 15));
 } // namespace physx
 #endif
 
-/** @} */
-#endif //PX_VEHICLE_NO_DRIVE_H
+#endif

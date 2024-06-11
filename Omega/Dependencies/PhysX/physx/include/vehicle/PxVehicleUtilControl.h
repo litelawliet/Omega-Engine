@@ -1,4 +1,3 @@
-//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -11,7 +10,7 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 // PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -23,15 +22,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Copyright (c) 2008-2019 NVIDIA Corporation. All rights reserved.
+// Copyright (c) 2008-2024 NVIDIA Corporation. All rights reserved.
 // Copyright (c) 2004-2008 AGEIA Technologies, Inc. All rights reserved.
 // Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
-#ifndef PX_VEHICLE_CONTROL_H
-#define PX_VEHICLE_CONTROL_H
-/** \addtogroup vehicle
-  @{
-*/
+#ifndef PX_VEHICLE_UTIL_CONTROL_H
+#define PX_VEHICLE_UTIL_CONTROL_H
+
 #include "vehicle/PxVehicleSDK.h"
 #include "vehicle/PxVehicleDrive4W.h"
 #include "vehicle/PxVehicleDriveNW.h"
@@ -48,13 +45,42 @@ namespace physx
 #endif
 
 /**
-\brief Used to produce smooth vehicle driving control values from key inputs.
-@see PxVehicle4WSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicle4WSmoothAnalogRawInputsAndSetAnalogInputs
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
+\brief Used to produce smooth steering values in the presence of discontinuities when a vehicle e.g. lands on the ground.
+Use a zero sharpness value to disable the feature (backward compatibility with previous PhysX versions).
 */
-struct PxVehicleKeySmoothingData
+struct PX_DEPRECATED PxVehicleSteerFilter
 {
-public:
+	PxVehicleSteerFilter(float sharpness=0.0f) : mSharpness(sharpness), mFilteredMaxSteer(0.0f)	{}
 
+	static PX_FORCE_INLINE float feedbackFilter(float val, float& memory, float sharpness)
+	{
+				if(sharpness<0.0f)	sharpness = 0.0f;
+		else	if(sharpness>1.0f)	sharpness = 1.0f;
+		return memory = val * sharpness + memory * (1.0f - sharpness);
+	}
+
+	PX_FORCE_INLINE	float	computeMaxSteer(const bool isVehicleInAir, const PxFixedSizeLookupTable<8>& steerVsForwardSpeedTable,
+											const PxF32 vzAbs, const PxF32 timestep)	const
+	{
+		const PxF32 targetMaxSteer = (isVehicleInAir ? 1.0f : steerVsForwardSpeedTable.getYVal(vzAbs));
+		if(mSharpness==0.0f)
+			return targetMaxSteer;
+		else
+			return feedbackFilter(targetMaxSteer, mFilteredMaxSteer, mSharpness*timestep);
+	}
+
+	PxReal			mSharpness;
+	mutable PxReal	mFilteredMaxSteer;
+};
+
+/**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
+\brief Used to produce smooth vehicle driving control values from key inputs.
+\see PxVehicle4WSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicle4WSmoothAnalogRawInputsAndSetAnalogInputs
+*/
+struct PX_DEPRECATED PxVehicleKeySmoothingData
+{
 	/**
 	\brief Rise rate of each analog value if digital value is 1
 	*/
@@ -68,13 +94,12 @@ public:
 PX_COMPILE_TIME_ASSERT(0==(sizeof(PxVehicleKeySmoothingData)& 0x0f));
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Used to produce smooth analog vehicle control values from analog inputs.
-@see PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicleDrive4WSmoothAnalogRawInputsAndSetAnalogInputs
+\see PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicleDrive4WSmoothAnalogRawInputsAndSetAnalogInputs
 */
-struct PxVehiclePadSmoothingData
+struct PX_DEPRECATED PxVehiclePadSmoothingData
 {
-public:
-
 	/**
 	\brief Rise rate of each analog value from previous value towards target if target>previous
 	*/
@@ -88,10 +113,11 @@ public:
 PX_COMPILE_TIME_ASSERT(0==(sizeof(PxVehiclePadSmoothingData)& 0x0f));
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Used to produce smooth vehicle driving control values from analog and digital inputs.
-@see PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicleDrive4WSmoothAnalogRawInputsAndSetAnalogInputs
+\see PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicleDrive4WSmoothAnalogRawInputsAndSetAnalogInputs
 */
-class PxVehicleDrive4WRawInputData
+class PX_DEPRECATED PxVehicleDrive4WRawInputData
 {
 public:
 
@@ -278,6 +304,7 @@ private:
 };
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Used to smooth and set analog vehicle control values (accel,brake,handbrake,steer) from digital inputs (keyboard).
  Also used to set boolean gearup, geardown values.
  \param[in] keySmoothing describes the rise and fall rates of the corresponding analog values when keys are pressed on and off.
@@ -286,37 +313,41 @@ private:
  \param[in] timestep is the time that has passed since the last call to PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs
  \param[in] isVehicleInAir describes if the vehicle is in the air or on the ground and is used to decide whether or not to apply steerVsForwardSpeedTable.
  \param[in] focusVehicle is the vehicle that will be given analog and gearup/geardown control values arising from the digital inputs.
+ \param[in] steerFilter is an optional smoothing filter for the steering angle.
+ \param[in] forwardAxis The axis denoting the local space forward direction of the vehicle.
  */
-void PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs
+PX_DEPRECATED void PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs
 	(const PxVehicleKeySmoothingData& keySmoothing, const PxFixedSizeLookupTable<8>& steerVsForwardSpeedTable,
-	 const PxVehicleDrive4WRawInputData& rawInputData, 
-	 const PxReal timestep, 
-	 const bool isVehicleInAir, 
-	 PxVehicleDrive4W& focusVehicle);
+	 const PxVehicleDrive4WRawInputData& rawInputData, const PxReal timestep, const bool isVehicleInAir, 
+	 PxVehicleDrive4W& focusVehicle, const PxVehicleSteerFilter& steerFilter = PxVehicleSteerFilter(),
+	 const PxVec3& forwardAxis = PxVehicleGetDefaultContext().forwardAxis);
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Used to smooth and set analog vehicle control values from analog inputs (gamepad).
 Also used to set boolean gearup, geardown values.
 \param[in] padSmoothing describes how quickly the control values applied to the vehicle blend from the current vehicle values towards the raw analog values from the gamepad.
 \param[in] steerVsForwardSpeedTable is a table of maximum allowed steer versus forward vehicle speed.
 \param[in] rawInputData is the state of all gamepad analog inputs that will be used control the vehicle.
-\param[in] timestep is the time that has passed since the last call to PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs
+\param[in] timestep is the time that has passed since the last call to PxVehicleDrive4WSmoothAnalogRawInputsAndSetAnalogInputs
 \param[in] isVehicleInAir describes if the vehicle is in the air or on the ground and is used to decide whether or not to apply steerVsForwardSpeedTable.
 \param[in] focusVehicle is the vehicle that will be given analog control values arising from the gamepad inputs.
+\param[in] steerFilter is an optional smoothing filter for the steering angle.
+\param[in] forwardAxis The axis denoting the local space forward direction of the vehicle.
 */
-void PxVehicleDrive4WSmoothAnalogRawInputsAndSetAnalogInputs
+PX_DEPRECATED void PxVehicleDrive4WSmoothAnalogRawInputsAndSetAnalogInputs
 	(const PxVehiclePadSmoothingData& padSmoothing, const PxFixedSizeLookupTable<8>& steerVsForwardSpeedTable,
-	 const PxVehicleDrive4WRawInputData& rawInputData, 
-	 const PxReal timestep, 
-	 const bool isVehicleInAir, 
-	 PxVehicleDrive4W& focusVehicle);
+	 const PxVehicleDrive4WRawInputData& rawInputData, const PxReal timestep, const bool isVehicleInAir, 
+	 PxVehicleDrive4W& focusVehicle, const PxVehicleSteerFilter& steerFilter = PxVehicleSteerFilter(),
+	 const PxVec3& forwardAxis = PxVehicleGetDefaultContext().forwardAxis);
 
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Used to produce smooth vehicle driving control values from analog and digital inputs.
-@see PxVehicleDriveNWSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicleDriveNWSmoothAnalogRawInputsAndSetAnalogInputs
+\see PxVehicleDriveNWSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicleDriveNWSmoothAnalogRawInputsAndSetAnalogInputs
 */
-class PxVehicleDriveNWRawInputData : public PxVehicleDrive4WRawInputData
+class PX_DEPRECATED PxVehicleDriveNWRawInputData : public PxVehicleDrive4WRawInputData
 {
 public:
 
@@ -325,45 +356,49 @@ public:
 };
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Used to smooth and set analog vehicle control values (accel,brake,handbrake,steer) from digital inputs (keyboard).
  Also used to set boolean gearup, geardown values.
  \param[in] keySmoothing describes the rise and fall rates of the corresponding analog values when keys are pressed on and off.
  \param[in] steerVsForwardSpeedTable is a table of maximum allowed steer versus forward vehicle speed.
  \param[in] rawInputData is the state of all digital inputs that control the vehicle.
- \param[in] timestep is the time that has passed since the last call to PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs
+ \param[in] timestep is the time that has passed since the last call to PxVehicleDriveNWSmoothDigitalRawInputsAndSetAnalogInputs
  \param[in] isVehicleInAir describes if the vehicle is in the air or on the ground and is used to decide whether or not to apply steerVsForwardSpeedTable.
  \param[in] focusVehicle is the vehicle that will be given analog and gearup/geardown control values arising from the digital inputs.
+ \param[in] steerFilter is an optional smoothing filter for the steering angle.
+ \param[in] forwardAxis The axis denoting the local space forward direction of the vehicle.
 */
-void PxVehicleDriveNWSmoothDigitalRawInputsAndSetAnalogInputs
+PX_DEPRECATED void PxVehicleDriveNWSmoothDigitalRawInputsAndSetAnalogInputs
 	(const PxVehicleKeySmoothingData& keySmoothing, const PxFixedSizeLookupTable<8>& steerVsForwardSpeedTable,
-	 const PxVehicleDriveNWRawInputData& rawInputData, 
-	 const PxReal timestep, 
-	 const bool isVehicleInAir, 
-	 PxVehicleDriveNW& focusVehicle);
+	 const PxVehicleDriveNWRawInputData& rawInputData, const PxReal timestep, const bool isVehicleInAir, 
+	 PxVehicleDriveNW& focusVehicle, const PxVehicleSteerFilter& steerFilter = PxVehicleSteerFilter(),
+	 const PxVec3& forwardAxis = PxVehicleGetDefaultContext().forwardAxis);
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Used to smooth and set analog vehicle control values from analog inputs (gamepad).
 Also used to set boolean gearup, geardown values.
 \param[in] padSmoothing describes how quickly the control values applied to the vehicle blend from the current vehicle values towards the raw analog values from the gamepad.
 \param[in] steerVsForwardSpeedTable is a table of maximum allowed steer versus forward vehicle speed.
 \param[in] rawInputData is the state of all gamepad analog inputs that will be used control the vehicle.
-\param[in] timestep is the time that has passed since the last call to PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs
+\param[in] timestep is the time that has passed since the last call to PxVehicleDriveNWSmoothAnalogRawInputsAndSetAnalogInputs
 \param[in] isVehicleInAir describes if the vehicle is in the air or on the ground and is used to decide whether or not to apply steerVsForwardSpeedTable.
 \param[in] focusVehicle is the vehicle that will be given analog control values arising from the gamepad inputs.
+\param[in] steerFilter is an optional smoothing filter for the steering angle.
+\param[in] forwardAxis The axis denoting the local space forward direction of the vehicle.
 */
-void PxVehicleDriveNWSmoothAnalogRawInputsAndSetAnalogInputs
+PX_DEPRECATED void PxVehicleDriveNWSmoothAnalogRawInputsAndSetAnalogInputs
 	(const PxVehiclePadSmoothingData& padSmoothing, const PxFixedSizeLookupTable<8>& steerVsForwardSpeedTable,
-	 const PxVehicleDriveNWRawInputData& rawInputData, 
-	 const PxReal timestep, 
-	 const bool isVehicleInAir, 
-	 PxVehicleDriveNW& focusVehicle);
+	 const PxVehicleDriveNWRawInputData& rawInputData, const PxReal timestep, const bool isVehicleInAir, 
+	 PxVehicleDriveNW& focusVehicle, const PxVehicleSteerFilter& steerFilter = PxVehicleSteerFilter(),
+	 const PxVec3& forwardAxis = PxVehicleGetDefaultContext().forwardAxis);
 
 
 /**
 \brief Used to produce smooth analog tank control values from analog and digital inputs.
-@see PxVehicleDriveTankSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicleDriveTankSmoothAnalogRawInputsAndSetAnalogInputs
+\see PxVehicleDriveTankSmoothDigitalRawInputsAndSetAnalogInputs, PxVehicleDriveTankSmoothAnalogRawInputsAndSetAnalogInputs
 */
-class PxVehicleDriveTankRawInputData
+class PX_DEPRECATED PxVehicleDriveTankRawInputData
 {
 public:
 
@@ -614,14 +649,15 @@ private:
 };
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Used to smooth and set analog tank control values from digital inputs (keyboard).
 Also used to set boolean gearup, geardown values.
 \param[in] keySmoothing describes the rise and fall rates of the corresponding analog values when keys are pressed on and off.
 \param[in] rawInputData is the state of all digital inputs that control the vehicle.
-\param[in] timestep is the time that has passed since the last call to PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs
+\param[in] timestep is the time that has passed since the last call to PxVehicleDriveTankSmoothDigitalRawInputsAndSetAnalogInputs
 \param[in] focusVehicle is the vehicle that will be given analog and gearup/geardown control values arising from the digital inputs.
 */
-void PxVehicleDriveTankSmoothDigitalRawInputsAndSetAnalogInputs
+PX_DEPRECATED void PxVehicleDriveTankSmoothDigitalRawInputsAndSetAnalogInputs
 (const PxVehicleKeySmoothingData& keySmoothing, 
  const PxVehicleDriveTankRawInputData& rawInputData, 
  const PxReal timestep, 
@@ -629,14 +665,15 @@ void PxVehicleDriveTankSmoothDigitalRawInputsAndSetAnalogInputs
 
 
 /**
+\deprecated This API is deprecated and is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
 \brief Used to smooth and set analog tank control values from analog inputs (gamepad).
 Also used to set boolean gearup, geardown values.
 \param[in] padSmoothing describes how quickly the control values applied to the vehicle blend from the current vehicle values towards the raw analog values from the gamepad.
 \param[in] rawInputData is the state of all gamepad analog inputs that will be used control the vehicle.
-\param[in] timestep is the time that has passed since the last call to PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs
+\param[in] timestep is the time that has passed since the last call to PxVehicleDriveTankSmoothAnalogRawInputsAndSetAnalogInputs
 \param[in] focusVehicle is the vehicle that will be given analog control values arising from the gamepad inputs.
 */
-void PxVehicleDriveTankSmoothAnalogRawInputsAndSetAnalogInputs
+PX_DEPRECATED void PxVehicleDriveTankSmoothAnalogRawInputsAndSetAnalogInputs
 (const PxVehiclePadSmoothingData& padSmoothing, 
  const PxVehicleDriveTankRawInputData& rawInputData, 
  const PxReal timestep, 
@@ -647,5 +684,4 @@ void PxVehicleDriveTankSmoothAnalogRawInputsAndSetAnalogInputs
 } // namespace physx
 #endif
 
-/** @} */
-#endif //PX_VEHICLE_CONTROL_H
+#endif

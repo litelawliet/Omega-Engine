@@ -9,8 +9,6 @@
 #include <OgCore/SceneNode.h>
 #include <OgPhysics/Physics.h>
 
-
-
 namespace OgEngine
 {
 	class CORE_API Core final

@@ -5,16 +5,6 @@
 #include <extensions/PxDefaultAllocator.h>
 #include <extensions/PxDefaultSimulationFilterShader.h>
 
-template <typename T>
-constexpr void PX_RELEASE(T x)
-{
-	if (x)
-	{
-		x->release();
-		x = nullptr;
-	}
-}
-
 constexpr const char* PVD_HOST = "127.0.0.1";
 
 class UserErrorCallback : public physx::PxErrorCallback

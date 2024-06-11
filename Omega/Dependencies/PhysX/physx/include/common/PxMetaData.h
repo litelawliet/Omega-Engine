@@ -1,4 +1,3 @@
-//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -11,7 +10,7 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 // PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -23,16 +22,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Copyright (c) 2008-2019 NVIDIA Corporation. All rights reserved.
+// Copyright (c) 2008-2024 NVIDIA Corporation. All rights reserved.
 // Copyright (c) 2004-2008 AGEIA Technologies, Inc. All rights reserved.
 // Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
-
-#ifndef PX_PHYSICS_METADATA_H
-#define PX_PHYSICS_METADATA_H
-/** \addtogroup physics
-@{
-*/
+#ifndef PX_METADATA_H
+#define PX_METADATA_H
 
 #include "foundation/Px.h"
 #include "foundation/PxIO.h"
@@ -180,7 +175,7 @@ namespace physx
 	/**
 	\brief specifies a binary metadata entry for an array of extra data
 	additional to PX_DEF_BIN_METADATA_EXTRA_ITEMS a mask can be specified to interpret the control value
-	@see PxMetaDataFlag::eCONTROL_MASK
+	\see PxMetaDataFlag::eCONTROL_MASK
 	*/
 	#define PX_DEF_BIN_METADATA_EXTRA_ITEMS_MASKED_CONTROL(stream, Class, type, control, controlMask ,count, flags, align) \
 	{ \
@@ -224,5 +219,4 @@ namespace physx
 } // namespace physx
 #endif
 
-/** @} */
 #endif

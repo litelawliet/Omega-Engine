@@ -1,4 +1,3 @@
-//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
@@ -11,7 +10,7 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 // PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -23,15 +22,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Copyright (c) 2008-2019 NVIDIA Corporation. All rights reserved.
+// Copyright (c) 2008-2024 NVIDIA Corporation. All rights reserved.
 // Copyright (c) 2004-2008 AGEIA Technologies, Inc. All rights reserved.
 // Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
 #ifndef PX_VEHICLE_NWDRIVE_H
 #define PX_VEHICLE_NWDRIVE_H
-/** \addtogroup vehicle
-  @{
-*/
 
 #include "vehicle/PxVehicleDrive.h"
 #include "vehicle/PxVehicleWheels.h"
@@ -51,18 +47,14 @@ class PxMaterial;
 class PxRigidDynamic;
 
 /**
+\deprecated This API is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
+
 \brief Data structure describing configuration data of a vehicle with up to PX_MAX_NB_WHEELS driven equally through the differential. The vehicle has an
 engine, clutch, gears, autobox, differential.
-@see PxVehicleDriveSimData
+\see PxVehicleDriveSimData
 */
-class PxVehicleDriveSimDataNW : public PxVehicleDriveSimData
+class PX_DEPRECATED PxVehicleDriveSimDataNW : public PxVehicleDriveSimData
 {
-//= ATTENTION! =====================================================================================
-// Changing the data layout of this class breaks the binary serialization format.  See comments for 
-// PX_BINARY_SERIAL_VERSION.  If a modification is required, please adjust the getBinaryMetaData 
-// function.  If the modification is made on a custom branch, please change PX_BINARY_SERIAL_VERSION
-// accordingly.
-//==================================================================================================
 public:
 
 	friend class PxVehicleDriveNW;
@@ -90,14 +82,14 @@ private:
 
 	/**
 	\brief Differential simulation data
-	@see setDiffData, getDiffData
+	\see setDiffData, getDiffData
 	*/
 	PxVehicleDifferentialNWData mDiff;
 
 	/**
 	\brief Test if the NW-drive simulation data has been setup with legal data.
 	Call only after setting all components.
-	@see setEngineData, setClutchData, setGearsData, setAutoboxData, setDiffData, setAckermannGeometryData 
+	\see setEngineData, setClutchData, setGearsData, setAutoboxData, setDiffData, setAckermannGeometryData 
 	*/
 	bool isValid() const;
 
@@ -111,11 +103,13 @@ PX_COMPILE_TIME_ASSERT(0==(sizeof(PxVehicleDriveSimDataNW) & 15));
 
 
 /**
+\deprecated This API is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
+
 \brief The control inputs for a PxVehicleDriveNW.
 
-@see PxVehicleDriveDynData::setAnalogInput, PxVehicleDriveDynData::getAnalogInput
+\see PxVehicleDriveDynData::setAnalogInput, PxVehicleDriveDynData::getAnalogInput
 */
-struct PxVehicleDriveNWControl
+struct PX_DEPRECATED PxVehicleDriveNWControl
 {
 	enum Enum
 	{
@@ -129,16 +123,12 @@ struct PxVehicleDriveNWControl
 };
 
 /**
+\deprecated This API is replaced by a new API, see the Vehicles section in the 4.0 to 5.1 migration guide.
+
 \brief Data structure with instanced dynamics data and configuration data of a vehicle with up to PX_MAX_NB_WHEELS driven wheels.
 */
-class PxVehicleDriveNW : public PxVehicleDrive
+class PX_DEPRECATED PxVehicleDriveNW : public PxVehicleDrive
 {
-//= ATTENTION! =====================================================================================
-// Changing the data layout of this class breaks the binary serialization format.  See comments for 
-// PX_BINARY_SERIAL_VERSION.  If a modification is required, please adjust the getBinaryMetaData 
-// function.  If the modification is made on a custom branch, please change PX_BINARY_SERIAL_VERSION
-// accordingly.
-//==================================================================================================
 public:
 
 	friend class PxVehicleUpdate;
@@ -150,13 +140,13 @@ public:
 
 	\return The instantiated vehicle.
 
-	@see free, setup
+	\see free, setup
 	*/
 	static PxVehicleDriveNW* allocate(const PxU32 nbWheels);
 
 	/**
 	\brief Deallocate a PxVehicleDriveNW instance.
-	@see allocate
+	\see allocate
 	*/
 	void free();
 
@@ -168,7 +158,7 @@ public:
 	\param[in] driveData describes the properties of the vehicle's drive model (gears/engine/clutch/differential/autobox).  The vehicle instance takes a copy of this data.
 	\param[in] nbWheels is the number of wheels on the vehicle.
 	\note It is assumed that the first shapes of the actor are the wheel shapes, followed by the chassis shapes.  To break this assumption use PxVehicleWheelsSimData::setWheelShapeMapping.
-	@see allocate, free, setToRestState, PxVehicleWheelsSimData::setWheelShapeMapping
+	\see allocate, free, setToRestState, PxVehicleWheelsSimData::setWheelShapeMapping
 	*/
 	void setup
 		(PxPhysics* physics, PxRigidDynamic* vehActor,
@@ -184,7 +174,7 @@ public:
 	\param[in] nbWheels is the number of wheels on the vehicle.
 	\note It is assumed that the first shapes of the actor are the wheel shapes, followed by the chassis shapes.  To break this assumption use PxVehicleWheelsSimData::setWheelShapeMapping.
 	\return The instantiated vehicle.
-	@see allocate, free, setToRestState, PxVehicleWheelsSimData::setWheelShapeMapping
+	\see allocate, free, setToRestState, PxVehicleWheelsSimData::setWheelShapeMapping
 	*/
 	static PxVehicleDriveNW* create
 		(PxPhysics* physics, PxRigidDynamic* vehActor,
@@ -196,13 +186,13 @@ public:
 	to the state they were in immediately after setup or create.
 	\note Calling setToRestState invalidates the cached raycast hit planes under each wheel meaning that suspension line
 	raycasts need to be performed at least once with PxVehicleSuspensionRaycasts before calling PxVehicleUpdates. 
-	@see setup, create, PxVehicleSuspensionRaycasts, PxVehicleUpdates
+	\see setup, create, PxVehicleSuspensionRaycasts, PxVehicleUpdates
 	*/
 	void setToRestState();
 
 	/**
 	\brief Simulation data that describes the configuration of the vehicle's drive model.
-	@see setup, create
+	\see setup, create
 	*/
 	PxVehicleDriveSimDataNW mDriveSimData;
 
@@ -221,7 +211,7 @@ public:
 	static	PxVehicleDriveNW*	createObject(PxU8*& address, PxDeserializationContext& context);
 	static	void				getBinaryMetaData(PxOutputStream& stream);
 	virtual	const char*			getConcreteTypeName() const			{ return "PxVehicleDriveNW";	}
-	virtual	bool				isKindOf(const char* name)	const	{ return !::strcmp("PxVehicleDriveNW", name) || PxBase::isKindOf(name); }
+	virtual	bool				isKindOf(const char* name)	const	{ PX_IS_KIND_OF(name, "PxVehicleDriveNW", PxVehicleDrive); }
 //~serialization
 };
 PX_COMPILE_TIME_ASSERT(0==(sizeof(PxVehicleDriveNW) & 15));
@@ -232,5 +222,4 @@ PX_COMPILE_TIME_ASSERT(0==(sizeof(PxVehicleDriveNW) & 15));
 } // namespace physx
 #endif
 
-/** @} */
-#endif //PX_VEHICLE_NWDRIVE_H
+#endif

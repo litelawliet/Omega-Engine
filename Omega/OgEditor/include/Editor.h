@@ -7,7 +7,6 @@
 #include <OgPhysics/Physics.h>
 #include <UI/imgui/imfilebrowser.h>
 
-
 namespace OgEngine
 {
 	class Editor final

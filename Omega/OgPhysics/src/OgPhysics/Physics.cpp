@@ -143,5 +143,4 @@ void OgEngine::PhysicsEngine::DeleteActor(PRigidBody* p_rb) const
 {
 	m_scene->removeActor(*p_rb->rigidBody);
 	PX_RELEASE(p_rb->rigidBody);
-	p_rb->rigidBody = nullptr;
 }

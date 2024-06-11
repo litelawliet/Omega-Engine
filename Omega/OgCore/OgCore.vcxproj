@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -76,7 +76,7 @@
     <SourcePath>$(ProjectDir)src;$(ProjectDir)UI;$(SourcePath)</SourcePath>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)dll\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <LibraryPath>$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\PhysX\physx\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\PhysX\physx\lib\$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -84,7 +84,7 @@
     <SourcePath>$(ProjectDir)src;$(ProjectDir)UI;$(SourcePath)</SourcePath>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)dll\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <LibraryPath>$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\PhysX\physx\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\PhysX\physx\lib\$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -92,7 +92,7 @@
     <SourcePath>$(ProjectDir)src;$(ProjectDir)UI;$(SourcePath)</SourcePath>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)dll\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <LibraryPath>$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\PhysX\physx\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\PhysX\physx\lib\$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -100,13 +100,13 @@
     <SourcePath>$(ProjectDir)src;$(ProjectDir)UI;$(SourcePath)</SourcePath>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)dll\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <LibraryPath>$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\PhysX\physx\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Dependencies\glfw\lib\$(Platform);$(SolutionDir)Dependencies\vulkan\lib\$(Platform);$(SolutionDir)Dependencies\PhysX\physx\lib\$(Platform);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>CORE_EXPORT;_ENABLE_EXTENDED_ALIGNED_STORAGE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLM_ENABLE_EXPERIMENTAL;CORE_EXPORT;_ENABLE_EXTENDED_ALIGNED_STORAGE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -137,21 +137,20 @@ xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_device_simulati
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_khronos_validation.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_monitor.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_screenshot.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_vktrace_layer.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\assimp\bin\$(Platform)\assimp-vc142-mt.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\assimp\bin\$(Platform)\assimp-vc143-mt.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\irrKlang.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpFlac.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpMP3.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysXCommon_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysXFoundation_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysX_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S</Command>
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysXCommon_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysXFoundation_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysX_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S</Command>
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>CORE_EXPORT;_ENABLE_EXTENDED_ALIGNED_STORAGE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLM_ENABLE_EXPERIMENTAL;CORE_EXPORT;_ENABLE_EXTENDED_ALIGNED_STORAGE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -182,14 +181,13 @@ xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_device_simulati
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_khronos_validation.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_monitor.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_screenshot.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_vktrace_layer.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\assimp\bin\$(Platform)\assimp-vc142-mt.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\assimp\bin\$(Platform)\assimp-vc143-mt.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\irrKlang.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpFlac.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpMP3.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysXCommon_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysXFoundation_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysX_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S</Command>
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysXCommon_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysXFoundation_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysX_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S</Command>
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -198,7 +196,7 @@ xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\P
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>CORE_EXPORT;_ENABLE_EXTENDED_ALIGNED_STORAGE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLM_ENABLE_EXPERIMENTAL;CORE_EXPORT;_ENABLE_EXTENDED_ALIGNED_STORAGE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -231,14 +229,13 @@ xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_device_simulati
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_khronos_validation.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_monitor.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_screenshot.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_vktrace_layer.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\assimp\bin\$(Platform)\assimp-vc142-mt.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\assimp\bin\$(Platform)\assimp-vc143-mt.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\irrKlang.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpFlac.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpMP3.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysXCommon_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysXFoundation_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysX_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S</Command>
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysXCommon_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysXFoundation_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysX_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S</Command>
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -247,7 +244,7 @@ xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\P
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>CORE_EXPORT;_ENABLE_EXTENDED_ALIGNED_STORAGE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLM_ENABLE_EXPERIMENTAL;CORE_EXPORT;_ENABLE_EXTENDED_ALIGNED_STORAGE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -280,14 +277,13 @@ xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_device_simulati
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_khronos_validation.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_monitor.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_screenshot.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\vulkan\bin\$(Platform)\VkLayer_vktrace_layer.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\assimp\bin\$(Platform)\assimp-vc142-mt.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\assimp\bin\$(Platform)\assimp-vc143-mt.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\irrKlang.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpFlac.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
 xcopy "$(SolutionDir)Dependencies\irrKlang\bin\$(Platform)\ikpMP3.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysXCommon_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysXFoundation_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
-xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\$(Configuration)\PhysX_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S</Command>
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysXCommon_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysXFoundation_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S
+xcopy "$(SolutionDir)Dependencies\PhysX\physx\bin\$(Platform)\PhysX_64.dll" "$(SolutionDir)bin\$(Platform)\$(Configuration)" /E /Y /S</Command>
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
